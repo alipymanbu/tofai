@@ -3,53 +3,73 @@ from langgraph.graph import StateGraph, START, END
 from typing import List, Tuple, Optional
 import state as st
 from state import VideoCreationState
+from lm_facade import LMFacade
 
-# Define the state class to hold all data throughout the process
-# class VideoCreationState(BaseModel):
-#     brand_name: Optional[str] = None
-#     brand_link: Optional[str] = None
-#     brand_about: Optional[str] = None
-#     user_demographics: Optional[str] = None
-#     user_likes: Optional[str] = None
-#     content_vibe: Optional[str] = None
-#     content_spaces: Optional[str] = None  # Selected story headline
-#     personality_tonality: Optional[str] = None
-#     script: Optional[List[Tuple[str, float]]] = None  # List of (scene description, duration in seconds)
-#     images: List[str] = []  # Approved images for each scene
-#     animation: Optional[str] = None
-#     video_with_voiceover: Optional[str] = None
-#     final_video: Optional[str] = None
-#     current_element: Optional[str] = None
-#     current_options: List[str] = []
-#     current_scene_index: int = 0
-#     brand_strategy_elements: List[str] = [
-#         "brand_about",
-#         "user_demographics",
-#         "user_likes",
-#         "content_vibe",
-#         "content_spaces",
-#         "personality_tonality"
-#     ]
-#     current_element_index: int = 0
-#     next: Optional[str] = None  # For conditional transitions
+lm_facade = LMFacade()
+prefix = """You are the best marketer on Earth specifically specialising in video
+  storytelling that helps brands get reach on social media. You are weird like Vsauce,
+  thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy
+  like David Ogilvy. You do this by marrying brand strategy and user passion points."""
+output_format_prompt = "Give me 3 options, add `||` between the options. Do not output anything else."
 
 def current_strategy(state: VideoCreationState) -> str:
     return state.brand_strategy_elements[state.current_brand_strategy_element_index]
 
+def parse_text_options(lm_output: str) -> List[str]:
+    return [opt.strip('\n ') for opt in lm_output.strip().split("||") if opt.strip('\n ')]
+
 # Placeholder generation functions (replace with actual LLM/media API calls)
 def generate_brand_about_options_func(brand_name: str, brand_link: str) -> List[str]:
-    return [
-        f"{brand_name} is a leader in sustainable fashion.",
-        f"{brand_name} crafts innovative tech solutions.",
-        f"{brand_name} delivers premium coffee experiences."
-    ]
+    prompt = f"""As first step of brand strategy, in one line clearly and precisely write down
+      what is the following brand about? {output_format_prompt}
 
-def generate_user_demographics_options_func(brand_about: str) -> List[str]:
-    return [
-        "Young urban professionals, 25-35, eco-conscious, in North America.",
-        "Tech-savvy teens, 13-19, global, love gaming.",
-        "Coffee enthusiasts, 30-50, middle-income, in Europe."
-    ]
+      Examples:
+      Brand: Adidas
+      Link: https://www.adidas.com
+      Option 1: Global leader in athletic wear, blending technology with fashion. ||
+      Option 2: Empowering athletes worldwide with innovative sportswear. ||
+      Option 3: Sustainable and high-performance sportswear, pushing boundaries in design.
+
+      Brand: Apple
+      Link: https://www.apple.com
+      Option 1: Pioneering technology that changes the world, one device at a time. ||
+      Option 2: Creating seamless experiences with cutting-edge tech. ||
+      Option 3: Innovative products that inspire creativity and productivity.
+
+      Now, your turn:
+      Brand: {brand_name}
+      Link: {brand_link}"""
+    response = lm_facade.invoke_t2t(f"{prefix}\n{prompt}")
+    return parse_text_options(response)
+
+def generate_user_demographics_options_func(brand_name: str, brand_link: str, brand_about: str) -> List[str]:
+    prompt = f"""As first step of brand strategy, clearly define geography, demographics, psychographics
+          trying to go for a real specific sizeable audience? {output_format_prompt}
+          
+          Examples:
+          Brand: Planterie
+          Link: https://www.planterie.in/
+          About: Planterie is a plant studio and café that sells air-purifying plants, terrariums,
+          and planters while designing green balconies and gardens for urban homes and offices.
+          Option 1: Urban Plant-Curious Millennials
+          Geography: South Delhi (primary), expandable to NCR and other metro cities via social media.
+          Demographics: 25-35 years old, mixed gender (60% female, 40% male), single or young couples, mid-to-high income (₹8-20 LPA), renters or new homeowners.
+          Psychographics: Tech-savvy, Instagram scrollers, care about aesthetics and wellness but are new to plants—think “I want a green vibe but don’t know where to start.” Overworked, seeking calm, follow trends like minimalism and self-care, love coffee shop hangs. ||
+          Option 2: Eco-Conscious Gen Z Creatives
+          Geography: South Delhi (core), with reach to urban youth across India (Mumbai, Bangalore, etc.) via reels and TikTok.
+          Demographics: 18-25 years old, mostly female (70%), students or early-career hustlers, moderate income (₹3-10 LPA or parental support), renting shared flats.
+          Psychographics: Passionate about sustainability, artsy, glued to short-form video platforms, DIY enthusiasts, love quirky cafés, reject corporate monotony, adore plants as “pets” and self-expression, follow influencers like PlantKween or Summer Rayne Oakes. ||
+          Option 3: Affluent Urban Wellness Seekers
+          Geography: South Delhi (focus), NCR elites, and aspirational upper-middle-class in Tier-1 cities.
+          Demographics: 30-45 years old, 50/50 gender split, married or single professionals, high income (₹20 LPA+), own homes or luxe apartments.
+          Psychographics: Health nuts, yoga buffs, into air quality and mental peace, shop premium brands, value experiences over stuff, frequent cafés for “me time” or meetings, follow design trends (think Kinfolk magazine), see plants as status and serenity.
+
+          Now, your turn:
+          Brand: {brand_name}
+          Link: {brand_link}
+          About: {brand_about}"""
+    response = lm_facade.invoke_t2t(f"{prefix}\n{prompt}")
+    return parse_text_options(response)
 
 def generate_user_likes_options_func(user_demographics: str) -> List[str]:
     return [
@@ -124,7 +144,7 @@ def generate_options(state: VideoCreationState) -> dict:
   if element == st.BRAND_ABOUT_STRATEGY_ELEMENT:
     current_options = generate_brand_about_options_func(state.brand_name, state.brand_link)
   elif element == st.USER_DEMOGRAPHICS_STRATEGY_ELEMENT:
-    current_options = generate_user_demographics_options_func(state.brand_about)
+    current_options = generate_user_demographics_options_func(state.brand_name, state.brand_link, state.brand_about)
   elif element == st.USER_LIKES_STRATEGY_ELEMENT:
     current_options = generate_user_likes_options_func(state.user_demographics)
   elif element == st.CONTENT_VIBE_STRATEGY_ELEMENT:
