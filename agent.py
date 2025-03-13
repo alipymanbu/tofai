@@ -4,86 +4,17 @@ from typing import List, Tuple, Optional
 import state as st
 from state import VideoCreationState
 from lm_facade import LMFacade
+from tasks.generate_brand_about import BrandAboutGenerator
+from tasks.generate_user_demographics import UserDemographicsGenerator
+from tasks.generate_user_likes import UserLikesGenerator
+from tasks.generate_content_vibe import ContentVibeGenerator
+from tasks.generate_content_spaces import ContentSpacesGenerator
+from tasks.generate_personality import PersonalityGenerator
 
-lm_facade = LMFacade()
-prefix = """You are the best marketer on Earth specifically specialising in video
-  storytelling that helps brands get reach on social media. You are weird like Vsauce,
-  thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy
-  like David Ogilvy. You do this by marrying brand strategy and user passion points."""
-output_format_prompt = "Give me 3 options, add `||` between the options. Do not output anything else."
+_LM_FACADE = LMFacade()
 
 def current_strategy(state: VideoCreationState) -> str:
     return state.brand_strategy_elements[state.current_brand_strategy_element_index]
-
-def parse_text_options(lm_output: str) -> List[str]:
-    return [opt.strip('\n ') for opt in lm_output.strip().split("||") if opt.strip('\n ')]
-
-# Placeholder generation functions (replace with actual LLM/media API calls)
-def generate_brand_about_options_func(brand_name: str, brand_link: str) -> List[str]:
-    prompt = f"""As first step of brand strategy, in one line clearly and precisely write down
-      what is the following brand about? {output_format_prompt}
-
-      Examples:
-      Brand: Adidas
-      Link: https://www.adidas.com
-      Option 1: Global leader in athletic wear, blending technology with fashion. ||
-      Option 2: Empowering athletes worldwide with innovative sportswear. ||
-      Option 3: Sustainable and high-performance sportswear, pushing boundaries in design.
-
-      Brand: Apple
-      Link: https://www.apple.com
-      Option 1: Pioneering technology that changes the world, one device at a time. ||
-      Option 2: Creating seamless experiences with cutting-edge tech. ||
-      Option 3: Innovative products that inspire creativity and productivity.
-
-      Now, your turn:
-      Brand: {brand_name}
-      Link: {brand_link}"""
-    response = lm_facade.invoke_t2t(f"{prefix}\n{prompt}")
-    return parse_text_options(response)
-
-def generate_user_demographics_options_func(brand_name: str, brand_link: str, brand_about: str) -> List[str]:
-    prompt = f"""As first step of brand strategy, clearly define geography, demographics, psychographics
-          trying to go for a real specific sizeable audience? {output_format_prompt}
-          
-          Examples:
-          Brand: Planterie
-          Link: https://www.planterie.in/
-          About: Planterie is a plant studio and café that sells air-purifying plants, terrariums,
-          and planters while designing green balconies and gardens for urban homes and offices.
-          Option 1: Urban Plant-Curious Millennials
-          Geography: South Delhi (primary), expandable to NCR and other metro cities via social media.
-          Demographics: 25-35 years old, mixed gender (60% female, 40% male), single or young couples, mid-to-high income (₹8-20 LPA), renters or new homeowners.
-          Psychographics: Tech-savvy, Instagram scrollers, care about aesthetics and wellness but are new to plants—think “I want a green vibe but don’t know where to start.” Overworked, seeking calm, follow trends like minimalism and self-care, love coffee shop hangs. ||
-          Option 2: Eco-Conscious Gen Z Creatives
-          Geography: South Delhi (core), with reach to urban youth across India (Mumbai, Bangalore, etc.) via reels and TikTok.
-          Demographics: 18-25 years old, mostly female (70%), students or early-career hustlers, moderate income (₹3-10 LPA or parental support), renting shared flats.
-          Psychographics: Passionate about sustainability, artsy, glued to short-form video platforms, DIY enthusiasts, love quirky cafés, reject corporate monotony, adore plants as “pets” and self-expression, follow influencers like PlantKween or Summer Rayne Oakes. ||
-          Option 3: Affluent Urban Wellness Seekers
-          Geography: South Delhi (focus), NCR elites, and aspirational upper-middle-class in Tier-1 cities.
-          Demographics: 30-45 years old, 50/50 gender split, married or single professionals, high income (₹20 LPA+), own homes or luxe apartments.
-          Psychographics: Health nuts, yoga buffs, into air quality and mental peace, shop premium brands, value experiences over stuff, frequent cafés for “me time” or meetings, follow design trends (think Kinfolk magazine), see plants as status and serenity.
-
-          Now, your turn:
-          Brand: {brand_name}
-          Link: {brand_link}
-          About: {brand_about}"""
-    response = lm_facade.invoke_t2t(f"{prefix}\n{prompt}")
-    return parse_text_options(response)
-
-def generate_user_likes_options_func(user_demographics: str) -> List[str]:
-    return [
-        "Short, witty skits with dry humor.",
-        "Sleek, artsy montages with vibrant colors.",
-        "Relatable vlogs with a warm tone."
-    ]
-
-def generate_content_vibe_options_func() -> List[str]:
-    return [
-        "Bold, energetic, innovate, disrupt.",
-        "Calm, authentic, connect, inspire.",
-        "Fun, quirky, play, surprise."
-    ]
 
 def generate_content_spaces_options_func() -> List[str]:
     return [
@@ -136,23 +67,22 @@ def collect_initial_input(state: VideoCreationState) -> dict:
     "current_brand_strategy_element_index": 0, # Keep this to ensure flow continues
     "next": "generate_options"
   }
-  print(f"collect_initial_input returning: {output_dict}") # Debug print
   return output_dict
 
 def generate_options(state: VideoCreationState) -> dict:
   element = current_strategy(state)
   if element == st.BRAND_ABOUT_STRATEGY_ELEMENT:
-    current_options = generate_brand_about_options_func(state.brand_name, state.brand_link)
+    current_options = BrandAboutGenerator(_LM_FACADE).generate({"Brand": state.brand_name, "Link": state.brand_link})
   elif element == st.USER_DEMOGRAPHICS_STRATEGY_ELEMENT:
-    current_options = generate_user_demographics_options_func(state.brand_name, state.brand_link, state.brand_about)
+    current_options = UserDemographicsGenerator(_LM_FACADE).generate({"Brand": state.brand_name, "Link": state.brand_link, "About": state.brand_about})
   elif element == st.USER_LIKES_STRATEGY_ELEMENT:
-    current_options = generate_user_likes_options_func(state.user_demographics)
+    current_options = UserLikesGenerator(_LM_FACADE).generate({"Brand": state.brand_name, "Link": state.brand_link, "About": state.brand_about, "User Demographics": state.user_demographics})
   elif element == st.CONTENT_VIBE_STRATEGY_ELEMENT:
-    current_options = generate_content_vibe_options_func()
+    current_options = ContentVibeGenerator(_LM_FACADE).generate({"Brand": state.brand_name, "About": state.brand_about, "User Demographics": state.user_demographics, "User Likes": state.user_likes})
   elif element == st.CONTENT_SPACES_STRATEGY_ELEMENT:
-    current_options = generate_content_spaces_options_func()
+    current_options = ContentSpacesGenerator(_LM_FACADE).generate({"Brand": state.brand_name, "About": state.brand_about, "User Demographics": state.user_demographics, "User Likes": state.user_likes, "Content Vibe": state.content_vibe})
   elif element == st.PERSONALITY_TONALITY_STRATEGY_ELEMENT:
-    current_options = generate_personality_tonality_options_func()
+    current_options = PersonalityGenerator(_LM_FACADE).generate({"Brand": state.brand_name, "About": state.brand_about, "User Demographics": state.user_demographics, "User Likes": state.user_likes, "Content Vibe": state.content_vibe, "Content Spaces": state.content_spaces})
   output_dict = {
     "current_options": current_options,
     "next": "select_option"
@@ -163,7 +93,7 @@ def select_option(state: VideoCreationState) -> dict:
   print(f"\nChoose an option for '{current_strategy(state)}':")
   current_element_index = state.current_brand_strategy_element_index
   for idx, opt in enumerate(state.current_options, 1):
-    print(f"{idx}. {opt}")
+    print(f"{opt}")
   print("Type the number to select, or 'more' for new options.")
   user_input = input().strip()
   if user_input == "more":
