@@ -14,7 +14,7 @@ class PersonalityGenerator(BaseGenerator):
         User Demographics: Urban Plant-Curious Millennials
         Geography: South Delhi (primary), expandable to NCR and other metro cities via social media.
         Demographics: 25-35 years old, mixed gender (60% female, 40% male), single or young couples, mid-to-high income (₹8-20 LPA), renters or new homeowners.
-        Psychographics: Tech-savvy, Instagram scrollers, care about aesthetics and wellness but are new to plants—think “I want a green vibe but don’t know where to start.” Overworked, seeking calm, follow trends like minimalism and self-care, love coffee shop hangs. ||
+        Psychographics: Tech-savvy, Instagram scrollers, care about aesthetics and wellness but are new to plants—think “I want a green vibe but don’t know where to start.” Overworked, seeking calm, follow trends like minimalism and self-care, love coffee shop hangs.
         User Likes: Relatable, Self-Deprecating Humor
         Style: Quick, quirky skits with a “millennial fail” vibe—think awkward plant-parenting mishaps or caffeine-fueled chaos.
         Why They Love It: They’re stressed and laugh at their own messes (e.g., forgetting to water plants or over-ordering oat milk lattes).
@@ -25,7 +25,7 @@ class PersonalityGenerator(BaseGenerator):
         Content Vibe: Serene Urban Oasis
         Nouns: Greenery, sanctuary, breath, light, calm, coffee, home, escape, growth, stillness.
         Verbs: Bloom, unwind, sip, nurture, breathe, transform, curate, recharge, glow, root.
-        Vibe: Planterie’s the quiet corner of your loud city life—where plants and coffee stitch your soul back together. ||
+        Vibe: Planterie’s the quiet corner of your loud city life—where plants and coffee stitch your soul back together.
         Content Spaces:
         How Plants Turned My Balcony Into a Breathing Space.
         The Secret to Calming Chaos with One Terrarium.

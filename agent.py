@@ -10,33 +10,13 @@ from tasks.generate_user_likes import UserLikesGenerator
 from tasks.generate_content_vibe import ContentVibeGenerator
 from tasks.generate_content_spaces import ContentSpacesGenerator
 from tasks.generate_personality import PersonalityGenerator
+from tasks.generate_script import ScriptGenerator
+from tasks.generate_image import ImageGenerator
 
 _LM_FACADE = LMFacade()
 
 def current_strategy(state: VideoCreationState) -> str:
     return state.brand_strategy_elements[state.current_brand_strategy_element_index]
-
-def generate_content_spaces_options_func() -> List[str]:
-    return [
-        "How sustainable fashion shapes our future in 20 words.",
-        "Tech hacks that make life easier, shared at a party.",
-        "The art of brewing coffee everyone talks about tonight."
-    ]
-
-def generate_personality_tonality_options_func() -> List[str]:
-    return [
-        "Like a bold explorer: 'We ventured into the wild.' 'The horizon called back.'",
-        "Like a wise friend: 'I’ve seen this before.' 'Here’s what I learned.'",
-        "Like a quirky artist: 'Paint splattered everywhere.' 'Chaos turned beautiful.'"
-    ]
-
-def generate_script_options_func(brand_strategy: dict) -> List[str]:
-    hook = brand_strategy["user_likes"].split(" ")[0]  # Simplified hook extraction
-    return [
-        f"[{hook}] Scene 1: Bold visuals of nature (3s). Scene 2: People connect over ideas (4s).",
-        f"[{hook}] Scene 1: Quiet moment of reflection (2s). Scene 2: Brand inspires subtly (5s).",
-        f"[{hook}] Scene 1: Quirky character appears (3s). Scene 2: Fun twist unfolds (4s)."
-    ]
 
 def generate_image_func(scene_description: str) -> bytes:
     return bytes(f"Image for '{scene_description}'", "utf-8")
@@ -115,22 +95,22 @@ def select_option(state: VideoCreationState) -> dict:
           "current_brand_strategy_element_index": current_element_index,
           "next": "generate_script_options"
         }
-    except (ValueError, IndexError):
-      print("Invalid input. Try again.")
+    except (ValueError, IndexError) as e:
+      print("Invalid input. Try again." + str(e))
       return {"next": "select_option"}
 
 
 def generate_script_options(state: VideoCreationState) -> dict:
   brand_strategy = {
-    "brand_name": state.brand_name,
-    "brand_about": state.brand_about,
-    "user_demographics": state.user_demographics,
-    "user_likes": state.user_likes,
-    "content_vibe": state.content_vibe,
-    "content_spaces": state.content_spaces,
-    "personality_tonality": state.personality_tonality
+    "Brand": state.brand_name,
+    "About": state.brand_about,
+    "User Demographics": state.user_demographics,
+    "User Likes": state.user_likes,
+    "Content Vibe": state.content_vibe,
+    "Content Spaces": state.content_spaces,
+    "Personality and Tonality": state.personality_tonality
   }
-  current_options = generate_script_options_func(brand_strategy)
+  current_options = ScriptGenerator(_LM_FACADE).generate(brand_strategy)
   return {
     "current_options": current_options,
     "next": "select_script"
@@ -139,7 +119,7 @@ def generate_script_options(state: VideoCreationState) -> dict:
 def select_script(state: VideoCreationState) -> dict:
   print("\nChoose a script for your video:")
   for i, opt in enumerate(state.current_options, 1):
-    print(f"{i}. {opt}")
+    print(f"{opt}")
   print("Type the number to select, or 'more' for new options.")
   user_input = input().strip()
   if user_input == "more":
@@ -148,11 +128,8 @@ def select_script(state: VideoCreationState) -> dict:
     try:
       selection = int(user_input) - 1
       script_text = state.current_options[selection]
-      # Parse script into scenes (simplified parsing)
-      scenes = script_text.split(". ")
-      script = [(scene.split(" (")[0], float(scene.split("(")[1].replace("s)", ""))) for scene in scenes if "(" in scene]
       return {
-        "script": script,
+        "script": script_text,
         "next": st.IMAGES_STEP
       }
     except (ValueError, IndexError):
@@ -160,21 +137,24 @@ def select_script(state: VideoCreationState) -> dict:
       return {"next": "select_script"}
 
 def generate_image(state: VideoCreationState) -> dict:
-  scene_desc, _ = state.script[state.current_scene_index]
-  image = generate_image_func(scene_desc)
-  print(f"\nImage for scene {state.current_scene_index + 1}: {image}")
-  approval = input("Approve this image? (yes/no): ").strip().lower()
-  images = state.images
-  current_scene_index = state.current_scene_index
+  scene_desc = state.script[state.current_scene_index]
+  brand_strategy = {
+    "Brand": state.brand_name,
+    "About": state.brand_about,
+    "User Demographics": state.user_demographics,
+    "User Likes": state.user_likes,
+    "Content Vibe": state.content_vibe,
+    "Content Spaces": state.content_spaces,
+    "Personality and Tonality": state.personality_tonality,
+    "Script": state.script
+  }
+  images = ImageGenerator(_LM_FACADE).generate(brand_strategy, multimodel=True)
+  print(images)
+  approval = input("Approve these images? (yes/no): ").strip().lower()
   if approval == "yes":
-    images.append(image)
-    current_scene_index += 1
-    if current_scene_index < len(state.script):
-      return {"next": st.IMAGES_STEP, "images": images, "current_scene_index": current_scene_index}
-    else:
-      return {"next": st.VOICEOVER_STEP, "images": images, "current_scene_index": current_scene_index}
+    return {"next": st.VOICEOVER_STEP, "images": images.split("||")}
   else:
-    return {"next": st.IMAGES_STEP}  # Regenerate if not approved
+    return {"next": st.IMAGES_STEP}
 
 def generate_voiceover(state: VideoCreationState) -> dict:
   voiceover = generate_voiceover_func(state.script)

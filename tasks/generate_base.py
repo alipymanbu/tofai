@@ -9,6 +9,27 @@ _PROMPT_BASE = """You are the best marketer on Earth specifically specialising i
   """
 _OUTPUT_INSTRUCTION = "Give me 3 options, add `||` between the options. Do not output anything else."
 
+_PROMPT_TEMPLATE_WITH_FEW_SHOT = """{prompt_base}
+    
+{prompt}
+{output_instruction}
+    
+Examples:
+{few_shot_str}
+
+Now, your turn:
+{params_str}"""
+
+_PROMPT_TEMPLATE_IMAGE = """{prompt_base}
+
+{params_str}
+
+{prompt}
+
+{script}
+
+{output_instruction}"""
+
 class BaseGenerator:
   def __init__(self, prompt: str, few_shot: List[str], param_names: List[str], output_instruction: Union[str, None] = None, lm_facade: Union[LMFacade, None] = None):
     """Constrcutor for BaseGenerator class.
@@ -25,7 +46,11 @@ class BaseGenerator:
     self._param_names = param_names
     self._lm_facade = lm_facade if lm_facade else LMFacade()
 
-  def generate(self, param_vals: dict[str, str]) -> Union[str, bytes]:
+  def generate(self, param_vals: dict[str, str], multimodel: bool = False) -> Union[str, bytes]:
+    if multimodel:
+      prompt = self.create_prompt_for_image(param_vals)
+      response = self._lm_facade.invoke_t2i(prompt)
+      return self.parse_text_options(response)
     prompt = self.create_prompt(param_vals)
     response = self._lm_facade.invoke_t2t(prompt)
     return self.parse_text_options(response)
@@ -36,19 +61,28 @@ class BaseGenerator:
   def create_prompt(self, param_vals) -> str:
     if not self._is_param_vals_valid(param_vals):
       raise ValueError("Invalid parameter values provided.")
-    few_shot_str = "\n\n".join([f"Example: {ex}" for ex in self._few_shot])
+    few_shot_str = "\n\n".join(self._few_shot)
     params_str = "\n".join([f"{key}: {value}" for key, value in param_vals.items()])
-    return f"""{self._prompt_base}
-    
-    {self._prompt}
-    {self._output_instruction}
-    
-    Examples:
-    {few_shot_str}
-
-    Now, your turn:
-    {params_str}
-    """
+    return _PROMPT_TEMPLATE_WITH_FEW_SHOT.format(
+      prompt_base=self._prompt_base,
+      prompt=self._prompt,
+      output_instruction=self._output_instruction,
+      few_shot_str=few_shot_str,
+      params_str=params_str
+    )
+  
+  def create_prompt_for_image(self, param_vals: dict[str, str]) -> str:
+    if not self._is_param_vals_valid(param_vals):
+      raise ValueError("Invalid parameter values provided.")
+    context = "\n".join([f"{key}: {value}" for key, value in param_vals.items() if key != "Script"])
+    script = param_vals["Script"]
+    return _PROMPT_TEMPLATE_IMAGE.format(
+      prompt_base=self._prompt_base,
+      prompt=self._prompt,
+      params_str=context,
+      script=script,
+      output_instruction=self._output_instruction
+    )
 
   def parse_text_options(self, lm_output: str) -> List[str]:
     return [opt.strip('\n ') for opt in lm_output.strip().split("||") if opt.strip('\n ')]

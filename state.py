@@ -38,7 +38,7 @@ class VideoCreationState(BaseModel):
     content_vibe: Optional[str] = None  # Selected content vibe
     content_spaces: Optional[str] = None  # Selected story headline
     personality_tonality: Optional[str] = None  # Selected personality tonality
-    script: Optional[List[Tuple[str, float]]] = None  # Selected List of (scene description, duration in seconds)
+    script: Optional[str] = None  # Selected script for the video.
     images: List[bytes] = []  # Approved images for each scene
     animation: Optional[bytes] = None  # Animation for the video
     voiceover: Optional[bytes] = None  # voiceover (audio) for the video
