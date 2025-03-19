@@ -253,6 +253,7 @@ def run_agent():
     # print(app.get_graph().draw_ascii())
     # app.debug = True
     app.invoke(VideoCreationState(brand_name=""))
+    # _LM_FACADE.invoke_t2i("Generate 2 images: 1. ocean waves 2. mountain landscape.")
 
 if __name__ == "__main__":
     run_agent()
