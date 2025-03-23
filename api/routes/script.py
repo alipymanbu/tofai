@@ -6,14 +6,14 @@ from datetime import datetime
 import logging
 
 from services.storage.database import get_db
-from app.services.ai.gemini_client_fixed import GeminiClient
+from services.ai.ai_orchestrator import AIOrchestrator
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Initialize Gemini client
-gemini_client = GeminiClient()
+# Initialize AI orchestrator
+ai_orchestrator = AIOrchestrator()
 
 class ScriptRequest(BaseModel):
     """Request model for script generation."""
@@ -51,28 +51,45 @@ async def generate_script(
                 content={"error": "Session not found"}
             )
         
-        # Get strategy data
-        strategy_data = None
-        if request and request.strategy:
-            strategy_data = request.strategy
-            logger.info("Using strategy data from request")
-        else:
-            strategy_data = session.get("strategy")
-            if not strategy_data:
-                logger.warning(f"Strategy not found for session {session_id}")
-                return JSONResponse(
-                    status_code=400,
-                    content={"error": "Strategy must be generated before creating a script"}
-                )
-            logger.info("Using strategy data from session")
+        # Check if strategy exists
+        if not session.get("strategy"):
+            logger.warning(f"Strategy not found for session {session_id}")
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Strategy must be generated before creating a script"}
+            )
         
-        # Call Gemini to generate script
-        logger.info(f"Generating script with strategy: {strategy_data}")
-        script_result = await gemini_client.generate_script(strategy_data)
+        # Create a job record to track the generation
+        job_id = f"script-{session_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
         
-        if not script_result["success"]:
-            error_msg = script_result.get("error", "Unknown error")
+        await db.jobs.insert_one({
+            "id": job_id,
+            "session_id": session_id,
+            "type": "script",
+            "status": "processing",
+            "progress": 0,
+            "created_at": datetime.utcnow()
+        })
+        
+        # Run the AI orchestrator to generate script
+        result = await ai_orchestrator.run(session_id, current_step="strategy")
+        
+        if not result["success"]:
+            error_msg = result.get("error", "Unknown error")
             logger.error(f"Script generation failed: {error_msg}")
+            
+            # Update job status
+            await db.jobs.update_one(
+                {"id": job_id},
+                {
+                    "$set": {
+                        "status": "failed",
+                        "progress": 100,
+                        "completed_at": datetime.utcnow(),
+                        "error": error_msg
+                    }
+                }
+            )
             
             # Return error but with 200 status to avoid frontend crash
             return JSONResponse(
@@ -83,35 +100,22 @@ async def generate_script(
                 }
             )
         
-        script_data = script_result["script"]
-        logger.info(f"Script generated successfully for session {session_id}")
+        # Get updated session with script
+        updated_session = await db.sessions.find_one({"id": session_id})
+        script_data = updated_session.get("script", {})
         
-        # Store script in session
-        await db.sessions.update_one(
-            {"id": session_id},
+        # Update job status
+        await db.jobs.update_one(
+            {"id": job_id},
             {
                 "$set": {
-                    "script": script_data,
-                    "updated_at": datetime.utcnow(),
-                    "current_step": "visuals",  # Update current step
-                    "status": "script"  # Update status
+                    "status": "completed",
+                    "progress": 100,
+                    "completed_at": datetime.utcnow(),
+                    "result": script_data
                 }
             }
         )
-        
-        # Create a job record to track the generation
-        job_id = f"script-{session_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        
-        await db.jobs.insert_one({
-            "id": job_id,
-            "session_id": session_id,
-            "type": "script",
-            "status": "completed",
-            "progress": 100,
-            "created_at": datetime.utcnow(),
-            "completed_at": datetime.utcnow(),
-            "result": script_data
-        })
         
         # Return the job ID and the script data for immediate use
         return {
@@ -124,6 +128,24 @@ async def generate_script(
     
     except Exception as e:
         logger.exception(f"Unexpected error in script generation: {str(e)}")
+        
+        # Update job status if job was created
+        if 'job_id' in locals():
+            try:
+                await db.jobs.update_one(
+                    {"id": job_id},
+                    {
+                        "$set": {
+                            "status": "failed",
+                            "progress": 100,
+                            "completed_at": datetime.utcnow(),
+                            "error": str(e)
+                        }
+                    }
+                )
+            except Exception as update_error:
+                logger.error(f"Failed to update job status: {update_error}")
+        
         return JSONResponse(
             status_code=200,  # Use 200 status with error data to avoid frontend crash
             content={

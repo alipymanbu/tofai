@@ -1,4 +1,4 @@
-from tasks.generate_base import BaseGenerator
+from services.ai.tasks.generate_base import BaseGenerator
 from services.ai.lm_facade import LMFacade
 
 class ScriptGenerator(BaseGenerator):

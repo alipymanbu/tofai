@@ -5,15 +5,15 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 import logging
 
-from app.utils.database import get_db
-from app.services.ai.gemini_client_fixed import GeminiClient
+from services.storage.database import get_db
+from services.ai.ai_orchestrator import AIOrchestrator
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Initialize Gemini client
-gemini_client = GeminiClient()
+# Initialize AI orchestrator
+ai_orchestrator = AIOrchestrator()
 
 class StrategyRequest(BaseModel):
     """Request model for strategy generation."""
@@ -55,29 +55,37 @@ async def generate_strategy(
                 content={"error": "Brand framework must be completed before generating strategy"}
             )
         
-        # Get brand data from request or from session
-        brand_data = None
-        if request and request.brand_data:
-            brand_data = request.brand_data
-            logger.info("Using brand data from request")
-        else:
-            # Extract relevant data from brand framework
-            brand_data = {
-                "brand_name": brand_framework.get("brand_name", ""),
-                "industry": brand_framework.get("industry", ""),
-                "brand_personality": brand_framework.get("brand_personality", ""),
-                "target_audience": brand_framework.get("target_audience", ""),
-                "brand_values": brand_framework.get("brand_values", []),
-                "description": brand_framework.get("brand_description", "")
-            }
-            logger.info("Using brand data from session")
+        # Create a job record to track the generation
+        job_id = f"strategy-{session_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
         
-        # Call Gemini to generate strategy
-        strategy_result = await gemini_client.generate_strategy(brand_data)
+        await db.jobs.insert_one({
+            "id": job_id,
+            "session_id": session_id,
+            "type": "strategy",
+            "status": "processing",
+            "progress": 0,
+            "created_at": datetime.utcnow()
+        })
         
-        if not strategy_result["success"]:
-            error_msg = strategy_result.get("error", "Unknown error")
+        # Run the AI orchestrator to generate strategy
+        result = await ai_orchestrator.run(session_id, current_step="brand-framework")
+        
+        if not result["success"]:
+            error_msg = result.get("error", "Unknown error")
             logger.error(f"Strategy generation failed: {error_msg}")
+            
+            # Update job status
+            await db.jobs.update_one(
+                {"id": job_id},
+                {
+                    "$set": {
+                        "status": "failed",
+                        "progress": 100,
+                        "completed_at": datetime.utcnow(),
+                        "error": error_msg
+                    }
+                }
+            )
             
             # Return error but with 200 status to avoid frontend crash
             return JSONResponse(
@@ -88,35 +96,22 @@ async def generate_strategy(
                 }
             )
         
-        strategy_data = strategy_result["strategy"]
-        logger.info(f"Strategy generated successfully for session {session_id}")
+        # Get updated session with strategy
+        updated_session = await db.sessions.find_one({"id": session_id})
+        strategy_data = updated_session.get("strategy", {})
         
-        # Store strategy in session
-        await db.sessions.update_one(
-            {"id": session_id},
+        # Update job status
+        await db.jobs.update_one(
+            {"id": job_id},
             {
                 "$set": {
-                    "strategy": strategy_data,
-                    "updated_at": datetime.utcnow(),
-                    "current_step": "script",  # Update current step
-                    "status": "strategy"  # Update status
+                    "status": "completed",
+                    "progress": 100,
+                    "completed_at": datetime.utcnow(),
+                    "result": strategy_data
                 }
             }
         )
-        
-        # Create a job record to track the generation
-        job_id = f"strategy-{session_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        
-        await db.jobs.insert_one({
-            "id": job_id,
-            "session_id": session_id,
-            "type": "strategy",
-            "status": "completed",
-            "progress": 100,
-            "created_at": datetime.utcnow(),
-            "completed_at": datetime.utcnow(),
-            "result": strategy_data
-        })
         
         # Return the job ID and the strategy data for immediate use
         return {
@@ -129,6 +124,24 @@ async def generate_strategy(
     
     except Exception as e:
         logger.exception(f"Unexpected error in strategy generation: {str(e)}")
+        
+        # Update job status if job was created
+        if 'job_id' in locals():
+            try:
+                await db.jobs.update_one(
+                    {"id": job_id},
+                    {
+                        "$set": {
+                            "status": "failed",
+                            "progress": 100,
+                            "completed_at": datetime.utcnow(),
+                            "error": str(e)
+                        }
+                    }
+                )
+            except Exception as update_error:
+                logger.error(f"Failed to update job status: {update_error}")
+        
         return JSONResponse(
             status_code=200,  # Use 200 status with error data to avoid frontend crash
             content={

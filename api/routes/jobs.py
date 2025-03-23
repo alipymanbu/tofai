@@ -2,10 +2,21 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 from datetime import datetime
 
-from app.models.job import JobResponse
-from app.utils.database import get_db
+from models.session import BaseModel  # Temporary import until we create a proper job model
+from services.storage.database import get_db
 
 router = APIRouter()
+
+# Define a simple job response model since we don't have it yet
+class JobResponse(BaseModel):
+    id: str
+    session_id: str
+    type: str
+    status: str
+    progress: Optional[int] = 0
+    created_at: datetime
+    completed_at: Optional[datetime] = None
+    error: Optional[str] = None
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
 async def get_job_status(job_id: str, db = Depends(get_db)):

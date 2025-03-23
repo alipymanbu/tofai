@@ -6,10 +6,14 @@ from datetime import datetime
 import logging
 
 from services.storage.database import get_db
+from services.ai.ai_orchestrator import AIOrchestrator
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Initialize AI orchestrator
+ai_orchestrator = AIOrchestrator()
 
 class VisualsRequest(BaseModel):
     """Request model for visuals generation."""
@@ -60,19 +64,79 @@ async def generate_visuals(
                 )
             logger.info("Using script data from session")
         
-        # Use placeholder visuals for now (actual image generation will be implemented later)
-        scenes = script_data.get("scenes", [])
-        visual_scenes = []
+        # Create a job record to track the generation
+        job_id = f"visuals-{session_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
         
-        for i, scene in enumerate(scenes):
-            visual_scene = VisualScene(
-                sceneNumber=scene.get("sceneNumber", i + 1),
-                visualUrl=f"/api/placeholder/{(i + 1) * 100}/320",  # Placeholder URLs
-                visualType="generated"
+        await db.jobs.insert_one({
+            "id": job_id,
+            "session_id": session_id,
+            "type": "visuals",
+            "status": "processing",
+            "progress": 0,
+            "created_at": datetime.utcnow()
+        })
+        
+        # Run the AI orchestrator to generate visuals
+        result = await ai_orchestrator.run(session_id, current_step="script")
+        
+        if not result["success"]:
+            error_msg = result.get("error", "Unknown error")
+            logger.error(f"Visuals generation failed: {error_msg}")
+            
+            # Update job status
+            await db.jobs.update_one(
+                {"id": job_id},
+                {
+                    "$set": {
+                        "status": "failed",
+                        "progress": 100,
+                        "completed_at": datetime.utcnow(),
+                        "error": error_msg
+                    }
+                }
             )
-            visual_scenes.append(visual_scene)
+            
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "error": f"Failed to generate visuals: {error_msg}",
+                    "fallback_needed": True
+                }
+            )
         
-        visuals_data = {"scenes": visual_scenes}
+        # Get updated session with visuals
+        updated_session = await db.sessions.find_one({"id": session_id})
+        
+        # Use placeholder visuals if not available from orchestrator
+        if not updated_session.get("visuals"):
+            scenes = script_data.get("scenes", [])
+            visual_scenes = []
+            
+            for i, scene in enumerate(scenes):
+                visual_scene = VisualScene(
+                    sceneNumber=scene.get("sceneNumber", i + 1),
+                    visualUrl=f"/api/placeholder/{(i + 1) * 100}/320",  # Placeholder URLs
+                    visualType="generated"
+                )
+                visual_scenes.append(visual_scene)
+            
+            visuals_data = {"scenes": visual_scenes}
+            
+            # Update the session
+            await db.sessions.update_one(
+                {"id": session_id},
+                {
+                    "$set": {
+                        "visuals": visuals_data,
+                        "updated_at": datetime.utcnow(),
+                        "current_step": "audio",
+                        "status": "visuals"
+                    }
+                }
+            )
+        else:
+            visuals_data = updated_session.get("visuals")
+        
         logger.info(f"Visuals generated successfully for session {session_id}")
         
         # Store visuals in session
@@ -88,19 +152,18 @@ async def generate_visuals(
             }
         )
         
-        # Create a job record to track the generation
-        job_id = f"visuals-{session_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        
-        await db.jobs.insert_one({
-            "id": job_id,
-            "session_id": session_id,
-            "type": "visuals",
-            "status": "completed",
-            "progress": 100,
-            "created_at": datetime.utcnow(),
-            "completed_at": datetime.utcnow(),
-            "result": visuals_data
-        })
+        # Update job status
+        await db.jobs.update_one(
+            {"id": job_id},
+            {
+                "$set": {
+                    "status": "completed",
+                    "progress": 100,
+                    "completed_at": datetime.utcnow(),
+                    "result": visuals_data
+                }
+            }
+        )
         
         # Return the job ID and the visuals data for immediate use
         return {

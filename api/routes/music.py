@@ -11,6 +11,7 @@ from services.ai.tts_service import TTSService
 from services.ai.script_audio_service import ScriptAudioService
 from utils.audio_storage import LocalAudioStorage
 from services.storage.database import get_db
+from services.ai.ai_orchestrator import AIOrchestrator
 
 router = APIRouter()
 
@@ -18,6 +19,7 @@ router = APIRouter()
 tts_service = TTSService()
 audio_storage = LocalAudioStorage()
 script_audio_service = ScriptAudioService()
+ai_orchestrator = AIOrchestrator()
 
 class TTSRequest(BaseModel):
     """Model for TTS generation request."""
@@ -116,6 +118,109 @@ async def get_audio_file(session_id: str, filename: str):
     
     return FileResponse(file_path, media_type="audio/mpeg")
 
+@router.post("/sessions/{session_id}/music", response_model=AudioResponse)
+async def generate_background_music(
+    session_id: str,
+    db = Depends(get_db)
+):
+    """Generate background music for the video."""
+    # Check if session exists
+    session = await db.sessions.find_one({"id": session_id})
+    
+    if not session:
+        raise HTTPException(
+            status_code=404,
+            detail="Session not found"
+        )
+    
+    # Create a job record to track the generation
+    job_id = f"music-{session_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+    
+    await db.jobs.insert_one({
+        "id": job_id,
+        "session_id": session_id,
+        "type": "music",
+        "status": "processing",
+        "progress": 0,
+        "created_at": datetime.utcnow()
+    })
+    
+    try:
+        # Use the AI orchestrator to generate music
+        result = await ai_orchestrator.run(session_id, current_step="audio")
+        
+        # Get updated session
+        updated_session = await db.sessions.find_one({"id": session_id})
+        
+        # For now, create a placeholder music file
+        music_filename = f"music_{uuid4()}.mp3"
+        placeholder_audio = b"Placeholder music audio"
+        
+        # Save the audio file
+        storage_result = await audio_storage.save_audio(
+            audio_data=placeholder_audio,
+            session_id=session_id,
+            filename=music_filename
+        )
+        
+        # Update session with music data
+        music_data = {
+            "url_path": f"/media/{session_id}/{music_filename}",
+            "duration": 30.0,
+            "filename": music_filename
+        }
+        
+        await db.sessions.update_one(
+            {"id": session_id},
+            {
+                "$set": {
+                    "music": music_data,
+                    "current_step": "video",
+                    "status": "music",
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # Update job status
+        await db.jobs.update_one(
+            {"id": job_id},
+            {
+                "$set": {
+                    "status": "completed",
+                    "progress": 100,
+                    "completed_at": datetime.utcnow(),
+                    "result": music_data
+                }
+            }
+        )
+        
+        # Return music data
+        return AudioResponse(
+            url_path=music_data["url_path"],
+            duration=music_data["duration"],
+            filename=music_data["filename"]
+        )
+        
+    except Exception as e:
+        # Update job status
+        await db.jobs.update_one(
+            {"id": job_id},
+            {
+                "$set": {
+                    "status": "failed",
+                    "progress": 0,
+                    "completed_at": datetime.utcnow(),
+                    "error": str(e)
+                }
+            }
+        )
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Music generation failed: {str(e)}"
+        )
+
 @router.post(
     "/sessions/{session_id}/script/audio",
     response_model=ScriptAudioResponse
@@ -143,11 +248,112 @@ async def generate_script_audio(
             detail="Script not found for this session"
         )
     
-    # Generate audio for the script
-    result = await script_audio_service.generate_script_audio(
-        session_id=session_id,
-        script=script,
-        voice_id=request.voice_id
-    )
+    # Create a job record
+    job_id = f"speech-{session_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
     
-    return result
+    await db.jobs.insert_one({
+        "id": job_id,
+        "session_id": session_id,
+        "type": "speech",
+        "status": "processing",
+        "progress": 0,
+        "created_at": datetime.utcnow()
+    })
+    
+    try:
+        # First try to use the AI orchestrator
+        orchestrator_result = await ai_orchestrator.run(session_id, current_step="visuals")
+        
+        # If orchestrator fails, fall back to direct service
+        if not orchestrator_result["success"]:
+            service_result = await script_audio_service.generate_script_audio(
+                session_id=session_id,
+                script=script,
+                voice_id=request.voice_id
+            )
+            
+            # Update job status
+            await db.jobs.update_one(
+                {"id": job_id},
+                {
+                    "$set": {
+                        "status": "completed",
+                        "progress": 100,
+                        "completed_at": datetime.utcnow(),
+                        "result": service_result
+                    }
+                }
+            )
+            
+            return service_result
+        
+        # Use audio from updated session if available
+        updated_session = await db.sessions.find_one({"id": session_id})
+        audio = updated_session.get("audio", {})
+        
+        if not audio:
+            # Fall back to direct service if no audio was generated
+            service_result = await script_audio_service.generate_script_audio(
+                session_id=session_id,
+                script=script,
+                voice_id=request.voice_id
+            )
+            
+            # Update job status
+            await db.jobs.update_one(
+                {"id": job_id},
+                {
+                    "$set": {
+                        "status": "completed",
+                        "progress": 100,
+                        "completed_at": datetime.utcnow(),
+                        "result": service_result
+                    }
+                }
+            )
+            
+            return service_result
+        
+        # Format the result from orchestrator
+        result = {
+            "success": True,
+            "scenes": audio.get("scenes", []),
+            "errors": [],
+            "total_scenes": len(script.get("scenes", [])),
+            "completed_scenes": len(audio.get("scenes", [])),
+            "failed_scenes": 0
+        }
+        
+        # Update job status
+        await db.jobs.update_one(
+            {"id": job_id},
+            {
+                "$set": {
+                    "status": "completed",
+                    "progress": 100,
+                    "completed_at": datetime.utcnow(),
+                    "result": result
+                }
+            }
+        )
+        
+        return result
+        
+    except Exception as e:
+        # Update job status
+        await db.jobs.update_one(
+            {"id": job_id},
+            {
+                "$set": {
+                    "status": "failed",
+                    "progress": 0,
+                    "completed_at": datetime.utcnow(),
+                    "error": str(e)
+                }
+            }
+        )
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Script audio generation failed: {str(e)}"
+        )

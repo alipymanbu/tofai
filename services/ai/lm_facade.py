@@ -57,3 +57,4 @@ class LMFacade:
               image_data = image_url.split(",")[1]
               decoded_image = base64.b64decode(image_data)
               images.append(decoded_image)
+    return images

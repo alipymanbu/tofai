@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:6.0
+    container_name: tofai-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=tofai
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: tofai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # You can uncomment the application service once the backend is ready
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: tofai-app
+  #   depends_on:
+  #     - mongo
+  #     - redis
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - .:/app
+  #   environment:
+  #     - MONGODB_URI=mongodb://mongo:27017
+  #     - REDIS_URI=redis://redis:6379/0
+  #     - CELERY_BROKER_URL=redis://redis:6379/1
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/1
+  #     - DEBUG=True
+  #     - ENVIRONMENT=development
+  #   restart: unless-stopped
+
+volumes:
+  mongo_data:
+  redis_data:

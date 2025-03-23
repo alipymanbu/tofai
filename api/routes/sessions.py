@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from uuid import uuid4
 from datetime import datetime
+import pytz
 
 from models.session import SessionResponse
 from services.storage.database import get_db
@@ -15,7 +16,7 @@ async def create_session(db = Depends(get_db)):
     """Create a new session."""
     session = {
         "id": str(uuid4()),
-        "created_at": datetime.now(datetime.timezone.utc),
+        "created_at": datetime.now(pytz.UTC),
         "status": "started",
         "current_step": "brand-framework"
     }
@@ -53,7 +54,7 @@ async def update_session(
     if update_data.current_step:
         update_fields["current_step"] = update_data.current_step
     
-    update_fields["updated_at"] = datetime.utcnow()
+    update_fields["updated_at"] = datetime.now(pytz.UTC)
     
     # Update the session
     result = await db.sessions.update_one(
@@ -61,7 +62,11 @@ async def update_session(
         {"$set": update_fields}
     )
     
-    if result.matched_count == 0:
+    # Handle both MongoDB result object and boolean result from in-memory DB
+    if hasattr(result, 'matched_count'):
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="Session not found")
+    elif not result:
         raise HTTPException(status_code=404, detail="Session not found")
     
     # Get updated session
@@ -73,7 +78,11 @@ async def delete_session(session_id: str, db = Depends(get_db)):
     """Delete a session."""
     result = await db.sessions.delete_one({"id": session_id})
     
-    if result.deleted_count == 0:
+    # Handle both MongoDB result object and boolean result from in-memory DB
+    if hasattr(result, 'deleted_count'):
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Session not found")
+    elif not result:
         raise HTTPException(status_code=404, detail="Session not found")
     
     # Also delete related jobs

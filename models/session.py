@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List, Literal
 from datetime import datetime
-from app.models.base import BaseDBModel
+from models.base import BaseDBModel
 
 class BrandFrameworkQuestion(BaseModel):
     """Model for a brand framework question."""
