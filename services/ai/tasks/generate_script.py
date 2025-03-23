@@ -1,5 +1,5 @@
 from tasks.generate_base import BaseGenerator
-from lm_facade import LMFacade
+from services.ai.lm_facade import LMFacade
 
 class ScriptGenerator(BaseGenerator):
   def __init__(self, lm_facade: LMFacade):

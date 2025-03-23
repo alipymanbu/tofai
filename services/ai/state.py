@@ -30,6 +30,7 @@ PERSONALITY_TONALITY_STRATEGY_ELEMENT = "personality_tonality"
 # ======== Define state class ========
 # Define the state class to hold all data throughout the process
 class VideoCreationState(BaseModel):
+    session_id: str  # Session ID
     brand_name: Optional[str] = None  # Brand name
     brand_link: Optional[str] = None  # Brand website
     brand_about: Optional[str] = None  # Select Brand about

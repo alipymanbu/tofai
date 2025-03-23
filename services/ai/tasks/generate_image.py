@@ -1,5 +1,5 @@
 from tasks.generate_base import BaseGenerator
-from lm_facade import LMFacade
+from services.ai.lm_facade import LMFacade
 
 _PROMPT_TEMPLATE_IMAGE = """{prompt_base}
 

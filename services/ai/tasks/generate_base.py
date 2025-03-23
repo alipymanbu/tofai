@@ -1,6 +1,6 @@
 from typing import Any, List, Union
 from abc import ABC, abstractmethod
-from lm_facade import LMFacade
+from services.ai.lm_facade import LMFacade
 
 _PROMPT_BASE = """You are the best marketer on Earth specifically specialising in video
   storytelling that helps brands get reach on social media. You are weird like Vsauce,
