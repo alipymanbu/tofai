@@ -172,8 +172,12 @@ Now, your turn:
             else:  # Default to TEXT
                 # Generate text options using the LM facade
                 response = self.lm_facade.invoke_t2t(full_prompt)
-                # Parse the options
-                return result.append(self._parse_options(response, prompt.options_delimiter))
+                result.append(self._parse_options(response, prompt.options_delimiter))
+        return result
+
+    def get_selection_for_step_id(self, step_id: str) -> str:
+        step = self.get_step_by_id(step_id=step_id)
+        return step.require_user_input_for_step_id
     
     def _parse_options(self, response: str, delimiter: str) -> List[str]:
         """

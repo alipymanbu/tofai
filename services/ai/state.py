@@ -70,8 +70,7 @@ class VideoCreationState(BaseModel):
         framework_result = intermediate_framework_result or self.framework_result.model_copy()
         step_result = self.get_step_result(step_id=step_id, framework_result=framework_result)
         if not step_result:
-            step_result = FrameworkStepResult()
-            step_result.id = step_id
+            step_result = FrameworkStepResult(id=step_id, result=[])
             framework_result.step_results.append(step_result)
         step_result.result.append(result_options)
         return framework_result

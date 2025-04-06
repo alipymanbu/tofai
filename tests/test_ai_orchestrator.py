@@ -1,15 +1,15 @@
 """
 Tests for the AI orchestrator.
+
+NO_AI_CODE=True
 """
 import pytest
-import asyncio
 from unittest.mock import MagicMock, patch
-import json
-from datetime import datetime
 import uuid
 
 from services.ai.ai_orchestrator import AIOrchestrator
-from services.ai.state import VideoCreationState
+from services.ai.lm_facade import LMFacade
+from services.ai.framework_model import FrameworkResult, FrameworkStepResult, ResultOptions
 
 # Mock the database interactions
 class MockDB:
@@ -33,9 +33,10 @@ class MockCollection:
     async def update_one(self, filter_query, update_query):
         session_id = filter_query.get("id")
         if session_id in self.data:
-            self.data[session_id].update(update_query.get("$set", {}))
-            return 1
-        return 0
+            if "$set" in update_query:
+                self.data[session_id].update(update_query.get("$set", {}))
+            return MagicMock(modified_count=1)
+        return MagicMock(modified_count=0)
 
 
 @pytest.fixture
@@ -49,105 +50,95 @@ def mock_get_db():
 
 
 # Tests
-class TestAIOrchestrator:
+class TestAIOrchestrator():
     """Tests for the AIOrchestrator class."""
     
     @pytest.mark.asyncio
-    @patch("services.ai.ai_orchestrator.get_db")
-    async def test_run_flow(self, mock_get_db_func, mock_get_db):
-        """Test running the full AI orchestration flow."""
-        # Setup
-        db_instance = await mock_get_db()
+    @patch('services.ai.ai_orchestrator.get_db')
+    @patch('builtins.input', side_effect=['adidas.com', '1'])
+    async def test_run_success(self, mock_input, mock_get_db_func):
+        """Test running the AI orchestration flow with successful execution."""
+        # Configure mock DB
+        db_instance = MockDB()
         mock_get_db_func.return_value = db_instance
+      
+        # Create a session ID
         session_id = str(uuid.uuid4())
         
+        # Create initial session data with framework result
+        initial_framework_result = FrameworkResult(
+            id="test_framework",
+            step_results=[]
+        )
+        
+        # Setup mock session data
+        session_data = {
+            "id": session_id,
+            "status": "started",
+            "current_step": "initial_input",
+            "framework_result": initial_framework_result
+        }
+        db_instance.sessions.data[session_id] = session_data
+        
+        # Mock LMFacade
+        mock_lm = MagicMock(spec=LMFacade)
+        mock_lm.invoke_t2t.return_value = "Option 1||Option 2||Option 3"
+        
+        # Create orchestrator with test framework
+        orchestrator = AIOrchestrator(framework_id="test_framework", lm_facade=mock_lm)
+
         # Run the flow
         result = await orchestrator.run(session_id)
-        
-        # Check the result
-        assert result["success"] is True
+        assert mock_input.call_count == 2
+        assert result["success"]
+        assert not result["error"]
         assert "result" in result
-        assert result["error"] is None
-        
-        # Verify DB operations
         assert mock_get_db_func.called
-        assert db_instance.sessions.find_one.called
-        assert db_instance.jobs.insert_one.called
-        assert db_instance.jobs.update_one.called
-        assert db_instance.sessions.update_one.called
-    
-    def test_initial_input(self, orchestrator):
-        """Test the initial input step."""
-        # Setup
-        state = VideoCreationState(
-            session_id="test-session",
-            framework_id="brand_awareness_video",
-            current_step_id="initial_input"
-        )
+
+    @pytest.mark.asyncio
+    @patch('services.ai.ai_orchestrator.get_db')
+    @patch('builtins.input', side_effect=['1'])
+    async def test_run_success_pickup_incomplete_session(self, mock_input, mock_get_db_func):
+        """Test running the AI orchestration flow with successful execution."""
+        # Configure mock DB
+        db_instance = MockDB()
+        mock_get_db_func.return_value = db_instance
+      
+        # Create a session ID
+        session_id = str(uuid.uuid4())
         
-        # Test with existing brand info
-        state.brand_name = "Test Brand"
-        state.brand_link = "https://testbrand.com"
-        
-        # Run the step
-        updated_state = orchestrator._initial_input(state)
-        
-        # Check the state
-        assert updated_state.next_step_id == "user_persona"
-        assert updated_state.brand_link == "https://testbrand.com"
-    
-    def test_generate_options(self, orchestrator):
-        """Test generating options."""
-        # Setup for user persona
-        state = VideoCreationState(
-            session_id="test-session",
-            framework_id="brand_awareness_video",
-            current_step_id="user_persona",
-            brand_link="https://testbrand.com"
-        )
-        state.update_param_values()
-        
-        # Run the step
-        updated_state = orchestrator._generate_options(state)
-        
-        # Check the state
-        assert updated_state.next_step_id == "select_user_persona"
-        assert len(updated_state.current_options) > 0
-        
-        # Test content spaces
-        state = VideoCreationState(
-            session_id="test-session",
-            framework_id="brand_awareness_video",
-            current_step_id="content_spaces",
-            brand_link="https://testbrand.com",
-            user_persona="Option 1: Sophie, The Minimalist Aesthete"
-        )
-        state.update_param_values()
-        
-        # Run the step
-        updated_state = orchestrator._generate_options(state)
-        
-        # Check the state
-        assert updated_state.next_step_id == "select_content_spaces"
-        assert len(updated_state.current_options) > 0
-    
-    def test_select_option(self, orchestrator):
-        """Test selecting an option."""
-        # Setup for user persona selection
-        state = VideoCreationState(
-            session_id="test-session",
-            framework_id="brand_awareness_video",
-            current_step_id="select_user_persona",
-            current_options=[
-                "Option 1: Sophie, The Minimalist Aesthete",
-                "Option 2: Alex, The Conscious Consumer"
+        # Create initial session data with framework result
+        initial_framework_result = FrameworkResult(
+            id="test_framework",
+            step_results=[
+                FrameworkStepResult(id="initial_input", result=[ResultOptions(result_options=["adidas.com"], selected_option=0)])
             ]
         )
-        # Run the step
-        updated_state = orchestrator._select_option(state)
-        # Check the state
-        assert updated_state.next_step_id == "content_spaces"
-        assert updated_state.get_user_persona() == "Option 1: Sophie, The Minimalist Aesthete"
+        
+        # Setup mock session data
+        session_data = {
+            "id": session_id,
+            "status": "started",
+            "current_step": "initial_input",
+            "framework_result": initial_framework_result
+        }
+        db_instance.sessions.data[session_id] = session_data
+        
+        # Mock LMFacade
+        mock_lm = MagicMock(spec=LMFacade)
+        mock_lm.invoke_t2t.return_value = "Option 1||Option 2||Option 3"
+        
+        # Create orchestrator with test framework
+        orchestrator = AIOrchestrator(framework_id="test_framework", lm_facade=mock_lm)
+
+        # Run the flow
+        result = await orchestrator.run(session_id)
+        assert mock_input.call_count == 1
+        assert result["success"]
+        assert not result["error"]
+        assert "result" in result
+        assert mock_get_db_func.called
+
 
 if __name__ == "__main__":
     pytest.main(["-xvs", "test_ai_orchestrator.py"])

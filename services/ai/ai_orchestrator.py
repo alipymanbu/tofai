@@ -2,7 +2,7 @@
 AI Orchestrator for brand awareness video creation.
 This module orchestrates the AI workflow using LangGraph and the config-driven framework.
 """
-from langgraph.graph import StateGraph
+from langgraph.graph import StateGraph, END
 from typing import Any, Dict, List, Tuple, Optional, Union
 import asyncio
 from datetime import datetime
@@ -95,13 +95,13 @@ class AIOrchestrator:
                     "status": "completed",
                     "progress": 100,
                     "completed_at": datetime.utcnow(),
-                    "result": result.to_dict()
+                    "result": result
                 }
             }
         )
         
         # Update session with results
-        session_update = result.to_dict()
+        session_update = result
         session_update["updated_at"] = datetime.utcnow()
         
         # Update the session
@@ -112,7 +112,7 @@ class AIOrchestrator:
         
         return {
             "success": True,
-            "result": result.to_dict(),
+            "result": result,
             "error": None
         }
     except Exception as e:
@@ -171,9 +171,12 @@ class AIOrchestrator:
             graph.add_node(step.id, handler)
         # Add conditional edges for each node
         for step in steps:
-            graph.add_conditional_edges(
+            next_step = step.next_step
+            if step.id == self.generator.framework.final_step:
+               next_step = END
+            graph.add_edge(
                 step.id,
-                step.next_step
+                next_step
             )
         graph.set_entry_point(initial_step_id)
     except Exception as e:
@@ -191,22 +194,20 @@ class AIOrchestrator:
         VideoCreationState: The updated state
     """
     # Check if we already have brand info
-    step_result = state.get_step_result(state.current_step_id)
+    step_result = state.get_step_result(step_id=state.current_step_id, framework_result=state.framework_result)
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
     if step_result:
         return {"current_step_id": next_step}
     print("Let's create a stunning brand awareness video!")
     brand_link = input("Got a link to your brand's website or online presence? ")
-    result_options = ResultOptions()
-    result_options.result_options = [brand_link]
-    result_options.selected_option = 0
+    result_options = ResultOptions(result_options=[brand_link], selected_option=0)
     framework_result = state.set_step_result(step_id=state.current_step_id, result_options=result_options)
     return {"framework_result": framework_result, "current_step_id": next_step}
 
   def _get_latest_param_values(self, step: FrameworkStep, state:VideoCreationState):
     params = set()
     for prompt in step.prompts:
-        params.add(prompt.parameters)
+        params = params.union(set(prompt.parameters))
     return state.get_param_values(params=params, framework_steps=self.generator.framework.steps)
 
   def _generate_options(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
@@ -228,13 +229,13 @@ class AIOrchestrator:
         results = self.generator.generate_options(state.current_step_id, param_values)
         framework_result = None
         for result in results:
-            options = ResultOptions()
-            options.result_options = result
+            options = ResultOptions(result_options=result)
             framework_result = state.set_step_result(state.current_step_id, result_options=options, intermediate_framework_result=framework_result)
+        return {"current_step_id": next_step, "framework_result": framework_result}
     except Exception as e:
         state.error = str(e)
         logger.error(f"Error generating options: {e}")
-    return {"current_step_id": next_step, "framework_result": framework_result}
+        return {"current_step_id": state.current_step_id}
 
   def _select_option(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
     """
@@ -249,15 +250,15 @@ class AIOrchestrator:
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
     try:
       print(f"\nChoose an option for '{state.current_step_id}':")
-      step_result = state.get_step_result(step_id=state.current_step_id, framework_result=state.framework_result)
+      selection_for = self.generator.get_selection_for_step_id(step_id=state.current_step_id)
+      step_result = state.get_step_result(step_id=selection_for, framework_result=state.framework_result)
       for idx, opt in enumerate(state.get_options_for_result(step_result=step_result, result_index=0), 1):
           print(f"{idx}. {opt}")
       
       print("Type the number to select.")
-      user_input = input().strip()
+      user_input = int(input().strip())
       framework_result = state.set_step_result_option_selection(step_id=state.current_step_id, result_index=0, selected_option=user_input)
       return {"current_step_id": next_step, "framework_result": framework_result}
     except Exception as e:
       logger.error(f"Error in select_option: {e}. Retrying.")
-      # Stay on current step in case of error
       return {"current_step_id": state.current_step_id}

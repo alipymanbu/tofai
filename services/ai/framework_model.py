@@ -75,9 +75,6 @@ class FrameworkStep(BaseModel):
             this one completes. If None, this is a terminal step. Defaults to None.
         requires_user_input (bool): Flag indicating whether this step requires 
             input from the user before proceeding. Defaults to False.
-        state_update_mapping (Dict[str, str]): Mapping that defines how to update
-            the orchestrator state based on the output of this step. Keys are target
-            state fields, values are source fields. Defaults to an empty dict.
     """
     id: str
     name: str
@@ -85,7 +82,7 @@ class FrameworkStep(BaseModel):
     prompts: List[Prompt]
     next_step: Optional[str] = None
     requires_user_input: bool = False
-    state_update_mapping: Dict[str, str] = Field(default_factory=dict)
+    require_user_input_for_step_id: str = ""
     
 
 class Framework(BaseModel):

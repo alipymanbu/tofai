@@ -7,7 +7,7 @@
   "steps": [
     {
       "id": "initial_input",
-      "name": "Initial Input",
+      "name": "Link",
       "description": "Collect initial inputs like the brand name and website link",
       "requires_user_input": true,
       "prompts": [],
@@ -51,10 +51,7 @@
       "description": "User selects a user persona from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "content_spaces",
-      "state_update_mapping": {
-        "selected_option": "user_persona"
-      }
+      "next_step": "content_spaces"
     },
     {
       "id": "content_spaces",
@@ -80,10 +77,7 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_content_spaces",
-      "state_update_mapping": {
-        "current_options": "content_spaces_options"
-      }
+      "next_step": "select_content_spaces"
     },
     {
       "id": "select_content_spaces",
@@ -91,10 +85,7 @@
       "description": "User selects a content space from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "personality_tonality",
-      "state_update_mapping": {
-        "selected_option": "content_spaces"
-      }
+      "next_step": "personality_tonality"
     },
     {
       "id": "personality_tonality",
@@ -120,10 +111,7 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_personality_tonality",
-      "state_update_mapping": {
-        "current_options": "personality_tonality_options"
-      }
+      "next_step": "select_personality_tonality"
     },
     {
       "id": "select_personality_tonality",
@@ -131,10 +119,7 @@
       "description": "User selects a personality and tonality from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "script",
-      "state_update_mapping": {
-        "selected_option": "personality_tonality"
-      }
+      "next_step": "script"
     },
     {
       "id": "script",
@@ -160,10 +145,7 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_script",
-      "state_update_mapping": {
-        "current_options": "script_options"
-      }
+      "next_step": "select_script"
     },
     {
       "id": "select_script",
@@ -171,10 +153,7 @@
       "description": "User selects a script from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "images",
-      "state_update_mapping": {
-        "selected_option": "script"
-      }
+      "next_step": "images"
     },
     {
       "id": "image_prompts",
@@ -193,10 +172,7 @@
           "output_instruction": "Add `||` between the options. Do not output anything else."
         }
       ],
-      "next_step": "images",
-      "state_update_mapping": {
-        "images": "image_prompts"
-      }
+      "next_step": "images"
     },
     {
       "id": "images",
@@ -215,10 +191,7 @@
           "output_instruction": ""
         }
       ],
-      "next_step": "voiceover",
-      "state_update_mapping": {
-        "images": "images"
-      }
+      "next_step": "voiceover"
     },
     {
       "id": "voiceover",
@@ -236,10 +209,7 @@
           "expected_output_modality": "AUDIO"
         }
       ],
-      "next_step": "background_music",
-      "state_update_mapping": {
-        "voiceover": "voiceover"
-      }
+      "next_step": "background_music"
     },
     {
       "id": "background_music",
@@ -257,10 +227,7 @@
           "expected_output_modality": "AUDIO"
         }
       ],
-      "next_step": "animation",
-      "state_update_mapping": {
-        "background_music": "background_music"
-      }
+      "next_step": "animation"
     },
     {
       "id": "animation",
@@ -268,10 +235,7 @@
       "description": "Create animation by combining images, voiceover, and background music",
       "requires_user_input": false,
       "prompts": [],
-      "next_step": "final_video",
-      "state_update_mapping": {
-        "animation": "animation"
-      }
+      "next_step": "final_video"
     },
     {
       "id": "final_video",
@@ -279,10 +243,7 @@
       "description": "Finalize the video",
       "requires_user_input": false,
       "prompts": [],
-      "next_step": null,
-      "state_update_mapping": {
-        "final_video": "final_video"
-      }
+      "next_step": null
     }
   ]
 }
