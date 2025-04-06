@@ -1,0 +1,288 @@
+{
+  "id": "test_framework",
+  "name": "Test Framework",
+  "description": "A framework only meant for testing.",
+  "initial_step": "initial_input",
+  "final_step": "final_video",
+  "steps": [
+    {
+      "id": "initial_input",
+      "name": "Initial Input",
+      "description": "Collect initial inputs like the brand name and website link",
+      "requires_user_input": true,
+      "prompts": [],
+      "next_step": "user_persona",
+      "state_update_mapping": {
+        "brand_link": "brand_link"
+      }
+    },
+    {
+      "id": "user_persona",
+      "name": "User Persona",
+      "description": "Generate user persona options",
+      "requires_user_input": false,
+      "prompts": [
+        {
+          "id": "user_persona_prompt",
+          "prefix": "Based on the brand website, do a thorough research on who the user could be. Try to create the persona of a person, give them a name, demographics, psychographics and other details and tell us what content do they like?",
+          "few_shots": [
+            {
+              "options": [
+                "Option 1: Sophie, The Minimalist Aesthete\nDemographics: 32, female, urban professional, $80K/year, lives in a sleek Seattle loft.\nPsychographics: Values quality over flash, obsessed with timeless design, hates waste, meditates to lo-fi beats, scrolls Pinterest for Scandinavian inspo.\nContent Likes: Short, visually stunning videos—think ASMR unboxings, 'day in the life' minimalism hacks, or quirky 'how it's made' factory tours with a twist (e.g., 'This bag's leather has a secret…').\nWhy Italic?: She'd love the understated elegance and the 'same makers as luxury brands' flex without the pretension.",
+                "Option 2: Alex, The Conscious Consumer\nDemographics: 28, non-binary, tech startup employee, $95K/year, lives in a Portland apartment with sustainable everything.\nPsychographics: Research-driven, values transparency, follows DTC brands on social, belongs to multiple CSAs, reads Consumer Reports for fun.\nContent Likes: Deep dives into supply chains, ethical manufacturing explainers, and 'what you're really paying for' breakdowns that highlight quality vs. marketing costs.\nWhy Italic?: The transparent pricing model and factory-direct relationships would appeal to their desire for clarity and value consciousness.",
+                "Option 3: Marcus, The Quality Connoisseur\nDemographics: 42, male, creative director, $120K/year, renovated Brooklyn brownstone.\nPsychographics: Self-taught in quality markers, appreciates craftsmanship, willing to invest in 'forever items,' reads niche design blogs, collects mid-century furniture.\nContent Likes: Behind-the-scenes manufacturing tours, material science explainers, and 'Why This Costs What It Costs' content that justifies investment through longevity and quality.\nWhy Italic?: The promise of luxury manufacturing quality without brand markups aligns perfectly with his value system of investing in craftsmanship, not logos."
+              ]
+            }
+          ],
+          "parameters": ["Link"],
+          "option_count": 3,
+          "options_delimiter": "||",
+          "expected_output_modality": "TEXT"
+        }
+      ],
+      "next_step": "select_user_persona",
+      "state_update_mapping": {
+        "current_options": "user_persona_options"
+      }
+    },
+    {
+      "id": "select_user_persona",
+      "name": "Select User Persona",
+      "description": "User selects a user persona from the options",
+      "requires_user_input": true,
+      "prompts": [],
+      "next_step": "content_spaces",
+      "state_update_mapping": {
+        "selected_option": "user_persona"
+      }
+    },
+    {
+      "id": "content_spaces",
+      "name": "Content Spaces",
+      "description": "Generate content space options",
+      "requires_user_input": false,
+      "prompts": [
+        {
+          "id": "content_spaces_prompt",
+          "prefix": "What are the content spaces? These are the wide spaces that our brand would like to tell stories about. Remember these are not scripts, but spaces from which 50 scripts can come.",
+          "few_shots": [
+            {
+              "options": [
+                "Option 1: The Quiet Luxury Code\nWhat's It About?: Celebrating the art of living well without shouting—Italic's logo-free, versatile pieces as the ultimate minimalist flex.\nWhy Sophie Loves It: It's her aesthetic dream: sleek, functional, timeless—content that mirrors her curated loft life.\nStory Seeds: 'One coat, three seasons, zero fuss,' 'The bag that doesn't scream—just whispers quality,' 'How to own less and live more.'\nSocial Media Fit: Ideal for 'day in the life' snippets or minimalist hacks that make her feel effortlessly chic.",
+                "Option 2: The Timeless Companions\nWhat's It About?: Italic's products as lifelong partners—durable, reliable, and quietly luxurious, built to outlast trends.\nWhy Sophie Loves It: She hates waste and loves permanence; stories of 'things that last' hit her right in the feels.\nStory Seeds: 'This scarf survived a decade—and still looks new,' 'The tote that's been to 12 cities,' 'Why my wallet's older than my cat.'\nSocial Media Fit: Great for cinematic 'object journey' tales or quirky 'test of time' experiments that hook her meditative vibe.",
+                "Option 3: The Maker's Journey\nWhat's It About?: Revealing the expert craftspeople and time-honored techniques behind Italic's pieces—putting faces to the 'same factories as luxury brands' promise.\nWhy Sophie Loves It: She's a sucker for process and provenance; seeing the hands that make her things gives emotional weight to her possessions.\nStory Seeds: 'Meet the artisan who stitched your jacket,' 'How a leather wallet gets its patina,' 'From raw material to your doorstep.'\nSocial Media Fit: Perfect for 'how it's made' micro-documentaries with ASMR-worthy details and stunning workshop cinematography."
+              ]
+            }
+          ],
+          "parameters": ["Link", "User Persona"],
+          "option_count": 3,
+          "options_delimiter": "||",
+          "expected_output_modality": "TEXT"
+        }
+      ],
+      "next_step": "select_content_spaces",
+      "state_update_mapping": {
+        "current_options": "content_spaces_options"
+      }
+    },
+    {
+      "id": "select_content_spaces",
+      "name": "Select Content Spaces",
+      "description": "User selects a content space from the options",
+      "requires_user_input": true,
+      "prompts": [],
+      "next_step": "personality_tonality",
+      "state_update_mapping": {
+        "selected_option": "content_spaces"
+      }
+    },
+    {
+      "id": "personality_tonality",
+      "name": "Personality and Tonality",
+      "description": "Generate personality and tonality options",
+      "requires_user_input": false,
+      "prompts": [
+        {
+          "id": "personality_tonality_prompt",
+          "prefix": "What kind of personality and tonality should the brand adopt? This is the brand's secret sauce, its distinctive voice that sets the stage for emotional resonance. A great personality and tonality should make the brand genuinely stand out.",
+          "few_shots": [
+            {
+              "options": [
+                "Option 1: The Quirky Minimalist Guide\nPersonality: The stylish friend who whispers luxury secrets with a playful twist—more Wes Anderson than Marie Kondo.\nTone: Light, clever, and gently ironic—treating quality as an inside joke we're all in on.\nSignature Move: The knack for making minimalism feel rebellious, not restrictive (Join the secret society of people who don't need logos).\nVisual Cues: Clean compositions with unexpected pops of whimsy—think someone using an Italic weekender bag as a pillow fort.\nCall-To-Action Style: Invitational with gentle urgency (The quiet revolution is accepting members).",
+                "Option 2: The Quality Confidant\nPersonality: The trusted friend who sees quality as poetry—finding beauty in durability, craft, and thoughtful design.\nTone: Warm, intimate, and slightly reverent—speaking about materials and craftsmanship with genuine wonder.\nSignature Move: Making the mundane feel magical through micro-details (This zipper will outlive your next three relationships).\nVisual Cues: Close-ups that feel like love letters to textures and stitching, bathed in golden-hour light.\nCall-To-Action Style: Soft suggestions that feel like shared wisdom (Life's too short for bags that don't age beautifully with you).",
+                "Option 3: The Minimal Maximalist\nPersonality: The paradoxical friend who finds freedom in constraints and abundance in simplicity.\nTone: Playfully philosophical with a dash of cosmic wonder—making minimalism feel expansive, not restrictive.\nSignature Move: Finding universe-sized meaning in tiny details (This jacket has pockets that understand you).\nVisual Cues: Spacious compositions that zoom dramatically between vast emptiness and intimate details.\nCall-To-Action Style: Mind-expanding invitations (Discover how less becomes everything)."
+              ]
+            }
+          ],
+          "parameters": ["Link", "User Persona", "Content Spaces"],
+          "option_count": 3,
+          "options_delimiter": "||",
+          "expected_output_modality": "TEXT"
+        }
+      ],
+      "next_step": "select_personality_tonality",
+      "state_update_mapping": {
+        "current_options": "personality_tonality_options"
+      }
+    },
+    {
+      "id": "select_personality_tonality",
+      "name": "Select Personality and Tonality",
+      "description": "User selects a personality and tonality from the options",
+      "requires_user_input": true,
+      "prompts": [],
+      "next_step": "script",
+      "state_update_mapping": {
+        "selected_option": "personality_tonality"
+      }
+    },
+    {
+      "id": "script",
+      "name": "Script",
+      "description": "Generate script options",
+      "requires_user_input": false,
+      "prompts": [
+        {
+          "id": "script_prompt",
+          "prefix": "Write the scripts for the ideas shortlisted. Please ensure that you start with a hook that we had shortlisted earlier. Dont make the script salsey. The main point is to capture attention, get the user to reach the end of the video and remember/feel something about the brand.",
+          "few_shots": [
+            {
+              "options": [
+                "Script 1: The Quiet Luxury of Doing Less\nHOOK (0:00-0:05): (Close-up of hand caressing buttery leather bag) \"The coolest flex? Not flexing at all.\" (Slight smile)\n\nBODY (0:06-0:30):\n(Voiceover, conversational but slightly playful) \"So here's what I realized about quality: it doesn't need to scream.\" (Shot of person removing tiny logo from competitor bag)\n\"This bag? Made in the same factory as those with four-digit price tags.\" (Person tapping bag knowingly)\n\"But instead of paying for billboards and celebrity gifting—\" (Eye roll, comic timing)\n\"—I'm just paying for, you know... the actual bag.\" (Wide shot of person organizing remarkably neat closet with minimal, color-coordinated items)\n\"It's like joining a secret club where the password is 'I don't need logos to feel fancy.'\" (Whispering this like a conspiracy, slight wink)\n\nEND (0:31-0:40): (Person walking confidently through city) \"Italic. Luxury without the luxury markup.\" (Text appears: \"The quiet revolution is accepting members\")\nFeel: Quirky confidence—Italic's the cool friend who knows the real secret to style.",
+                "Script 2: What This Bag Doesn't Have\nHOOK (0:00-0:05): (Person at luxury boutique looking at price tag, jaw drops) \"Four thousand dollars... for THIS?\" (Zoom in on tiny logo)\n\nBODY (0:06-0:30):\n(Voiceover, warm and thoughtful) \"You know what my favorite bag doesn't have?\" (Quick cuts of various luxury logos)\n\"A giant logo that screams 'look how much I spent.'\" (Person confidently carrying an Italic bag)\n\"What it DOES have?\" (Close-ups begin, ASMR-style)\n\"Hand-stitched seams from the same artisans who make those four-figure bags.\" (Extreme close-up of perfect stitching)\n\"Butter-soft leather that gets better every year.\" (Time-lapse of leather developing patina)\n\"And somehow... it costs hundreds, not thousands.\" (Person looking satisfied, checking receipt)\n\nEND (0:31-0:40): (Split-screen of Italic bag vs. logo bag) \"Italic. Everything but the markup.\" (Text appears: \"Life's too short for bags that don't age beautifully with you\")\nFeel: Thoughtful revelation—Italic's the wise friend who helps you see through marketing noise.",
+                "Script 3: The Bag That Gets You\nHOOK (0:00-0:05): (Person struggling with overstuffed, complicated bag with giant logo) \"Why is this relationship so complicated?\" (Frustrated expression)\n\nBODY (0:06-0:30):\n(Voiceover, playfully philosophical) \"What if your bag... actually understood you?\" (Person switches to minimal Italic tote)\n\"No flashy hardware demanding attention.\" (Close-up of clean, minimal design)\n\"Just pockets that make sense—like this one, specifically sized for your phone.\" (Demonstration of thoughtful features)\n\"Materials that don't just last, but get more interesting with time—like the best friendships.\" (Montage of bag in different settings, developing character)\n\"Space that expands when you need it, because bags should adapt to life, not vice versa.\" (Demonstration of bag's versatility)\n\nEND (0:31-0:40): (Person using bag effortlessly) \"Italic. Design that gets you.\" (Text appears: \"Discover how less becomes everything\")\nFeel: Mindful wonder—Italic's the insightful friend who sees possibilities in simplicity."
+              ]
+            }
+          ],
+          "parameters": ["Link", "User Persona", "Content Spaces", "Personality and Tonality"],
+          "option_count": 3,
+          "options_delimiter": "||",
+          "expected_output_modality": "TEXT"
+        }
+      ],
+      "next_step": "select_script",
+      "state_update_mapping": {
+        "current_options": "script_options"
+      }
+    },
+    {
+      "id": "select_script",
+      "name": "Select Script",
+      "description": "User selects a script from the options",
+      "requires_user_input": true,
+      "prompts": [],
+      "next_step": "images",
+      "state_update_mapping": {
+        "selected_option": "script"
+      }
+    },
+    {
+      "id": "image_prompts",
+      "name": "Image Prompts",
+      "description": "Generate images' prompts for each scene in the script",
+      "requires_user_input": false,
+      "prompts": [
+        {
+          "id": "image_prompt_prompt",
+          "prefix": "Generate visually compelling image prompts for each scene in the script. These prompts will be used to generate images that match the brand's style and the script's requirements.",
+          "few_shots": [],
+          "parameters": ["Brand", "Content Spaces", "Personality and Tonality", "Script"],
+          "option_count": -1,
+          "options_delimiter": "||",
+          "expected_output_modality": "TEXT",
+          "output_instruction": "Add `||` between the options. Do not output anything else."
+        }
+      ],
+      "next_step": "images",
+      "state_update_mapping": {
+        "images": "image_prompts"
+      }
+    },
+    {
+      "id": "images",
+      "name": "Images",
+      "description": "Generate image for given prompt",
+      "requires_user_input": false,
+      "prompts": [
+        {
+          "id": "image_prompt",
+          "prefix": "",
+          "few_shots": [],
+          "parameters": ["Image Prompt"],
+          "option_count": 1,
+          "options_delimiter": "",
+          "expected_output_modality": "IMAGE",
+          "output_instruction": ""
+        }
+      ],
+      "next_step": "voiceover",
+      "state_update_mapping": {
+        "images": "images"
+      }
+    },
+    {
+      "id": "voiceover",
+      "name": "Voiceover",
+      "description": "Generate voiceover for the script",
+      "requires_user_input": false,
+      "prompts": [
+        {
+          "id": "voiceover_prompt",
+          "prefix": "Generate a natural-sounding voiceover for the script. The voice should match the personality and tonality of the brand.",
+          "few_shots": [],
+          "parameters": ["Script", "Personality and Tonality"],
+          "option_count": 1,
+          "options_delimiter": "",
+          "expected_output_modality": "AUDIO"
+        }
+      ],
+      "next_step": "background_music",
+      "state_update_mapping": {
+        "voiceover": "voiceover"
+      }
+    },
+    {
+      "id": "background_music",
+      "name": "Background Music",
+      "description": "Generate background music for the video",
+      "requires_user_input": false,
+      "prompts": [
+        {
+          "id": "background_music_prompt",
+          "prefix": "Generate background music that complements the script and matches the brand's personality and tonality. The music should enhance the emotional impact of the video.",
+          "few_shots": [],
+          "parameters": ["Script", "Personality and Tonality"],
+          "option_count": 1,
+          "options_delimiter": "",
+          "expected_output_modality": "AUDIO"
+        }
+      ],
+      "next_step": "animation",
+      "state_update_mapping": {
+        "background_music": "background_music"
+      }
+    },
+    {
+      "id": "animation",
+      "name": "Animation",
+      "description": "Create animation by combining images, voiceover, and background music",
+      "requires_user_input": false,
+      "prompts": [],
+      "next_step": "final_video",
+      "state_update_mapping": {
+        "animation": "animation"
+      }
+    },
+    {
+      "id": "final_video",
+      "name": "Final Video",
+      "description": "Finalize the video",
+      "requires_user_input": false,
+      "prompts": [],
+      "next_step": null,
+      "state_update_mapping": {
+        "final_video": "final_video"
+      }
+    }
+  ]
+}

@@ -35,10 +35,8 @@ async def generate_strategy(
     """Generate content strategy based on brand framework."""
     try:
         logger.info(f"Starting strategy generation for session {session_id}")
-        
         # Check if session exists
         session = await db.sessions.find_one({"id": session_id})
-        
         if not session:
             logger.warning(f"Session {session_id} not found")
             return JSONResponse(
