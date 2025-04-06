@@ -1,31 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
-from pydantic import BaseModel
 from typing import Optional, List, Dict, Any, Union
 from uuid import uuid4
 from datetime import datetime
 
 from services.storage.database import get_db
 from services.ai.ai_orchestrator import AIOrchestrator
+from api.models import VideoResponse, JobStatusResponse
 
 router = APIRouter()
 
 # Initialize AI orchestrator
 ai_orchestrator = AIOrchestrator()
-
-class VideoResponse(BaseModel):
-    """Model for video response."""
-    video_url: str
-    thumbnail_url: str
-    duration: int
-    format: str
-    resolution: str
-
-class JobStatusResponse(BaseModel):
-    """Model for job status response."""
-    message: str
-    job_id: str
-    status: str
-    progress: Optional[int] = None
 
 @router.post("/sessions/{session_id}/video", response_model=JobStatusResponse)
 async def generate_video(

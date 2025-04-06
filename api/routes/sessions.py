@@ -1,6 +1,5 @@
 
 from fastapi import APIRouter, HTTPException, Depends, status
-from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from uuid import uuid4
 from datetime import datetime
@@ -8,6 +7,7 @@ import pytz
 
 from models.session import SessionResponse
 from services.storage.database import get_db
+from api.models import SessionUpdateRequest
 
 router = APIRouter()
 
@@ -35,10 +35,6 @@ async def get_session(session_id: str, db = Depends(get_db)):
     
     return session
 
-class SessionUpdateRequest(BaseModel):
-    """Model for session update request."""
-    status: Optional[str] = None
-    current_step: Optional[str] = None
 
 @router.patch("/sessions/{session_id}", response_model=SessionResponse)
 async def update_session(

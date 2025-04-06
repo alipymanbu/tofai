@@ -1,6 +1,8 @@
 """
 AI Orchestrator for brand awareness video creation.
 This module orchestrates the AI workflow using LangGraph and the config-driven framework.
+
+NO_AI_CODE=True
 """
 from langgraph.graph import StateGraph, END
 from typing import Any, Dict, List, Tuple, Optional, Union
@@ -13,7 +15,7 @@ from services.ai.framework_model import FrameworkStep, FrameworkResult, ResultOp
 import services.ai.state as st
 from services.ai.state import VideoCreationState
 from services.ai.lm_facade import LMFacade
-from services.storage.database import get_db
+from services.storage.database import get_db, SessionCollection
 from services.ai.tasks.generator import Generator
 
 logger = logging.getLogger(__name__)
@@ -35,42 +37,19 @@ class AIOrchestrator:
     self.generator = Generator(framework_id, self.lm_facade)
     self.graph = self._orchestrate_graph()
 
-  async def run(self, session_id: str, current_step_id: str = None) -> Dict[str, Any]:
+  async def run(self, session: dict, current_step_id: str = None) -> Dict[str, Any]:
     """
     Run the AI orchestration flow with MongoDB and Redis integration.
     Args:
-        session_id: The session ID
+        session: The session of current conversation
         current_step_id: Optional current step to start from
     Returns:
         Result dictionary
     """
     try:
-        # Get database connection
-        db = await get_db()
-        # Get session data from database
-        session = await db.sessions.find_one({"id": session_id})
-        if not session:
-            logger.error(f"Session {session_id} not found")
-            return {
-                "success": False,
-                "result": None,
-                "error": f"Session {session_id} not found"
-            }
-        
-        # Create job record
-        job_id = f"ai-flow-{session_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
-        await db.jobs.insert_one({
-            "id": job_id,
-            "session_id": session_id,
-            "type": "ai_flow",
-            "status": "processing",
-            "progress": 0,
-            "created_at": datetime.utcnow()
-        })
-        
-    # Initialize state with data from the session
+        # Initialize state with data from the session
         initial_state = VideoCreationState(
-            session_id=session_id,
+            session_id=session["id"],
             framework_id=self.framework_id,
             current_step_id=current_step_id or self.generator.framework.initial_step
         )
@@ -86,60 +65,10 @@ class AIOrchestrator:
         # Run the graph
         app = self.graph.compile()
         result = await app.ainvoke(initial_state)
-        
-        # Update job status
-        await db.jobs.update_one(
-            {"id": job_id},
-            {
-                "$set": {
-                    "status": "completed",
-                    "progress": 100,
-                    "completed_at": datetime.utcnow(),
-                    "result": result
-                }
-            }
-        )
-        
-        # Update session with results
-        session_update = result
-        session_update["updated_at"] = datetime.utcnow()
-        
-        # Update the session
-        await db.sessions.update_one(
-            {"id": session_id},
-            {"$set": session_update}
-        )
-        
-        return {
-            "success": True,
-            "result": result,
-            "error": None
-        }
+        return result
     except Exception as e:
         logger.exception(f"Error in AI orchestration: {str(e)}")
-        
-        # Update job status if it exists
-        if 'job_id' in locals():
-            try:
-                await db.jobs.update_one(
-                    {"id": job_id},
-                    {
-                        "$set": {
-                            "status": "failed",
-                            "progress": 100,
-                            "completed_at": datetime.utcnow(),
-                            "error": str(e)
-                        }
-                    }
-                )
-            except Exception as update_error:
-                logger.error(f"Failed to update job status: {str(update_error)}")
-        
-        return {
-            "success": False,
-            "result": None,
-            "error": str(e)
-        }
+        return None
 
   def _orchestrate_graph(self) -> StateGraph:
     """
@@ -247,7 +176,10 @@ class AIOrchestrator:
     Returns:
         VideoCreationState: The updated state
     """
+    selection_step_result = state.get_step_result(step_id=state.current_step_id, framework_result=state.framework_result)
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
+    if selection_step_result:
+        return {"current_step_id": next_step}
     try:
       print(f"\nChoose an option for '{state.current_step_id}':")
       selection_for = self.generator.get_selection_for_step_id(step_id=state.current_step_id)

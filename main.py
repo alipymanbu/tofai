@@ -3,7 +3,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import sessions, script, strategy, image, speech, music, video, jobs
+from api.routes import sessions, script, strategy, image, speech, music, video, jobs, framework
 from services.storage.database import init_db, close_db, seed_mock_data
 from config.settings import settings
 
@@ -31,6 +31,7 @@ app.include_router(speech.router, prefix="/api", tags=["Speech Generation"])
 app.include_router(music.router, prefix="/api", tags=["Music Generation"])
 app.include_router(video.router, prefix="/api", tags=["Video Generation"])
 app.include_router(jobs.router, prefix="/api", tags=["Jobs"])
+app.include_router(framework.router, prefix="/api", tags=["Framework"])
 
 @app.on_event("startup")
 async def startup_event():
