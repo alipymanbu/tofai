@@ -1,87 +1,52 @@
-
 from fastapi import APIRouter, HTTPException, Depends, status
 from typing import Optional, List, Dict, Any
 from uuid import uuid4
-from datetime import datetime
-import pytz
+from datetime import datetime, timezone
 
-from models.session import SessionResponse
-from services.storage.database import get_db
-from api.models import SessionUpdateRequest
+from services.storage.database import DataAccess
+from api.models import Session, SessionStatus
+from models.session_db import SessionDBModel
+import logging
+from api.dependencies import get_data_access
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
-@router.post("/sessions", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
-async def create_session(db = Depends(get_db)):
+@router.post("/sessions", response_model=Session, status_code=status.HTTP_201_CREATED)
+async def create_session(db: DataAccess = Depends(get_data_access)):
     """Create a new session."""
-    session = {
-        "id": str(uuid4()),
-        "created_at": datetime.now(pytz.UTC),
-        "status": "started",
-        "current_step": "brand-framework"
-    }
-    
-    await db.sessions.insert_one(session)
-    
-    return session
-
-@router.get("/sessions/{session_id}", response_model=SessionResponse)
-async def get_session(session_id: str, db = Depends(get_db)):
-    """Get session details."""
-    session = await db.sessions.find_one({"id": session_id})
-    
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
-    
-    return session
-
-
-@router.patch("/sessions/{session_id}", response_model=SessionResponse)
-async def update_session(
-    session_id: str,
-    update_data: SessionUpdateRequest,
-    db = Depends(get_db)
-):
-    """Update session status or current step."""
-    # Prepare update data
-    update_fields = {}
-    if update_data.status:
-        update_fields["status"] = update_data.status
-    if update_data.current_step:
-        update_fields["current_step"] = update_data.current_step
-    
-    update_fields["updated_at"] = datetime.now(pytz.UTC)
-    
-    # Update the session
-    result = await db.sessions.update_one(
-        {"id": session_id},
-        {"$set": update_fields}
+    session_db_model = SessionDBModel(
+        session=Session(
+            id=str(uuid4()),
+            created_at=datetime.now(timezone.utc),
+            status=SessionStatus.STARTED,
+            current_step_id="initial_input"
+        )
     )
-    
-    # Handle both MongoDB result object and boolean result from in-memory DB
-    if hasattr(result, 'matched_count'):
-        if result.matched_count == 0:
+    try:
+        await db.insert_session(session_db_model)
+        return session_db_model.session
+    except Exception as e:
+        logger.error(f"Error creating session with exception: {e}")
+        raise HTTPException(status_code=500, detail=f"Error creating session.")
+
+@router.get("/sessions/{session_id}", response_model=Session)
+async def get_session(session_id: str, db: DataAccess = Depends(get_data_access)):
+    """Get session details."""
+    try:
+        session_db_model = await db.get_session(session_id)
+        if not session_db_model:
             raise HTTPException(status_code=404, detail="Session not found")
-    elif not result:
-        raise HTTPException(status_code=404, detail="Session not found")
-    
-    # Get updated session
-    session = await db.sessions.find_one({"id": session_id})
-    return session
+        return session_db_model.session
+    except Exception as e:
+        logger.error(f"Error getting session with exception: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting session.")
 
 @router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_session(session_id: str, db = Depends(get_db)):
+async def delete_session(session_id: str, db: DataAccess = Depends(get_data_access)):
     """Delete a session."""
-    result = await db.sessions.delete_one({"id": session_id})
-    
-    # Handle both MongoDB result object and boolean result from in-memory DB
-    if hasattr(result, 'deleted_count'):
-        if result.deleted_count == 0:
-            raise HTTPException(status_code=404, detail="Session not found")
-    elif not result:
-        raise HTTPException(status_code=404, detail="Session not found")
-    
-    # Also delete related jobs
-    await db.jobs.delete_many({"session_id": session_id})
-    
+    try:
+        await db.delete_session(session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     return None

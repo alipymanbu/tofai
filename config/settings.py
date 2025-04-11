@@ -12,18 +12,12 @@ class Settings(BaseSettings):
     DATABASE_NAME: str = os.getenv("DATABASE_NAME", "tofai")
     
     # Redis
-    REDIS_URI: str = os.getenv("REDIS_URI", "redis://localhost:6379/0")
+    REDIS_HOST: str = os.getenv("REDIS_HOST", "redis://localhost:6379/0")
+    REDIS_PORT: str = os.getenv("REDIS_PORT", "8080")
     
     # AI Services
     CLAUDE_API_KEY: str = os.getenv("CLAUDE_API_KEY", "")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    
-    # AI Model Selection
-    STRATEGY_MODEL: str = os.getenv("STRATEGY_MODEL", "claude")
-    SCRIPT_MODEL: str = os.getenv("SCRIPT_MODEL", "claude")
-    VISUALS_MODEL: str = os.getenv("VISUALS_MODEL", "stable-diffusion")
-    AUDIO_MODEL: str = os.getenv("AUDIO_MODEL", "eleven-labs")
-    VIDEO_MODEL: str = os.getenv("VIDEO_MODEL", "internal-renderer")
     
     # Storage
     S3_BUCKET: str = os.getenv("S3_BUCKET", "tofai-media")

@@ -1,16 +1,39 @@
 import asyncio
+from contextlib import asynccontextmanager
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 
-from api.routes import sessions, script, strategy, image, speech, music, video, jobs, framework
-from services.storage.database import init_db, close_db, seed_mock_data
+from api.routes import sessions, jobs, framework
+from services.storage.database import DataAccess
 from config.settings import settings
+from api.dependencies import initialize_data_access, get_data_access
+
+data_access_instance: Optional[DataAccess] = None
+
+async def startup_event():
+    """Initialize services on startup."""
+    await initialize_data_access()
+
+async def shutdown_event():
+    """Close connections on shutdown."""
+    # if data_access_instance:
+    #     await data_access_instance.mongo_client.close()
+    #     await data_access_instance.redis_client.close()
+    pass
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await startup_event()
+    yield
+    await shutdown_event()
 
 app = FastAPI(
     title="TOF.ai",
     description="AI-powered video generation platform for brand awareness",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 # Configure CORS
@@ -22,37 +45,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register API routes
+
+# Register API routes with the dependency
 app.include_router(sessions.router, prefix="/api", tags=["Sessions"])
-app.include_router(strategy.router, prefix="/api", tags=["Brand Strategy"])
-app.include_router(script.router, prefix="/api", tags=["Script Generation"])
-app.include_router(image.router, prefix="/api", tags=["Image Generation"])
-app.include_router(speech.router, prefix="/api", tags=["Speech Generation"])
-app.include_router(music.router, prefix="/api", tags=["Music Generation"])
-app.include_router(video.router, prefix="/api", tags=["Video Generation"])
 app.include_router(jobs.router, prefix="/api", tags=["Jobs"])
 app.include_router(framework.router, prefix="/api", tags=["Framework"])
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize services on startup."""
-    await init_db()
-    
-    # Seed mock data if in development environment
-    if settings.ENVIRONMENT == "development":
-        await seed_mock_data()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Close connections on shutdown."""
-    await close_db()
-
 @app.get("/api/health")
-async def health_check():
+async def health_check(db: DataAccess = Depends(get_data_access)):
     """API health check endpoint."""
     return {
         "status": "ok",
-        "environment": settings.ENVIRONMENT
+        "environment": settings.ENVIRONMENT,
+        "database_initialized": db is not None
     }
 
 if __name__ == "__main__":

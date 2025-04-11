@@ -3,328 +3,164 @@ Tests for the framework API routes.
 
 This module provides unit tests for the API routes in api/routes/framework.py.
 """
-import pytest
-import sys
-import os
-from unittest.mock import MagicMock, patch, AsyncMock
+import asyncio
+import unittest
+from unittest.mock import AsyncMock, patch
+from datetime import datetime, timezone
 import uuid
-import json
-from datetime import datetime
-from fastapi import FastAPI, Depends
 from fastapi.testclient import TestClient
+from fastapi import Depends
 
-# Import get_db directly from the services.storage.database
-from services.storage.database import get_db
+from main import app, lifespan
+from api.dependencies import get_data_access
+from services.storage.database import DataAccess
+from api.models import GenerateOptionsRequest, InitInputRequest, Session, JobStatus, SessionStatus as DBSessionStatus
+from models.session_db import SessionDBModel
+from models.job_db import JobDBModel, Job
+from services.ai.framework_model import FrameworkResult, FrameworkStepResult, ResultOptions
 
-# Add the mock modules to sys.path so they can be imported
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'mocks'))
+class TestFrameworkAPI(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        async with lifespan(app):  # Use the lifespan context manager
+            self.client = TestClient(app)
+            self.mock_db = AsyncMock(spec=DataAccess)
+            self.mock_aio = AsyncMock()
 
-# Create mock classes for testing
+            self.session_id = str(uuid.uuid4())
+            self.framework_id = "test_framework"
+            self.step_id = "test_step"
+            self.session = Session(id=self.session_id, created_at=datetime.now(timezone.utc), current_step_id=self.step_id, framework_id=self.framework_id)
+            self.session_db_model = SessionDBModel(session=self.session)
+            self.framework_result = FrameworkResult(
+                id=self.framework_id,
+                step_results=[FrameworkStepResult(id=self.step_id, result=[ResultOptions(result_options=["option1"], selected_option=0)])],
+            )
+            self.job = Job(
+                id=str(uuid.uuid4()),
+                session_id=self.session_id,
+                created_at=datetime.now(timezone.utc),
+                status=JobStatus.COMPLETED,
+                progress=100,
+                tasks_completed=[self.step_id],
+                result={}
+            )
+            self.job_db_model = JobDBModel(job=self.job)
 
-class MockCollection:
-    """Mock database collection for testing."""
-    
-    def __init__(self):
-        self.data = {}
-    
-    async def find_one(self, query):
-        """Find one item matching the query."""
-        session_id = query.get("id")
-        if session_id not in self.data:
-            return None
-        return self.data.get(session_id)
-    
-    async def insert_one(self, document):
-        """Insert one document into the collection."""
-        doc_id = document.get("id")
-        if doc_id:
-            self.data[doc_id] = document
-        return document
-    
-    async def update_one(self, filter_query, update_query):
-        """Update one document in the collection."""
-        session_id = filter_query.get("id")
-        if session_id in self.data and "$set" in update_query:
-            self.data[session_id].update(update_query.get("$set", {}))
-            return MagicMock(modified_count=1)
-        return MagicMock(modified_count=0)
-    
-    def find(self, query=None):
-        """Mock find that returns a cursor-like object."""
-        filtered_data = []
-        if query:
-            for item in self.data.values():
-                match = True
-                for k, v in query.items():
-                    if k not in item or item[k] != v:
-                        match = False
-                        break
-                if match:
-                    filtered_data.append(item)
-        else:
-            filtered_data = list(self.data.values())
-        
-        cursor = MagicMock()
-        cursor.to_list = AsyncMock(return_value=filtered_data)
-        cursor.sort = MagicMock(return_value=cursor)
-        cursor.limit = MagicMock(return_value=cursor)
-        return cursor
+            async def override_get_data_access():
+                return self.mock_db
 
+            app.dependency_overrides[get_data_access] = override_get_data_access
+            print(f"Arjun2: {app.dependency_overrides.get(get_data_access)}")
+            print(f"Arjun4: {await override_get_data_access()}")
 
-class MockDB:
-    """Mock database for testing."""
-    
-    def __init__(self):
-        self.sessions = MockCollection()
-        self.jobs = MockCollection()
+    async def asyncTearDown(self):
+        app.dependency_overrides.clear()
 
+    async def test_generate_step_options_success(self):
+        print(f"Arjun: {app.dependency_overrides}")
+        self.mock_db.get_session.return_value = self.session_db_model
+        self.mock_aio.run.return_value = {"framework_result": self.framework_result, "current_step_id": "next_step"}
+        self.mock_db.insert_job.return_value = None
+        self.mock_db.update_session.return_value = None
 
-class MockAIOrchestrator:
-    """Mock AIOrchestrator for testing."""
-    
-    async def run(self, session=None, current_step_id=None):
-        """Mock implementation of run method."""
-        framework_result = {
-            "id": "brand_awareness_video",
-            "step_results": [
-                {
-                    "id": current_step_id or "user_persona",
-                    "result": [
-                        {
-                            "result_options": [
-                                "Option 1: User Persona 1",
-                                "Option 2: User Persona 2",
-                                "Option 3: User Persona 3"
-                            ],
-                            "selected_option": -1
-                        }
-                    ]
-                }
-            ]
-        }
-        return {"framework_result": framework_result}
+        with patch("services.ai.ai_orchestrator.AIOrchestrator", return_value=self.mock_aio):
+            response = self.client.post(
+                f"/framework/steps/{self.step_id}/generate?session_id={self.session_id}",
+                json=GenerateOptionsRequest(framework_id=self.framework_id, step_id=self.step_id).model_dump(),
+            )
 
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["message"], "generation success")
+        self.assertEqual(response.json()["status"], "completed")
+        self.assertEqual(response.json()["progress"], 100)
+        self.mock_db.update_session.assert_called_once()
+        self.mock_db.insert_job.assert_called_once()
 
-class MockGenerator:
-    """Mock Generator for testing."""
-    
-    def __init__(self, framework_id=None, *args, **kwargs):
-        self.framework_id = framework_id or "brand_awareness_video"
-        self.framework = MagicMock()
-        self.framework.id = self.framework_id
-        self.framework.name = "Brand Awareness Video Framework"
-        self.framework.description = "A framework for creating brand awareness videos"
-        self.framework.initial_step = "initial_input"
-        self.framework.final_step = "final_video"
-    
-    def get_step_by_id(self, step_id):
-        """Mock get_step_by_id method."""
-        step = MagicMock()
-        step.id = step_id
-        step.name = f"{step_id.replace('_', ' ').title()}"
-        step.description = f"Description for {step_id}"
-        step.requires_user_input = step_id.startswith("select_")
-        step.next_step = "final_step" if step_id == "select_script" else f"{step_id}_next"
-        return step
-    
-    def get_step_by_index(self, index):
-        """Mock get_step_by_index method."""
-        step = MagicMock()
-        step.id = "initial_input"
-        step.name = "Initial Input"
-        step.description = "Initial input description"
-        step.requires_user_input = True
-        step.next_step = "user_persona"
-        return step
-    
-    def get_selection_for_step_id(self, step_id):
-        """Mock get_selection_for_step_id method."""
-        if step_id.startswith("select_"):
-            return step_id.replace("select_", "")
-        return None
+    async def test_generate_step_options_session_not_found(self):
+        self.mock_db.get_session.return_value = None
 
-
-@pytest.fixture
-def mock_db():
-    """Create a mock database."""
-    return MockDB()
-
-
-@pytest.fixture
-def session_id():
-    """Generate a random session ID."""
-    return str(uuid.uuid4())
-
-
-@pytest.fixture
-def app_client(monkeypatch):
-    """Create an app with the actual framework router but with mocked dependencies."""
-    # Add the mocks directory to the front of sys.path
-    mocks_dir = os.path.join(os.path.dirname(__file__), 'mocks')
-    if mocks_dir not in sys.path:
-        sys.path.insert(0, mocks_dir)
-    
-    # Import the actual framework router
-    from api.routes.framework import router
-    
-    # Create a FastAPI app
-    app = FastAPI()
-    app.include_router(router, prefix="/api")
-    
-    # Mock database
-    mock_db = MockDB()
-    app.dependency_overrides[get_db] = lambda: mock_db
-    
-    # Store mock_db in app.state for test access
-    app.state.mock_db = mock_db
-    
-    client = TestClient(app)
-    return client
-
-
-class TestFrameworkAPIs:
-    """Tests for the framework API routes."""
-    
-    def test_generate_step_options(self, app_client, session_id):
-        """Test the generate_step_options endpoint."""
-        # Set up test session
-        mock_db = app_client.app.state.mock_db
-        session_data = {
-            "id": session_id,
-            "status": "started",
-            "current_step": "initial_input",
-            "framework_result": {
-                "id": "brand_awareness_video",
-                "step_results": [
-                    {
-                        "id": "initial_input",
-                        "result": [
-                            {
-                                "result_options": ["https://example.com"],
-                                "selected_option": 0
-                            }
-                        ]
-                    }
-                ]
-            }
-        }
-        mock_db.sessions.data[session_id] = session_data
-        
-        # Call the API endpoint
-        response = app_client.post(
-            f"/api/framework/steps/{session_id}/generate",
-            json={
-                "framework_id": "brand_awareness_video",
-                "step_id": "user_persona"
-            }
+        response = self.client.post(
+            f"/framework/steps/{self.step_id}/generate?session_id={self.session_id}",
+            json=GenerateOptionsRequest(framework_id=self.framework_id, step_id=self.step_id).model_dump(),
         )
-        
-        # Check the response
-        assert response.status_code == 200
-        data = response.json()
-        assert "job_id" in data
-        assert data["status"] == "completed"
-        assert data["progress"] == 100
-        
-        # Verify job creation
-        jobs = list(mock_db.jobs.data.values())
-        assert len(jobs) > 0
-        assert jobs[-1]["session_id"] == session_id
-        assert jobs[-1]["status"] == "completed"
-    
-    def test_select_step_option(self, app_client, session_id):
-        """Test the select_step_option endpoint."""
-        # Set up test session
-        mock_db = app_client.app.state.mock_db
-        framework_result = {
-            "id": "brand_awareness_video",
-            "step_results": [
-                {
-                    "id": "user_persona",
-                    "result": [
-                        {
-                            "result_options": [
-                                "Option 1: Sophie, The Minimalist Aesthete",
-                                "Option 2: Alex, The Conscious Consumer", 
-                                "Option 3: Marcus, The Quality Connoisseur"
-                            ],
-                            "selected_option": -1
-                        }
-                    ]
-                }
-            ]
-        }
-        
-        session_data = {
-            "id": session_id,
-            "status": "in_progress",
-            "current_step": "select_user_persona",
-            "framework_result": json.dumps(framework_result)
-        }
-        mock_db.sessions.data[session_id] = session_data
-        
-        # Call the API endpoint
-        response = app_client.post(
-            f"/api/framework/steps/select_user_persona/select?session_id={session_id}&option_index=1&result_index=0&framework_id=brand_awareness_video"
+
+        self.assertEqual(response.status_code, 404)
+
+    async def test_generate_step_options_ai_error(self):
+        self.mock_db.get_session.return_value = self.session_db_model
+        self.mock_aio.run.side_effect = Exception("AI Error")
+        self.mock_db.insert_job.return_value = None
+
+        with patch("services.ai.ai_orchestrator.AIOrchestrator", return_value=self.mock_aio):
+            response = self.client.post(
+                f"/framework/steps/{self.step_id}/generate?session_id={self.session_id}",
+                json=GenerateOptionsRequest(framework_id=self.framework_id, step_id=self.step_id).model_dump(),
+            )
+
+        self.assertEqual(response.status_code, 500)
+        self.mock_db.insert_job.assert_called()
+
+    async def test_select_step_option_success(self):
+        self.mock_db.get_session.return_value = self.session_db_model
+        self.mock_db.update_session.return_value = None
+        self.mock_db.insert_job.return_value = None
+
+        response = self.client.post(
+            f"/framework/steps/{self.step_id}/select?session_id={self.session_id}&option_index=0&result_index=0",
+            json={"framework_id": self.framework_id},
         )
-        
-        # Check the response
-        assert response.status_code == 200
-        data = response.json()
-        assert "job_id" in data
-        assert data["status"] == "completed"
-        
-        # Verify job creation
-        jobs = list(mock_db.jobs.data.values())
-        assert len(jobs) > 0
-        assert jobs[-1]["session_id"] == session_id
-        assert jobs[-1]["status"] == "completed"
-    
-    def test_initial_input(self, app_client, session_id):
-        """Test the initial_input endpoint."""
-        # Set up test session
-        mock_db = app_client.app.state.mock_db
-        session_data = {
-            "id": session_id,
-            "status": "started",
-            "current_step": "initial_input"
-        }
-        mock_db.sessions.data[session_id] = session_data
-        
-        # Call the API endpoint
-        response = app_client.post(
-            f"/api/framework/steps/initial_input?session_id={session_id}",
-            json={
-                "framework_id": "brand_awareness_video",
-                "brand_link": "https://example.com"
-            }
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue("job_id" in response.json())
+        self.assertTrue("created_at" in response.json())
+        self.assertEqual(response.json()["framework_id"], self.framework_id)
+        self.mock_db.update_session.assert_called_once()
+        self.mock_db.insert_job.assert_called_once()
+
+    async def test_select_step_option_session_not_found(self):
+        self.mock_db.get_session.return_value = None
+
+        response = self.client.post(
+            f"/framework/steps/{self.step_id}/select?session_id={self.session_id}&option_index=0&result_index=0",
+            json={"framework_id": self.framework_id},
         )
-        
-        # Check the response
-        assert response.status_code == 200
-        data = response.json()
-        assert "job_id" in data
-        assert data["status"] == "completed"
-        
-        # Verify job creation
-        jobs = list(mock_db.jobs.data.values())
-        assert len(jobs) > 0
-        assert jobs[-1]["session_id"] == session_id
-        assert jobs[-1]["status"] == "completed"
-    
-    def test_session_not_found(self, app_client):
-        """Test handling of non-existent sessions."""
-        # Call the API endpoint with a non-existent session
-        response = app_client.post(
-            "/api/framework/steps/initial_input?session_id=non-existent-session",
-            json={
-                "framework_id": "brand_awareness_video",
-                "brand_link": "https://example.com"
-            }
+
+        self.assertEqual(response.status_code, 404)
+
+    async def test_select_step_option_no_generations(self):
+        self.session_db_model.session.result = None
+        self.mock_db.get_session.return_value = self.session_db_model
+
+        response = self.client.post(
+            f"/framework/steps/{self.step_id}/select?session_id={self.session_id}&option_index=0&result_index=0",
+            json={"framework_id": self.framework_id},
         )
-        
-        # Check the response
-        assert response.status_code == 404
-        data = response.json()
-        assert "detail" in data
-        assert "not found" in data["detail"]
+
+        self.assertEqual(response.status_code, 400)
+
+    async def test_initial_input_success(self):
+        self.mock_db.get_session.return_value = self.session_db_model
+        self.mock_db.update_session.return_value = None
+        self.mock_db.insert_job.return_value = None
+
+        response = self.client.post(
+            f"/framework/steps/initial_input?session_id={self.session_id}",
+            json=InitInputRequest(framework_id=self.framework_id, brand_link="http://test.com").model_dump(),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue("job_id" in response.json())
+        self.assertTrue("created_at" in response.json())
+        self.assertEqual(response.json()["framework_id"], self.framework_id)
+        self.mock_db.update_session.assert_called_once()
+        self.mock_db.insert_job.assert_called_once()
+
+    async def test_initial_input_session_not_found(self):
+        self.mock_db.get_session.return_value = None
+
+        response = self.client.post(
+            f"/framework/steps/initial_input?session_id={self.session_id}",
+            json=InitInputRequest(framework_id=self.framework_id, brand_link="http://test.com").model_dump(),
+        )
+
+        self.assertEqual(response.status_code, 404)

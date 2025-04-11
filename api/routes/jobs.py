@@ -1,68 +1,26 @@
-from fastapi import APIRouter, HTTPException, Depends
-from typing import Optional
-from datetime import datetime
+from fastapi import APIRouter, HTTPException, Depends, status
+from typing import Optional, List
+from datetime import datetime, timezone
+import logging
 
-from services.storage.database import get_db
-from api.models import JobResponse
+from services.storage.database import DataAccess
+from api.models import Job
+from api.dependencies import get_data_access
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+
+class JobResponse(Job):
+    pass
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
-async def get_job_status(job_id: str, db = Depends(get_db)):
+async def get_job_status(job_id: str, db: DataAccess = Depends(get_data_access)):
     """Check the status of an asynchronous job."""
-    job = await db.jobs.find_one({"id": job_id})
-    
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    
-    return job
-
-@router.delete("/jobs/{job_id}", status_code=204)
-async def cancel_job(job_id: str, db = Depends(get_db)):
-    """Cancel a pending or in-progress job."""
-    job = await db.jobs.find_one({"id": job_id})
-    
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
-    
-    # Can only cancel pending or processing jobs
-    if job["status"] not in ["pending", "processing"]:
-        raise HTTPException(status_code=400, detail=f"Cannot cancel job in {job['status']} state")
-    
-    # Update job as canceled
-    await db.jobs.update_one(
-        {"id": job_id},
-        {
-            "$set": {
-                "status": "failed", 
-                "completed_at": datetime.utcnow(),
-                "error": "Job canceled by user"
-            }
-        }
-    )
-    
-    return None
-
-@router.get("/sessions/{session_id}/jobs", response_model=list[JobResponse])
-async def list_session_jobs(
-    session_id: str, 
-    status: Optional[str] = None,
-    type: Optional[str] = None,
-    limit: int = 10, 
-    db = Depends(get_db)
-):
-    """List all jobs for a session with optional filtering."""
-    # Build filter
-    filter_query = {"session_id": session_id}
-    
-    if status:
-        filter_query["status"] = status
-    
-    if type:
-        filter_query["type"] = type
-    
-    # Query jobs
-    cursor = db.jobs.find(filter_query).sort("created_at", -1).limit(limit)
-    jobs = await cursor.to_list(length=limit)
-    
-    return jobs
+    try:
+        job_db_model = await db.get_job(job_id)
+        if not job_db_model:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+        return job_db_model.job
+    except Exception as e:
+        logger.error(f"Error getting job {job_id} with exception: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error getting job status.")

@@ -11,11 +11,11 @@ from datetime import datetime
 import logging
 import json
 
+from api.models import Session
 from services.ai.framework_model import FrameworkStep, FrameworkResult, ResultOptions
 import services.ai.state as st
 from services.ai.state import VideoCreationState
 from services.ai.lm_facade import LMFacade
-from services.storage.database import get_db, SessionCollection
 from services.ai.tasks.generator import Generator
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class AIOrchestrator:
     self.generator = Generator(framework_id, self.lm_facade)
     self.graph = self._orchestrate_graph()
 
-  async def run(self, session: dict, current_step_id: str = None) -> Dict[str, Any]:
+  async def run(self, session: Session, current_step_id: str = None) -> Dict[str, Any]:
     """
     Run the AI orchestration flow with MongoDB and Redis integration.
     Args:
@@ -49,16 +49,16 @@ class AIOrchestrator:
     try:
         # Initialize state with data from the session
         initial_state = VideoCreationState(
-            session_id=session["id"],
+            session_id=session.id,
             framework_id=self.framework_id,
             current_step_id=current_step_id or self.generator.framework.initial_step
         )
         
         # Add existing framework result if available
-        if "framework_result" in session and session["framework_result"]:
+        if session.result:
             # Convert from dict to FrameworkResult
             try:
-                initial_state.framework_result = FrameworkResult.model_validate(session["framework_result"])
+                initial_state.framework_result = session.result
             except Exception as e:
                 logger.error(f"Error loading framework result: {e}")
 

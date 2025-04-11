@@ -2,15 +2,29 @@
 Pydantic models for API requests and responses.
 """
 from pydantic import BaseModel, Field
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional, Union, Literal
 from datetime import datetime
+from services.ai.framework_model import FrameworkResult
+from enum import Enum
 
 # ============ Session Models ============
 
-class SessionUpdateRequest(BaseModel):
-    """Model for session update request."""
-    status: Optional[str] = None
-    current_step: Optional[str] = None
+class SessionStatus(int, Enum):
+    """Enum for job status."""
+    UNDEFINED = 0
+    STARTED = 1
+    EXPIRED = 2
+
+class Session(BaseModel):
+    """Model for a user session."""
+    id: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    expired_at: Optional[datetime] = None
+    status: SessionStatus = SessionStatus.UNDEFINED
+    result: Optional[FrameworkResult] = None
+    framework_id: str = "brand_awareness_video"
+    current_step_id: str
 
 # ============ Framework Models ============
 
@@ -32,58 +46,31 @@ class InitInputRequest(BaseModel):
     framework_id: str
     brand_link: str
 
+class UserResponse(BaseModel):
+    """Response model for select options."""
+    job_id: str
+    framework_id: str
+    created_at: datetime
+
 # ============ Jobs Models ============
 
-class JobStatusResponse(BaseModel):
-    """Model for job status response."""
-    message: str
-    job_id: str
-    status: str
-    progress: Optional[int] = None
+class JobStatus(int, Enum):
+    """Enum for job status."""
+    UNDEFINED = 0
+    PENDING = 1
+    PROCESSING = 2
+    COMPLETED = 3
+    FAILED = 4
+    CANCELED = 5
 
-class JobResponse(BaseModel):
-    """API response for job details."""
+class Job(BaseModel):
+    """Model for a background job."""
     id: str
     session_id: str
-    type: str
-    status: str
-    progress: int
     created_at: datetime
     completed_at: Optional[datetime] = None
+    status: str = JobStatus.UNDEFINED
+    progress: int = Field(default=0, ge=0, le=100)
+    tasks_completed: Optional[List[str]] = None
     error: Optional[str] = None
-    result: Optional[Dict[str, Any]] = None
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
-                "session_id": "b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7",
-                "type": "script",
-                "status": "completed",
-                "progress": 100,
-                "created_at": "2025-03-21T12:30:00.000Z",
-                "completed_at": "2025-03-21T12:31:00.000Z",
-                "result": {
-                    "script": {
-                        "scenes": [
-                            {
-                                "sceneNumber": 1,
-                                "narration": "Introducing our new product",
-                                "visualDescription": "Product on a pedestal",
-                                "duration": 5
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-
-# ============ Video Models ============
-
-class VideoResponse(BaseModel):
-    """Model for video response."""
-    video_url: str
-    thumbnail_url: str
-    duration: int
-    format: str
-    resolution: str
+    completed_at: Optional[datetime] = None
