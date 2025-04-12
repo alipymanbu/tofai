@@ -37,7 +37,6 @@ async def generate_step_options(
     Returns:
         Generated options
     """
-    print(f"Arjun: {db}")
     start_time = datetime.now(timezone.utc)
     job_id = f"/generate/{request.framework_id}/{request.step_id}/{start_time.strftime('%Y%m%d%H%M%S')}/{str(uuid.uuid4())}"
     try:

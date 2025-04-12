@@ -21,37 +21,36 @@ from services.ai.framework_model import FrameworkResult, FrameworkStepResult, Re
 
 class TestFrameworkAPI(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
+        self.mock_db = AsyncMock(spec=DataAccess)
+        self.mock_aio = AsyncMock()
+        self.session_id = str(uuid.uuid4())
+        self.framework_id = "test_framework"
+        self.step_id = "test_step"
+        self.session = Session(id=self.session_id, created_at=datetime.now(timezone.utc), current_step_id=self.step_id, framework_id=self.framework_id)
+        self.session_db_model = SessionDBModel(session=self.session)
+        self.framework_result = FrameworkResult(
+            id=self.framework_id,
+            step_results=[FrameworkStepResult(id=self.step_id, result=[ResultOptions(result_options=["option1"], selected_option=0)])],
+        )
+        self.job = Job(
+            id=str(uuid.uuid4()),
+            session_id=self.session_id,
+            created_at=datetime.now(timezone.utc),
+            status=JobStatus.COMPLETED,
+            progress=100,
+            tasks_completed=[self.step_id],
+            result={}
+        )
+        self.job_db_model = JobDBModel(job=self.job)
+
+        async def override_get_data_access():
+            return self.mock_db
+        app.dependency_overrides.clear()
+        app.dependency_overrides[get_data_access] = override_get_data_access
+        print(f"Arjun2: {app.dependency_overrides.get(get_data_access)}")
+        print(f"Arjun4: {await override_get_data_access()}")
         async with lifespan(app):  # Use the lifespan context manager
             self.client = TestClient(app)
-            self.mock_db = AsyncMock(spec=DataAccess)
-            self.mock_aio = AsyncMock()
-
-            self.session_id = str(uuid.uuid4())
-            self.framework_id = "test_framework"
-            self.step_id = "test_step"
-            self.session = Session(id=self.session_id, created_at=datetime.now(timezone.utc), current_step_id=self.step_id, framework_id=self.framework_id)
-            self.session_db_model = SessionDBModel(session=self.session)
-            self.framework_result = FrameworkResult(
-                id=self.framework_id,
-                step_results=[FrameworkStepResult(id=self.step_id, result=[ResultOptions(result_options=["option1"], selected_option=0)])],
-            )
-            self.job = Job(
-                id=str(uuid.uuid4()),
-                session_id=self.session_id,
-                created_at=datetime.now(timezone.utc),
-                status=JobStatus.COMPLETED,
-                progress=100,
-                tasks_completed=[self.step_id],
-                result={}
-            )
-            self.job_db_model = JobDBModel(job=self.job)
-
-            async def override_get_data_access():
-                return self.mock_db
-
-            app.dependency_overrides[get_data_access] = override_get_data_access
-            print(f"Arjun2: {app.dependency_overrides.get(get_data_access)}")
-            print(f"Arjun4: {await override_get_data_access()}")
 
     async def asyncTearDown(self):
         app.dependency_overrides.clear()
