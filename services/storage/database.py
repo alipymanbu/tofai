@@ -12,13 +12,17 @@ from enum import Enum
 
 class ModelType(str, Enum):
     SESSIONS = "sessions"
-    JOBS = "JOBS"
+    JOBS = "jobs"
 
 class DataAccess:
     def __init__(self, settings: Settings):
         self.mongo_client = motor.motor_asyncio.AsyncIOMotorClient(settings.MONGODB_URI)
         self.mongo_db = self.mongo_client[settings.DATABASE_NAME]
-        self.redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
+        self.redis_client = redis.Redis(
+            host=settings.REDIS_HOST, port=settings.REDIS_PORT,
+            username=settings.REDIS_USER, 
+            password=settings.REDIS_SECRET
+        )
         self.session_collection = self.mongo_db[ModelType.SESSIONS]
         self.job_collection = self.mongo_db[ModelType.JOBS]
 

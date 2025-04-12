@@ -32,9 +32,9 @@ class LMFacade:
         LMs.TTS_SERVICE: OpenAI() if os.environ.get("OPENAI_API_KEY") else None
       }
     except Exception as e:
-      logger.error(f"Error initializing LM clients: {e}")
-      # Fallback to minimal initialization
-      self._lm_clients = {}
+      err_msg = f"Error initializing LM clients: {e}"
+      logger.error(err_msg)
+      raise ValueError(err_msg)
 
   # Invoke LLM for text to text inference.
   def invoke_t2t(self, prompt: str) -> str:
