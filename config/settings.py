@@ -1,6 +1,6 @@
 import os
 from pydantic_settings import BaseSettings
-from config.secrets import MONGO_DB_CREDS, AWS_CREDS, REDIS_CREDS
+from config.secrets import MONGO_DB_CREDS, AWS_CREDS, REDIS_CREDS, GEMINI_CREDS, ELEVEN_CREDS
 
 class Settings(BaseSettings):
     # Server
@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     # AI Services
     CLAUDE_API_KEY: str = os.getenv("CLAUDE_API_KEY", "")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
+    GEMINI_API_PROJECT_NUMBER: int = os.getenv("GEMINI_API_PROJECT_NUMBER", GEMINI_CREDS["project"])
+    GEMINI_API_SECRET: str = os.getenv("GEMINI_API_SECRET", GEMINI_CREDS["secret"])
+    ELEVEN_TTS_SECRET: str = os.getenv("ELEVEN_TTS_SECRET", ELEVEN_CREDS["secret"])
+    
     
     # Storage
     S3_BUCKET: str = os.getenv("S3_BUCKET", "tofai-media")

@@ -11,7 +11,6 @@ class MediaType(str, Enum):
     SPEECH = "speech"
     MUSIC = "music"
 
-
 class S3MediaManager:
     """
     A class for managing media files in an Amazon S3 bucket.
@@ -142,23 +141,8 @@ class S3MediaManager:
             upload_args["Expires"] = ttl
 
         try:
-            if isinstance(file_data, str):
-                # If file_data is a string, assume it's a file path
-                if not os.path.exists(file_data):
-                    print(f"Error: File not found at {file_data}")
-                    return False
-                self._s3.upload_file(file_data, **upload_args)
-                print(
-                    f"File {file_data} uploaded to s3://{bucket_name}/{s3_key}"
-                )
-            elif isinstance(file_data, bytes):
-                # If file_data is bytes, upload directly
-                self._s3.put_object(Body=file_data, **upload_args)
-                print(f"Bytes uploaded to s3://{bucket_name}/{s3_key}")
-            else:
-                raise ValueError(
-                    "file_data must be either a file path (str) or bytes"
-                )
+            self._s3.put_object(Body=file_data, **upload_args)
+            print(f"Bytes uploaded to s3://{bucket_name}/{s3_key}")
             return True
         except Exception as e:
             print(f"Error uploading to S3: {e}")
