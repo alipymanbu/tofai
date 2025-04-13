@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     S3_REGION: str = os.getenv("S3_REGION", "us-east-1")
     AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", AWS_CREDS["key"])
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", AWS_CREDS["secret"])
-    AWS_REGION: str = os.getenv("AWS_REGION", "us-west-2")
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-2")
     
     # Celery settings
     CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/1")

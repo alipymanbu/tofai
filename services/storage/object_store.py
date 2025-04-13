@@ -1,6 +1,8 @@
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
+from botocore.config import Config
 import os
+import logging
 from typing import Optional, Union
 from enum import Enum
 from config.settings import Settings  # Import the Settings class
@@ -40,7 +42,12 @@ class S3MediaManager:
             region_name=self.region_name,
             aws_access_key_id=self.aws_access_key_id,
             aws_secret_access_key=self.aws_secret_access_key,
+            config=Config(signature_version='s3v4')
         )
+    
+    @classmethod
+    def create_key(cls, session_id: str, framework_step_id: str, index: int):
+        return f"{session_id}-{framework_step_id}-{index}"
 
     def _check_connection(self):
         """
@@ -110,7 +117,7 @@ class S3MediaManager:
 
     def upload_file(
         self,
-        file_data: Union[str, bytes],
+        file_data: bytes,
         media_type: MediaType,
         filename: str,
         ttl: Optional[int] = None,  # Add the ttl parameter
@@ -119,8 +126,7 @@ class S3MediaManager:
         Uploads a file to the S3 bucket. This version can upload from a file path or from bytes.
 
         Args:
-            file_data: The data to upload. This can be either a file path (string)
-                       or the file content as bytes.
+            file_data: The data to upload.
             media_type: The type of media being uploaded (e.g., MediaType.IMAGE).
             filename: The name to use for the file in S3.
             ttl: Time-to-Live in seconds.  Optional.  If provided, the uploaded
@@ -136,16 +142,16 @@ class S3MediaManager:
         bucket_name = self.get_bucket_name(media_type)
         s3_key = self._generate_s3_key(filename)
         upload_args = {"Bucket": bucket_name, "Key": s3_key}
-
+        # TODO: This ttl doesn't WAI. Implement liefecyle rules on buckets.
         if ttl is not None:
             upload_args["Expires"] = ttl
 
         try:
             self._s3.put_object(Body=file_data, **upload_args)
-            print(f"Bytes uploaded to s3://{bucket_name}/{s3_key}")
+            logging.info(f"Bytes uploaded to s3://{bucket_name}/{s3_key}")
             return True
         except Exception as e:
-            print(f"Error uploading to S3: {e}")
+            logging.error(f"Error uploading to S3: {e}")
             return False
 
     def get_file_url(self, filename: str, media_type: MediaType) -> Optional[str]:
@@ -168,13 +174,12 @@ class S3MediaManager:
         try:
             url = self._s3.generate_presigned_url(
                 "get_object",
-                Bucket=bucket_name,
-                Key=s3_key,
+                Params={"Bucket": bucket_name, "Key": s3_key},
                 ExpiresIn=3600,  # URL expires in 1 hour (you can adjust)
             )
             return url
         except ClientError as e:
-            print(f"Error generating URL for {filename}: {e}")
+            logging.info(f"Error generating URL for {filename}: {e}")
             return None
 
     def delete_file(self, filename: str, media_type: MediaType) -> bool:
@@ -195,10 +200,10 @@ class S3MediaManager:
         s3_key = self._generate_s3_key(filename)
         try:
             self._s3.delete_object(Bucket=bucket_name, Key=s3_key)
-            print(f"File s3://{bucket_name}/{s3_key} deleted.")
+            logging.info(f"File s3://{bucket_name}/{s3_key} deleted.")
             return True
         except Exception as e:
-            print(f"Error deleting {filename} from S3: {e}")
+            logging.info(f"Error deleting {filename} from S3: {e}")
             return False
 
     def list_files(self, media_type: MediaType, prefix: Optional[str] = None) -> list[str]:
@@ -230,7 +235,7 @@ class S3MediaManager:
                     files.append(obj["Key"])  # Return the full key (path)
             return files
         except Exception as e:
-            print(f"Error listing files in S3 with prefix {prefix}: {e}")
+            logging.info(f"Error listing files in S3 with prefix {prefix}: {e}")
             return []
 
     def does_file_exist(self, filename: str, media_type: MediaType) -> bool:
@@ -257,10 +262,10 @@ class S3MediaManager:
                 return False  # File not found
             else:
                 # Handle other errors (e.g., permission issues)
-                print(f"Error checking if file exists: {e}")
+                logging.info(f"Error checking if file exists: {e}")
                 return False
         except Exception as e:
-            print(f"Error checking file existence: {e}")
+            logging.info(f"Error checking file existence: {e}")
             return False
 
     def update_ttl(self, filename: str, media_type: MediaType, ttl: int) -> bool:
@@ -290,9 +295,9 @@ class S3MediaManager:
                 CopySource=copy_source,
                 Expires=ttl,  # Set the new TTL here
             )
-            print(f"TTL for s3://{bucket_name}/{s3_key} updated to {ttl} seconds.")
+            logging.info(f"TTL for s3://{bucket_name}/{s3_key} updated to {ttl} seconds.")
             return True
         except Exception as e:
-            print(f"Error updating TTL for {filename}: {e}")
+            logging.info(f"Error updating TTL for {filename}: {e}")
             return False
 

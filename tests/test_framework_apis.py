@@ -47,8 +47,6 @@ class TestFrameworkAPI(unittest.IsolatedAsyncioTestCase):
             return self.mock_db
         app.dependency_overrides.clear()
         app.dependency_overrides[get_data_access] = override_get_data_access
-        print(f"Arjun2: {app.dependency_overrides.get(get_data_access)}")
-        print(f"Arjun4: {await override_get_data_access()}")
         async with lifespan(app):  # Use the lifespan context manager
             self.client = TestClient(app)
 
@@ -56,7 +54,6 @@ class TestFrameworkAPI(unittest.IsolatedAsyncioTestCase):
         app.dependency_overrides.clear()
 
     async def test_generate_step_options_success(self):
-        print(f"Arjun: {app.dependency_overrides}")
         self.mock_db.get_session.return_value = self.session_db_model
         self.mock_aio.run.return_value = {"framework_result": self.framework_result, "current_step_id": "next_step"}
         self.mock_db.insert_job.return_value = None
