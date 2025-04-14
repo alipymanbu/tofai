@@ -8,9 +8,10 @@ import json
 import os
 from pathlib import Path
 
-from services.ai.framework_model import Framework, FrameworkStep, Prompt
+from services.ai.framework_model import Framework, FrameworkStep, Prompt, MediaUri
 from services.ai.lm_facade import LMFacade
 from services.ai.agents import agents_list
+from services.storage.object_store import S3MediaManager, MediaType
 
 class Generator:
     """
@@ -27,6 +28,7 @@ class Generator:
         """
         self.framework = self._load_framework(framework_id)
         self.lm_facade = lm_facade or LMFacade()
+        self.s3 = S3MediaManager(framework_id=framework_id)
         
     def _load_framework(self, framework_id: str) -> Framework:
         """
@@ -139,19 +141,41 @@ Now, your turn:
             params_str=params_str
         )
 
-    def generate_options_from_prompt(self, step: FrameworkStep, param_values: Dict[str, str]) -> List[List[Union[str, bytes]]]:
+    def put_media_to_s3_and_get_url(self, data: bytes, type: MediaType, session_id: str, step_id: str, index: int) -> MediaUri:
+        s3_filename = S3MediaManager.create_key(session_id="", framework_step_id=step_id, index=index)
+        self.s3.upload_file(
+            file_data=data,
+            media_type=type,
+            filename=s3_filename
+        )
+        file_url = self.s3.get_file_url(filename=s3_filename, media_type=type)
+        return MediaUri(uri=file_url)
+
+    def generate_options_from_prompt(self, step: FrameworkStep, param_values: Dict[str, str], session_id: str) -> List[List[Union[str, MediaUri]]]:
         result = []
-        for prompt in step.prompts:
+        for idx ,prompt in enumerate(step.prompts):
             # Generate the full prompt
             full_prompt = self.generate_prompt(prompt, param_values)
             if prompt.expected_output_modality == "IMAGE":
                 # For image generation
                 image_data = self.lm_facade.invoke_t2i(full_prompt)
-                result.append(image_data)
+                result.append(self.put_media_to_s3_and_get_url(
+                    data=image_data,
+                    type=MediaType.IMAGE,
+                    session_id=session_id,
+                    step_id=step.id,
+                    index=idx
+                ))
             elif prompt.expected_output_modality == "AUDIO":
                 # For audio generation
                 audio_data = self.lm_facade.invoke_t2s(full_prompt)
-                result.append(audio_data)
+                result.append(self.put_media_to_s3_and_get_url(
+                    data=audio_data,
+                    type=MediaType.SPEECH,
+                    session_id=session_id,
+                    step_id=step.id,
+                    index=idx
+                ))
             else:  # Default to TEXT
                 # Generate text options using the LM facade
                 response = self.lm_facade.invoke_t2t(full_prompt)
@@ -164,13 +188,14 @@ Now, your turn:
             result.append(agents_list.get_agent_call(agent.id, {"lm_facade": self.lm_facade, "param_values": param_values}))
         return result
     
-    def generate_options(self, step_id: str, param_values: Dict[str, str]) -> List[List[Union[str, bytes]]]:
+    def generate_options(self, step_id: str, param_values: Dict[str, str], session_id: str) -> List[List[Union[str, bytes]]]:
         """
         Generate options for a step.
         
         Args:
             step_id: The ID of the step
             param_values: The parameter values to use
+            session_id: Id of user session
             
         Returns:
             List[List[Union[str, bytes]]]: LLM result from each prompt in the list. The result itself is a list of options (can be text, images, or audio data)
@@ -183,7 +208,7 @@ Now, your turn:
             raise ValueError(f"Step '{step_id}' has no prompts or agents.")
         
         result = []
-        result += self.generate_options_from_prompt(step=step, param_values=param_values)
+        result += self.generate_options_from_prompt(step=step, param_values=param_values, session_id=session_id)
         result += self.generate_options_from_agent(step=step, param_values=param_values)
         return result
 

@@ -157,7 +157,7 @@ class AIOrchestrator:
         step = self.generator.get_step_by_id(state.current_step_id)
         param_values = self._get_latest_param_values(step=step, state=state)
         # Generate options
-        results = self.generator.generate_options(state.current_step_id, param_values)
+        results = self.generator.generate_options(state.current_step_id, param_values, session_id=state.session_id)
         framework_result = None
         for result in results:
             options = ResultOptions(result_options=result)

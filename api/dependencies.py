@@ -10,5 +10,5 @@ async def initialize_data_access():
         data_access_instance = DataAccess(settings=settings)
     print(f"Arjun3: {data_access_instance}")
 
-async def get_data_access():
+async def get_data_access() -> DataAccess:
     return data_access_instance
