@@ -7,6 +7,27 @@ from datetime import datetime
 from services.ai.framework_model import FrameworkResult
 from enum import Enum
 
+# ============ User Models ============
+
+class User(BaseModel):
+    """Model for a user in the system."""
+    id: str
+    username: str
+    email: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    @classmethod
+    def from_cognito_claims(cls, claims: Dict[str, Any]) -> "User":
+        """Create a User instance from Cognito claims."""
+        return cls(
+            id=claims.get("sub"),
+            username=claims.get("cognito:username") or claims.get("username") or claims.get("email"),
+            email=claims.get("email"),
+            created_at=datetime.now(),
+            updated_at=datetime.now()
+        )
+
 # ============ Session Models ============
 
 class SessionStatus(int, Enum):
