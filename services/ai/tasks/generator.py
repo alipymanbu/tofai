@@ -9,6 +9,7 @@ from pathlib import Path
 
 from services.ai.framework_model import Framework, FrameworkStep, Prompt
 from services.ai.lm_facade import LMFacade
+from services.ai.agents import agents_list
 
 class Generator:
     """
@@ -136,27 +137,8 @@ Now, your turn:
             few_shot_str=few_shot_str,
             params_str=params_str
         )
-    
-    def generate_options(self, step_id: str, param_values: Dict[str, str]) -> List[List[Union[str, bytes]]]:
-        """
-        Generate options for a step.
-        
-        Args:
-            step_id: The ID of the step
-            param_values: The parameter values to use
-            
-        Returns:
-            List[List[Union[str, bytes]]]: LLM result from each prompt in the list. The result itself is a list of options (can be text, images, or audio data)
-        """
-        step = self.get_step_by_id(step_id)
-        if not step:
-            raise ValueError(f"Step with ID '{step_id}' not found.")
-        
-        if not step.prompts:
-            raise ValueError(f"Step '{step_id}' has no prompts.")
-        
-        # Use the first prompt in the step
-        prompt = step.prompts[0]
+
+    def generate_options_from_prompt(self, step: FrameworkStep, param_values: Dict[str, str]) -> List[List[Union[str, bytes]]]:
         result = []
         for prompt in step.prompts:
             # Generate the full prompt
@@ -173,6 +155,35 @@ Now, your turn:
                 # Generate text options using the LM facade
                 response = self.lm_facade.invoke_t2t(full_prompt)
                 result.append(self._parse_options(response, prompt.options_delimiter))
+        return result
+
+    def generate_options_from_agent(self, step: FrameworkStep, param_values: Dict[str, str]) -> List[List[Union[str, bytes]]]:
+        result = []
+        for agent in step.agents:
+            result.append(agents_list.get_agent_call(agent.id, {"lm_facade": self.lm_facade, "param_values": param_values}))
+        return result
+    
+    def generate_options(self, step_id: str, param_values: Dict[str, str]) -> List[List[Union[str, bytes]]]:
+        """
+        Generate options for a step.
+        
+        Args:
+            step_id: The ID of the step
+            param_values: The parameter values to use
+            
+        Returns:
+            List[List[Union[str, bytes]]]: LLM result from each prompt in the list. The result itself is a list of options (can be text, images, or audio data)
+        """
+        step = self.get_step_by_id(step_id)
+        if not step:
+            raise ValueError(f"Step with ID '{step_id}' not found.")
+        
+        if not step.prompts and not step.agents:
+            raise ValueError(f"Step '{step_id}' has no prompts or agents.")
+        
+        result = []
+        result += self.generate_options_from_prompt(step=step, param_values=param_values)
+        result += self.generate_options_from_agent(step=step, param_values=param_values)
         return result
 
     def get_selection_for_step_id(self, step_id: str) -> str:

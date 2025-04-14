@@ -1,6 +1,6 @@
 import os
 from pydantic_settings import BaseSettings
-from config.secrets import MONGO_DB_CREDS, AWS_CREDS, REDIS_CREDS, GEMINI_CREDS, ELEVEN_CREDS
+from config.secrets import MONGO_DB_CREDS, AWS_CREDS, REDIS_CREDS, GEMINI_CREDS, ELEVEN_CREDS, GOOGLE_SEARCH_CREDS
 
 class Settings(BaseSettings):
     # Server
@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     GEMINI_API_PROJECT_NUMBER: int = os.getenv("GEMINI_API_PROJECT_NUMBER", GEMINI_CREDS["project"])
     GEMINI_API_SECRET: str = os.getenv("GEMINI_API_SECRET", GEMINI_CREDS["secret"])
     ELEVEN_TTS_SECRET: str = os.getenv("ELEVEN_TTS_SECRET", ELEVEN_CREDS["secret"])
+
+    # APIs
+    GOOGLE_SEARCH_API_KEY: str = os.getenv("GOOGLE_SEARCH_API_KEY", GOOGLE_SEARCH_CREDS["secret"])
+    GOOGLE_CSE_ID: str = os.getenv("GOOGLE_CSE_ID", GOOGLE_SEARCH_CREDS["cse_id"])
+    
     
     
     # Storage

@@ -11,10 +11,21 @@
       "description": "Collect initial inputs like the brand name and website link",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "user_persona",
-      "state_update_mapping": {
-        "brand_link": "brand_link"
-      }
+      "next_step": "research_link"
+    },
+    {
+      "id": "link_research",
+      "name": "Link Research",
+      "description": "Research a given brand link",
+      "requires_user_input": false,
+      "prompts": [],
+      "agents": [
+        {
+          "id": "brand_analyzer",
+          "parameters": ["Link"]
+        }
+      ],
+      "next_step": "user_persona"
     },
     {
       "id": "user_persona",
@@ -34,7 +45,7 @@
               ]
             }
           ],
-          "parameters": ["Link"],
+          "parameters": ["Link Research"],
           "option_count": 3,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT"
@@ -71,7 +82,7 @@
               ]
             }
           ],
-          "parameters": ["Link", "User Persona"],
+          "parameters": ["Link Research", "User Persona"],
           "option_count": 3,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT"
@@ -105,7 +116,7 @@
               ]
             }
           ],
-          "parameters": ["Link", "User Persona", "Content Spaces"],
+          "parameters": ["Link Research", "User Persona", "Content Spaces"],
           "option_count": 3,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT"
@@ -139,7 +150,7 @@
               ]
             }
           ],
-          "parameters": ["Link", "User Persona", "Content Spaces", "Personality and Tonality"],
+          "parameters": ["Link Research", "User Persona", "Content Spaces", "Personality and Tonality"],
           "option_count": 3,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT"

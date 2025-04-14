@@ -5,6 +5,7 @@ This module defines Pydantic models for the workflow steps and prompt generation
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Union, Any, Literal
 from enum import Enum
+from services.ai.agents import agents_list
 
 class OutputModality(str, Enum):
     """
@@ -59,6 +60,9 @@ class Prompt(BaseModel):
     output_instruction: Optional[str] = f"Give me {option_count} options, add `{options_delimiter}` between the options. Do not output anything else."
     expected_output_modality: OutputModality = OutputModality.TEXT
 
+class AgentStep(BaseModel):
+    id: agents_list.AgentId
+    parameters: List[str]
 
 class FrameworkStep(BaseModel):
     """
@@ -80,6 +84,7 @@ class FrameworkStep(BaseModel):
     name: str
     description: str
     prompts: List[Prompt]
+    agents: List[AgentStep] = []
     next_step: Optional[str] = None
     requires_user_input: bool = False
     require_user_input_for_step_id: str = ""

@@ -12,6 +12,7 @@ from elevenlabs.client import ElevenLabs
 from config.settings import settings
 from google import genai
 from google.genai import types
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +41,16 @@ class LMFacade:
       err_msg = f"Error initializing LM clients: {e}"
       logger.error(err_msg)
       raise ValueError(err_msg)
+
+  def get_langchain_llm(self) -> Any:
+    """
+    Returns a Langchain-compatible LLM instance based on the currently selected text-to-text model.
+    """
+    if self._text_to_text == LMs.GEMINI_2_0_FLASH:
+        return ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=settings.GEMINI_API_SECRET)
+    else:
+        raise ValueError(f"No Langchain LLM configured for {self._text_to_text}")
+
 
   # Invoke LLM for text to text inference.
   def invoke_t2t(self, prompt: str) -> str:

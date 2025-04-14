@@ -137,6 +137,8 @@ class AIOrchestrator:
     params = set()
     for prompt in step.prompts:
         params = params.union(set(prompt.parameters))
+    for agent in step.agents:
+        params = params.union(set(agent.parameters))
     return state.get_param_values(params=params, framework_steps=self.generator.framework.steps)
 
   def _generate_options(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
