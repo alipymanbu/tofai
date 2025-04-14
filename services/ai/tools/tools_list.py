@@ -1,3 +1,6 @@
+"""Agentic tools.
+NO_AI_CODE=True
+"""
 from enum import Enum
 from typing import Any, Union
 from langchain.tools import tool

@@ -1,6 +1,7 @@
 """
 Config-driven generator for AI prompts.
 This module provides a mechanism to generate prompts from configuration files.
+NO_AI_CODE=True
 """
 from typing import Dict, List, Optional, Any, Union
 import json

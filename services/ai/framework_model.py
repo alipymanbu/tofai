@@ -1,6 +1,7 @@
 """
 Config-driven framework for AI orchestration.
 This module defines Pydantic models for the workflow steps and prompt generation.
+NO_AI_CODE=True
 """
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Union, Any, Literal

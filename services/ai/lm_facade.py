@@ -1,3 +1,5 @@
+"""NO_AI_CODE=True
+"""
 from enum import Enum
 from openai import OpenAI
 from typing import Tuple, Any, Union, Literal
