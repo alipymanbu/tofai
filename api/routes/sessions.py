@@ -7,7 +7,7 @@ from services.storage.database import DataAccess
 from api.models import Session, SessionStatus, User
 from models.session_db import SessionDBModel
 import logging
-from api.dependencies import get_data_access
+from api.dependency.data import get_data_access
 from api.dependency.auth import get_current_user
 
 router = APIRouter()

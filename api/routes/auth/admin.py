@@ -6,7 +6,7 @@ from typing import Dict, Any, List
 
 from api.dependency.auth import get_current_user, has_role
 from services.storage.database import DataAccess
-from api.dependencies import get_data_access
+from api.dependency.data import get_data_access
 from api.models import User
 
 router = APIRouter()

@@ -16,7 +16,9 @@ from services.ai import ai_orchestrator
 from services.ai.framework_model import ResultOptions, FrameworkResult, FrameworkStepResult
 from api.models import GenerateOptionsRequest, GenerateOptionsResponse, InitInputRequest, JobStatus, Job, UserResponse
 from models.job_db import JobDBModel
-from api.dependencies import get_data_access
+from api.dependency.data import get_data_access
+from api.dependency.auth import get_current_user
+from api.models import User
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -25,6 +27,7 @@ router = APIRouter()
 async def generate_step_options(
     request: GenerateOptionsRequest,
     session_id: Optional[str] = Query(..., description="Session ID to update"),
+    user: User = Depends(get_current_user),
     db: DataAccess = Depends(get_data_access)
 ):
     """
@@ -91,6 +94,7 @@ async def select_step_option(
     session_id: str = Query(..., description="Session ID to update"),
     option_index: int = Query(..., ge=0, description="Index of the selected option"),
     result_index: int = Query(0, ge=0, description="Index of the result group to select from"),
+    user: User = Depends(get_current_user),
     db: DataAccess = Depends(get_data_access)
 ):
     """
@@ -164,6 +168,7 @@ async def select_step_option(
 async def get_initial_input(
     initial_input: InitInputRequest,
     session_id: str = Query(..., description="Session ID to update"),
+    user: User = Depends(get_current_user),
     db: DataAccess = Depends(get_data_access)
 ):
     """

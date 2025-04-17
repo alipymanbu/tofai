@@ -11,7 +11,7 @@ from api.routes import sessions, jobs, framework
 from api.routes.auth import router as auth_router
 from services.storage.database import DataAccess
 from config.settings import settings
-from api.dependencies import initialize_data_access, get_data_access
+from api.dependency.data import initialize_data_access, get_data_access
 
 data_access_instance: Optional[DataAccess] = None
 

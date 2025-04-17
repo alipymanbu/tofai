@@ -5,7 +5,9 @@ import logging
 
 from services.storage.database import DataAccess
 from api.models import Job
-from api.dependencies import get_data_access
+from api.dependency.data import get_data_access
+from api.dependency.auth import get_current_user
+from api.models import User
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -14,7 +16,10 @@ class JobResponse(Job):
     pass
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
-async def get_job_status(job_id: str, db: DataAccess = Depends(get_data_access)):
+async def get_job_status(
+    job_id: str, 
+    user: User = Depends(get_current_user),
+    db: DataAccess = Depends(get_data_access)):
     """Check the status of an asynchronous job."""
     try:
         job_db_model = await db.get_job(job_id)
