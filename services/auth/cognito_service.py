@@ -26,6 +26,7 @@ class CognitoService:
         self.domain = auth_settings.COGNITO_DOMAIN
         self.redirect_uri = auth_settings.COGNITO_REDIRECT_URL
         self.logout_uri = auth_settings.COGNITO_LOGOUT_URL
+        self.scope = auth_settings.COGNITO_SCOPE
         
         # Initialize boto3 client
         self.client = boto3.client('cognito-idp', region_name=self.region)
@@ -49,7 +50,7 @@ class CognitoService:
         params = {
             "client_id": self.client_id,
             "response_type": "code",
-            "scope": "openid email profile",
+            "scope": self.scope,
             "redirect_uri": self.redirect_uri
         }
         
@@ -140,7 +141,7 @@ class CognitoService:
                 return None
                 
             # Verify audience (client ID)
-            if claims['client_id'] != self.client_id and claims.get('aud') != self.client_id:
+            if claims.get('aud') != self.client_id:
                 logger.error("Token audience mismatch")
                 return None
                 

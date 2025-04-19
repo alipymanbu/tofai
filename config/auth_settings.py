@@ -1,17 +1,19 @@
 from pydantic_settings import BaseSettings
+from config.secrets import AUTH_CREDS
 
 class AuthSettings(BaseSettings):
-    COGNITO_REGION: str = "us-east-1"  # Change to your region
-    COGNITO_USER_POOL_ID: str = ""  # Fill from AWS Console
-    COGNITO_APP_CLIENT_ID: str = ""  # Fill from AWS Console
-    COGNITO_APP_CLIENT_SECRET: str = ""  # Fill from AWS Console
-    COGNITO_DOMAIN: str = ""  # Fill from AWS Console
-    COGNITO_REDIRECT_URL: str = "http://localhost:8000/api/auth/callback"
-    COGNITO_LOGOUT_URL: str = "http://localhost:8000"
+    COGNITO_REGION: str = AUTH_CREDS["region"]  # Change to your region
+    COGNITO_USER_POOL_ID: str = AUTH_CREDS["user_pool_id"]  # Fill from AWS Console
+    COGNITO_APP_CLIENT_ID: str = AUTH_CREDS["client_id"]  # Fill from AWS Console
+    COGNITO_APP_CLIENT_SECRET: str = AUTH_CREDS["client_secret"] # Fill from AWS Console
+    COGNITO_DOMAIN: str = AUTH_CREDS["domain"]  # Fill from AWS Console
+    COGNITO_REDIRECT_URL: str = AUTH_CREDS["redirect_url"]  # Fill from AWS Console
+    COGNITO_LOGOUT_URL: str = AUTH_CREDS["logout_url"]  # Fill from AWS Console
+    COGNITO_SCOPE: str = AUTH_CREDS["scope"]  # Fill from AWS Console
     
     # JWT configs
     COGNITO_ALGORITHMS: list = ["RS256"]
-    COGNITO_JWKS_URI: str = ""  # Will be populated during initialization
+    COGNITO_JWKS_URI: str = AUTH_CREDS["token_signing_url"]  # Will be populated during initialization
     
     def __init__(self, **data):
         super().__init__(**data)

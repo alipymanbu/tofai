@@ -1,9 +1,7 @@
 """NO_AI_CODE=True
 """
 from enum import Enum
-from openai import OpenAI
 from typing import Tuple, Any, Union, Literal
-from langchain_openai import ChatOpenAI
 from langchain_ollama import ChatOllama
 import os
 import base64

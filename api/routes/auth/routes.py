@@ -49,9 +49,10 @@ async def callback(request: Request, response: Response, code: str, state: Optio
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=True,
-            samesite="lax",
-            max_age=3600  # 1 hour
+            secure=True,  # Set to False in development if not using HTTPS
+            samesite="lax",  # Use "none" if cross-domain in production with HTTPS
+            max_age=3600,  # 1 hour
+            domain=None,  # Let the browser set it appropriately
         )
         
         response.set_cookie(
@@ -74,7 +75,7 @@ async def callback(request: Request, response: Response, code: str, state: Optio
             )
         
         # Redirect to the state url or default
-        redirect_url = state or "/"
+        redirect_url = state or "http://localhost:3000/"
         return RedirectResponse(redirect_url)
         
     except Exception as e:
@@ -84,6 +85,7 @@ async def callback(request: Request, response: Response, code: str, state: Optio
 @router.get("/user")
 async def get_current_user(request: Request):
     """Get the current user from the ID token."""
+    print(request)
     id_token = request.cookies.get("id_token")
     
     if not id_token:
