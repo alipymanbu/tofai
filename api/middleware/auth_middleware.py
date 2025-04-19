@@ -27,11 +27,13 @@ class AuthMiddleware:
             "/docs",
             "/redoc",
             "/openapi.json",
+            "/api/auth/user",
         ]
     
     async def __call__(
         self, scope: Scope, receive: Receive, send: Send
     ):
+        # Check if the request is HTTP
         if scope["type"] != "http":
             # If it's not HTTP, just forward the request
             await self.app(scope, receive, send)
