@@ -25,7 +25,7 @@ class AIOrchestrator:
   AI Orchestrator for brand awareness video creation using a config-driven framework.
   """
 
-  def __init__(self, framework_id: str = "brand_awareness_video", lm_facade: Union[LMFacade, None] = None):
+  def __init__(self, framework_id: str = "brand_awareness_video", lm_facade: Union[LMFacade, None] = None, is_local_test: bool = False):
     """
     Initialize the AI orchestrator.
     
@@ -36,6 +36,7 @@ class AIOrchestrator:
     self.lm_facade = lm_facade or LMFacade()
     self.generator = Generator(framework_id, self.lm_facade)
     self.graph = self._orchestrate_graph()
+    self.is_local_test = is_local_test
 
   async def run(self, session: Session, current_step_id: str = None) -> Dict[str, Any]:
     """
@@ -51,7 +52,7 @@ class AIOrchestrator:
         initial_state = VideoCreationState(
             session_id=session.id,
             framework_id=self.framework_id,
-            current_step_id=current_step_id or self.generator.framework.initial_step
+            current_step_id=self.generator.framework.initial_step
         )
         
         # Add existing framework result if available
@@ -64,6 +65,7 @@ class AIOrchestrator:
 
         # Run the graph
         app = self.graph.compile()
+        # config = {"recursion_limit": 5}
         result = await app.ainvoke(initial_state)
         return result
     except Exception as e:
@@ -82,6 +84,14 @@ class AIOrchestrator:
     # Get all steps from the framework
     steps = []
     initial_step_id = None
+
+    # Callable to get the next node or end.
+    def next_node_or_end(state: VideoCreationState) -> str:
+        print(f"next_node_or_end: {state.current_step_id}")
+        if state.current_step_id:
+           return state.current_step_id
+        return END
+
     try:
         # Get the framework
         framework = self.generator.framework
@@ -100,14 +110,9 @@ class AIOrchestrator:
             graph.add_node(step.id, handler)
         # Add conditional edges for each node
         for step in steps:
-            next_step = step.next_step
-            if step.id == self.generator.framework.final_step:
-               next_step = END
-            graph.add_edge(
-                step.id,
-                next_step
-            )
+            graph.add_conditional_edges(step.id, next_node_or_end)
         graph.set_entry_point(initial_step_id)
+        graph.set_finish_point(framework.final_step)
     except Exception as e:
         raise ValueError(f"Error building graph from framework: {e}")
     return graph
@@ -127,18 +132,21 @@ class AIOrchestrator:
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
     if step_result:
         return {"current_step_id": next_step}
+    if not self.is_local_test:
+        return {"current_step_id": END}
     print("Let's create a stunning brand awareness video!")
     brand_link = input("Got a link to your brand's website or online presence? ")
     result_options = ResultOptions(result_options=[brand_link], selected_option=0)
     framework_result = state.set_step_result(step_id=state.current_step_id, result_options=result_options)
     return {"framework_result": framework_result, "current_step_id": next_step}
 
-  def _get_latest_param_values(self, step: FrameworkStep, state:VideoCreationState):
+  def _get_latest_param_values(self, step: FrameworkStep, state:VideoCreationState) -> dict[str, Union[str, List[str]]]:
     params = set()
     for prompt in step.prompts:
         params = params.union(set(prompt.parameters))
     for agent in step.agents:
         params = params.union(set(agent.parameters))
+    print(f"params: {params}")
     return state.get_param_values(params=params, framework_steps=self.generator.framework.steps)
 
   def _generate_options(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
@@ -151,7 +159,10 @@ class AIOrchestrator:
     Returns:
         VideoCreationState: The updated state
     """
+    step_result = state.get_step_result(step_id=state.current_step_id, framework_result=state.framework_result)
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
+    if step_result:
+        return {"current_step_id": next_step}
     try:
         # Get the current step configuration
         step = self.generator.get_step_by_id(state.current_step_id)
@@ -161,6 +172,8 @@ class AIOrchestrator:
         framework_result = None
         for result in results:
             options = ResultOptions(result_options=result)
+            if len(result) == 1:
+                options.selected_option = 0  # Select the first option by default, if only one is available.
             framework_result = state.set_step_result(state.current_step_id, result_options=options, intermediate_framework_result=framework_result)
         return {"current_step_id": next_step, "framework_result": framework_result}
     except Exception as e:
@@ -178,13 +191,16 @@ class AIOrchestrator:
     Returns:
         VideoCreationState: The updated state
     """
-    selection_step_result = state.get_step_result(step_id=state.current_step_id, framework_result=state.framework_result)
+    selection_for = self.generator.get_selection_for_step_id(step_id=state.current_step_id)
+    selection_step_result = state.get_step_result(step_id=selection_for, framework_result=state.framework_result)
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
-    if selection_step_result:
+    # print(f"next_step: {next_step} selection_step_result: {selection_step_result}")
+    if selection_step_result and all([opt.selected_option >= 0 for opt in selection_step_result.result]):
         return {"current_step_id": next_step}
+    if not self.is_local_test:
+        return {"current_step_id": END}
     try:
       print(f"\nChoose an option for '{state.current_step_id}':")
-      selection_for = self.generator.get_selection_for_step_id(step_id=state.current_step_id)
       step_result = state.get_step_result(step_id=selection_for, framework_result=state.framework_result)
       for idx, opt in enumerate(state.get_options_for_result(step_result=step_result, result_index=0), 1):
           print(f"{idx}. {opt}")

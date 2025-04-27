@@ -10,8 +10,26 @@ from pathlib import Path
 
 from services.ai.framework_model import Framework, FrameworkStep, Prompt, MediaUri
 from services.ai.lm_facade import LMFacade
-from services.ai.agents import agents_list
+from services.ai.agents import agents_getter
 from services.storage.object_store import S3MediaManager, MediaType
+import hashlib
+import magic
+
+def detect_file_type_from_bytes(byte_data):
+    # Create a Magic instance
+    mime_magic = magic.Magic(mime=True)
+    # Use from_buffer to analyze bytes directly
+    file_type = mime_magic.from_buffer(byte_data)
+    return file_type
+
+def generate_md5_hash(input_string):
+    # Create an MD5 hash object
+    md5_hash = hashlib.md5()
+    # Update the hash object with the bytes of the input string
+    md5_hash.update(input_string.encode('utf-8'))
+    # Get the hexadecimal representation of the hash
+    hashed_string = md5_hash.hexdigest()
+    return hashed_string
 
 class Generator:
     """
@@ -64,7 +82,7 @@ class Generator:
         # Create the framework
         return Framework.model_validate(config_data)
     
-    def get_step_by_id(self, step_id: str) -> Optional[FrameworkStep]:
+    def get_step_by_id(self, step_id: Optional[str]) -> Optional[FrameworkStep]:
         """
         Get a step from the framework by ID.
         
@@ -74,6 +92,8 @@ class Generator:
         Returns:
             Optional[FrameworkStep]: The step with the given ID, or None if not found
         """
+        if not step_id:
+            return None
         for step in self.framework.steps:
             if step.id == step_id:
                 return step
@@ -89,7 +109,7 @@ class Generator:
         Returns:
             Optional[FrameworkStep]: The step with the given index, or None if not found
         """
-        if index >= len(self.framework) or index < 0:
+        if index >= len(self.framework.steps) or index < 0:
             return None
         return self.framework.steps[index]
     
@@ -122,15 +142,16 @@ class Generator:
         # Build the parameter string
         params_str = "\n".join([f"{key}: {value}" for key, value in param_values.items()])
         output_instruction = prompt.output_instruction or self.framework.default_output_instruction
-        template = f"""{{prompt_base}}
-        
-{{prompt_prefix}}
+        template = f"""{{prompt_prefix}}
 {{output_instruction}}
         
 {{few_shot_str}}
 
 Now, your turn:
 {{params_str}}"""
+        if not prompt.ignore_prompt_base:
+            template = f"""{{prompt_base}}
+            """ + template
         
         # Fill in the template
         return template.format(
@@ -141,54 +162,98 @@ Now, your turn:
             params_str=params_str
         )
 
-    def put_media_to_s3_and_get_url(self, data: bytes, type: MediaType, session_id: str, step_id: str, index: int) -> MediaUri:
-        s3_filename = S3MediaManager.create_key(session_id="", framework_step_id=step_id, index=index)
+    def put_media_to_s3_and_get_url(self, data: bytes, type: MediaType, session_id: str, step_id: str, index: int, input_prompt: str) -> MediaUri:
+        content_type = detect_file_type_from_bytes(data)
+        s3_filename = S3MediaManager.create_key(session_id=session_id, framework_step_id=step_id, index=index, unique_key=generate_md5_hash(input_prompt))
         self.s3.upload_file(
             file_data=data,
             media_type=type,
-            filename=s3_filename
+            filename=s3_filename,
+            content_type=content_type,
         )
         file_url = self.s3.get_file_url(filename=s3_filename, media_type=type)
         return MediaUri(uri=file_url)
 
-    def generate_options_from_prompt(self, step: FrameworkStep, param_values: Dict[str, str], session_id: str) -> List[List[Union[str, MediaUri]]]:
+    def _generate_param_combinations(self, data: Dict[str, Union[str, List[str]]]) -> List[Dict[str, str]]:
+        list_values = []
+        list_keys = []
+        for key, value in data.items():
+            list_keys.append(key)
+            if isinstance(value, list):
+                list_values.append([(key, str(item)) for item in value])
+            else:
+                list_values.append([(key, str(value))])
+
+        combinations: List[Dict[str, str]] = []
+
+        def generate(index, current_combination):
+            if index == len(list_keys):
+                combinations.append(dict(current_combination))
+                return
+
+            for key_value_pair in list_values[index]:
+                generate(index + 1, current_combination + [key_value_pair])
+
+        generate(0, [])
+        return combinations
+
+    def generate_options_from_prompt(self, step: FrameworkStep, param_values: Dict[str, Union[str, List[str]]], session_id: str) -> List[List[Union[str, MediaUri]]]:
         result = []
+        # print(f"Generating options from prompt: {step.prompts} {param_values}")
+        full_prompts = []
+        print(f"Generating options from prompt: {len(step.prompts)} {param_values}")
+        param_values_flattened = self._generate_param_combinations(param_values)
+        print(f"param_values_flattened: {param_values_flattened}")
         for idx ,prompt in enumerate(step.prompts):
+            for params_value_flattened in param_values_flattened:
+                full_prompts.append(self.generate_prompt(prompt, params_value_flattened))
+        for idx, full_prompt in enumerate(full_prompts):
             # Generate the full prompt
-            full_prompt = self.generate_prompt(prompt, param_values)
+            # full_prompt = self.generate_prompt(prompt, params_value_flattened)
             if prompt.expected_output_modality == "IMAGE":
                 # For image generation
                 image_data = self.lm_facade.invoke_t2i(full_prompt)
-                result.append(self.put_media_to_s3_and_get_url(
+                result.append([self.put_media_to_s3_and_get_url(
                     data=image_data,
                     type=MediaType.IMAGE,
                     session_id=session_id,
                     step_id=step.id,
-                    index=idx
-                ))
+                    index=idx,
+                    input_prompt=full_prompt
+                )])
             elif prompt.expected_output_modality == "AUDIO":
                 # For audio generation
                 audio_data = self.lm_facade.invoke_t2s(full_prompt)
-                result.append(self.put_media_to_s3_and_get_url(
+                result.append([self.put_media_to_s3_and_get_url(
                     data=audio_data,
                     type=MediaType.SPEECH,
                     session_id=session_id,
                     step_id=step.id,
-                    index=idx
-                ))
+                    index=idx,
+                    input_prompt=full_prompt
+                )])
             else:  # Default to TEXT
                 # Generate text options using the LM facade
                 response = self.lm_facade.invoke_t2t(full_prompt)
                 result.append(self._parse_options(response, prompt.options_delimiter))
         return result
 
-    def generate_options_from_agent(self, step: FrameworkStep, param_values: Dict[str, str]) -> List[List[Union[str, bytes]]]:
+    def generate_options_from_agent(self, step: FrameworkStep, param_values: Dict[str, Union[str, List[str]]], session_id: str) -> List[List[Union[str, MediaUri]]]:
         result = []
+        param_values_flattened = self._generate_param_combinations(param_values)
         for agent in step.agents:
-            result.append(agents_list.get_agent_call(agent.id, {"lm_facade": self.lm_facade, "param_values": param_values}))
+            result.append(agents_getter.get_agent_call(
+                id=agent.id,
+                lm_facade=self.lm_facade,
+                s3=self.s3,
+                session_id=session_id,
+                step_id=step.id,
+                params_value_flattened=param_values_flattened,
+                param_values=param_values
+                ))
         return result
     
-    def generate_options(self, step_id: str, param_values: Dict[str, str], session_id: str) -> List[List[Union[str, bytes]]]:
+    def generate_options(self, step_id: str, param_values: Dict[str, Union[str, List[str]]], session_id: str) -> List[List[Union[str, MediaUri]]]:
         """
         Generate options for a step.
         
@@ -209,12 +274,18 @@ Now, your turn:
         
         result = []
         result += self.generate_options_from_prompt(step=step, param_values=param_values, session_id=session_id)
-        result += self.generate_options_from_agent(step=step, param_values=param_values)
+        result += self.generate_options_from_agent(step=step, param_values=param_values, session_id=session_id)
         return result
 
     def get_selection_for_step_id(self, step_id: str) -> str:
         step = self.get_step_by_id(step_id=step_id)
         return step.require_user_input_for_step_id
+
+    def get_step_id_for_selection_id(self, step_id: str) -> Optional[FrameworkStep]:
+        for step in self.framework.steps:
+            if step.require_user_input_for_step_id == step_id:
+                return step
+        return None
     
     def _parse_options(self, response: str, delimiter: str) -> List[str]:
         """

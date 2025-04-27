@@ -6,7 +6,7 @@ NO_AI_CODE=True
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Union, Any, Literal
 from enum import Enum
-from services.ai.agents import agents_list
+from services.ai.agents.agents_list import AgentId
 
 class OutputModality(str, Enum):
     """
@@ -53,16 +53,18 @@ class Prompt(BaseModel):
             (TEXT, IMAGE, or AUDIO). Defaults to TEXT.
     """
     id: str
+    ignore_prompt_base: bool = False
     prefix: str
     few_shots: List[FewShot] = Field(default_factory=list)
     options_delimiter: str = "||"
     option_count: int = 3
+    # expected_selection_count: int = 1
     parameters: List[str] = Field(default_factory=list)
     output_instruction: Optional[str] = f"Give me {option_count} options, add `{options_delimiter}` between the options. Do not output anything else."
     expected_output_modality: OutputModality = OutputModality.TEXT
 
 class AgentStep(BaseModel):
-    id: agents_list.AgentId
+    id: AgentId
     parameters: List[str]
 
 class FrameworkStep(BaseModel):
@@ -84,6 +86,7 @@ class FrameworkStep(BaseModel):
     id: str
     name: str
     description: str
+    expected_selection_count: Union[int, Literal["ALL"]] = 1
     prompts: List[Prompt]
     agents: List[AgentStep] = []
     next_step: Optional[str] = None

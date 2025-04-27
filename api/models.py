@@ -59,19 +59,29 @@ class GenerateOptionsResponse(BaseModel):
     job_id: str
     framework_id: str
     step_id: str
-    options: List[Union[str, Dict[str, str]]]
     created_at: datetime
+    next_api: str | None = None
+    wait_for_user_action: bool | None = None
 
 class InitInputRequest(BaseModel):
     """Request with values for initial user input."""
     framework_id: str
     brand_link: str
 
+class SelectRequest(BaseModel):
+    """Request with values for user selection."""
+    framework_id: str
+    step_id: str
+    option_index: int = Field(default=0, ge=0)
+    result_index: int = Field(default=0, ge=0)
+
 class UserResponse(BaseModel):
     """Response model for select options."""
     job_id: str
     framework_id: str
     created_at: datetime
+    next_api: str | None = None
+    wait_for_user_action: bool | None = None
 
 # ============ Jobs Models ============
 

@@ -12,6 +12,7 @@ class MediaType(str, Enum):
     IMAGE = "image"
     SPEECH = "speech"
     MUSIC = "music"
+    VIDEO = "video"
 
 class S3MediaManager:
     """
@@ -46,8 +47,8 @@ class S3MediaManager:
         )
     
     @classmethod
-    def create_key(cls, session_id: str, framework_step_id: str, index: int):
-        return f"{session_id}-{framework_step_id}-{index}"
+    def create_key(cls, session_id: str, framework_step_id: str, index: int, unique_key: str = "unique_key"):
+        return f"{session_id}-{framework_step_id}-{index}-{unique_key}"
 
     def _check_connection(self):
         """
@@ -121,6 +122,7 @@ class S3MediaManager:
         media_type: MediaType,
         filename: str,
         ttl: Optional[int] = None,  # Add the ttl parameter
+        content_type: str = "",
     ) -> bool:
         """
         Uploads a file to the S3 bucket. This version can upload from a file path or from bytes.
@@ -141,7 +143,7 @@ class S3MediaManager:
 
         bucket_name = self.get_bucket_name(media_type)
         s3_key = self._generate_s3_key(filename)
-        upload_args = {"Bucket": bucket_name, "Key": s3_key}
+        upload_args = {"Bucket": bucket_name, "Key": s3_key, "ContentType": content_type}
         # TODO: This ttl doesn't WAI. Implement liefecyle rules on buckets.
         if ttl is not None:
             upload_args["Expires"] = ttl
@@ -175,7 +177,7 @@ class S3MediaManager:
             url = self._s3.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": bucket_name, "Key": s3_key},
-                ExpiresIn=3600,  # URL expires in 1 hour (you can adjust)
+                ExpiresIn=60 * 60 * 24 * 7,  # URL expires in 7 days
             )
             return url
         except ClientError as e:

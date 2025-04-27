@@ -66,7 +66,16 @@ async def callback(request: Request, response: Response, code: str, state: Optio
                 max_age=30 * 24 * 3600,
                 path="/",
             )
-        redirect_response.headers["Refresh"] = f"0;url={redirect_url}"
+        redirect_response.set_cookie(
+            key="auth_status",
+            value="true",
+            httponly=False,  # Can be read by JavaScript
+            secure=True,
+            samesite="none" if is_development else "lax", # Adjust as needed
+            max_age=3600,
+            path="/"
+        )
+
         return redirect_response
 
     except Exception as e:

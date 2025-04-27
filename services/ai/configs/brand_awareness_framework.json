@@ -4,6 +4,7 @@
   "description": "A framework for creating brand awareness videos by generating user personas, content spaces, tonality, and scripts.",
   "initial_step": "initial_input",
   "final_step": "final_video",
+  "prompt_base": "You are the best marketer on Earth specifically specialising in video storytelling that helps brands get reach on social media. You are weird like Vsauce, thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy like David Ogilvy. You do this by understanding what kind of content the brands want by taking them through a series of steps mentioned below, providing them a few options at each step, and then on the basis of the user's reply, proceeding to the next step. Your scripts are written in such a way to have some stimulation every 3-5 seconds.",
   "steps": [
     {
       "id": "initial_input",
@@ -11,7 +12,7 @@
       "description": "Collect initial inputs like the brand name and website link",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "research_link"
+      "next_step": "link_research"
     },
     {
       "id": "link_research",
@@ -51,10 +52,7 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_user_persona",
-      "state_update_mapping": {
-        "current_options": "user_persona_options"
-      }
+      "next_step": "select_user_persona"
     },
     {
       "id": "select_user_persona",
@@ -62,7 +60,8 @@
       "description": "User selects a user persona from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "content_spaces"
+      "next_step": "content_spaces",
+      "require_user_input_for_step_id": "user_persona"
     },
     {
       "id": "content_spaces",
@@ -96,7 +95,8 @@
       "description": "User selects a content space from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "personality_tonality"
+      "next_step": "personality_tonality",
+      "require_user_input_for_step_id": "content_spaces"
     },
     {
       "id": "personality_tonality",
@@ -130,7 +130,8 @@
       "description": "User selects a personality and tonality from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "script"
+      "next_step": "script",
+      "require_user_input_for_step_id": "personality_tonality"
     },
     {
       "id": "script",
@@ -164,23 +165,33 @@
       "description": "User selects a script from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "images"
+      "next_step": "image_prompts",
+      "require_user_input_for_step_id": "script"
     },
     {
       "id": "image_prompts",
       "name": "Image Prompts",
       "description": "Generate images' prompts for each scene in the script",
       "requires_user_input": false,
+      "expected_selection_count": "ALL",
       "prompts": [
         {
           "id": "image_prompt_prompt",
-          "prefix": "Generate visually compelling image prompts for each scene in the script. These prompts will be used to generate images that match the brand's style and the script's requirements.",
-          "few_shots": [],
-          "parameters": ["Brand", "Content Spaces", "Personality and Tonality", "Script"],
+          "prefix": "Now, generate description for each visual scene in the following script. Imagine you're the director and the video playing in your head. What do you see in each scene in that video with utmost detail while adhering to the essense of the overall script.",
+          "few_shots": [
+            {
+              "options": [
+                "Scene 1 (Hook): A dazling iPhone with Apple logo talking to it's person",
+                "Scene 2: Owner looks impressed, nodding in agreement with the iPhone's statement.",
+                "Scene 3: Zoom out, the person is an AI itself."
+              ]
+            }
+          ],
+          "parameters": ["Link", "Script"],
           "option_count": -1,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT",
-          "output_instruction": "Add `||` between the options. Do not output anything else."
+          "output_instruction": "Add `||` between each scene. Do not output anything else."
         }
       ],
       "next_step": "images"
@@ -194,12 +205,39 @@
         {
           "id": "image_prompt",
           "prefix": "",
+          "ignore_prompt_base": true,
           "few_shots": [],
-          "parameters": ["Image Prompt"],
+          "parameters": ["Image Prompts"],
           "option_count": 1,
           "options_delimiter": "",
           "expected_output_modality": "IMAGE",
           "output_instruction": ""
+        }
+      ],
+      "next_step": "voiceover_prompt"
+    },
+    {
+      "id": "voiceover_prompt",
+      "name": "Voiceover Prompt",
+      "description": "Generate prompt to synthesize the speech of the video.",
+      "requires_user_input": false,
+      "expected_selection_count": "ALL",
+      "prompts": [
+        {
+          "id": "voiceover_prompt_prompt",
+          "prefix": "Now, generate speech for the given script. Imagine you're the voiceover artist and the video playing in your head. Write down what do you speak?",
+          "few_shots": [
+            {
+              "options": [
+                "Stuck in a creative rut? What if your tools fueled your imagination instead of hindering it? Imagine: Instant access to millions of colors at your fingertips. Effortless collaboration, sharing ideas instantly across the globe. The power of a full studio, right in your backpack. From rough sketches to polished masterpieces, all powered by Apple. Unlock your potential. Unleash your vision. Apple. Powering your creativity."
+              ]
+            }
+          ],
+          "parameters": ["Link", "Script"],
+          "option_count": -1,
+          "options_delimiter": "||",
+          "expected_output_modality": "TEXT",
+          "output_instruction": "Just output the speech text. Do not output anything else."
         }
       ],
       "next_step": "voiceover"
@@ -212,12 +250,39 @@
       "prompts": [
         {
           "id": "voiceover_prompt",
-          "prefix": "Generate a natural-sounding voiceover for the script. The voice should match the personality and tonality of the brand.",
+          "prefix": "",
+          "ignore_prompt_base": true,
           "few_shots": [],
-          "parameters": ["Script", "Personality and Tonality"],
+          "parameters": ["Voiceover Prompt"],
           "option_count": 1,
           "options_delimiter": "",
           "expected_output_modality": "AUDIO"
+        }
+      ],
+      "next_step": "background_music_prompt"
+    },
+    {
+      "id": "background_music_prompt",
+      "name": "Background Music Prompt",
+      "description": "Generate prompt to synthesize the music of the video.",
+      "requires_user_input": false,
+      "expected_selection_count": "ALL",
+      "prompts": [
+        {
+          "id": "background_music_prompt_prompt",
+          "prefix": "Now, create a text prompt that will be fed to another LLM to generate music for a Brand Awareness Video with the following aspects:",
+          "few_shots": [
+            {
+              "options": [
+                "Create upbeat, curious music with clean electronic and warm acoustic elements. Playful rhythm, surprising moments. Think tech discovery excitement with a wink."
+              ]
+            }
+          ],
+          "parameters": ["Link", "Personality and Tonality"],
+          "option_count": -1,
+          "options_delimiter": "||",
+          "expected_output_modality": "TEXT",
+          "output_instruction": "The prompt should be less than 200 characters. Just output the text. Do not output anything else."
         }
       ],
       "next_step": "background_music"
@@ -230,30 +295,29 @@
       "prompts": [
         {
           "id": "background_music_prompt",
-          "prefix": "Generate background music that complements the script and matches the brand's personality and tonality. The music should enhance the emotional impact of the video.",
+          "prefix": "",
+          "ignore_prompt_base": true,
           "few_shots": [],
-          "parameters": ["Script", "Personality and Tonality"],
+          "parameters": ["Background Music Prompt"],
           "option_count": 1,
           "options_delimiter": "",
           "expected_output_modality": "AUDIO"
         }
       ],
-      "next_step": "animation"
-    },
-    {
-      "id": "animation",
-      "name": "Animation",
-      "description": "Create animation by combining images, voiceover, and background music",
-      "requires_user_input": false,
-      "prompts": [],
       "next_step": "final_video"
     },
     {
       "id": "final_video",
       "name": "Final Video",
-      "description": "Finalize the video",
+      "description": "Create video by combining images, voiceover, and background music",
       "requires_user_input": false,
       "prompts": [],
+      "agents": [
+        {
+          "id": "video_generator",
+          "parameters": ["Images", "Background Music", "Voiceover"]
+        }
+      ],
       "next_step": null
     }
   ]

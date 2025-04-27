@@ -32,7 +32,7 @@ class TestAIOrchestrator():
         session_data = Session(id=session_id, created_at=datetime.datetime.now(), status=SessionStatus.STARTED, current_step_id="initial_input", result=initial_framework_result)
         mock_lm = MagicMock(spec=LMFacade)
         mock_lm.invoke_t2t.return_value = "Option 1||Option 2||Option 3"
-        orchestrator = AIOrchestrator(framework_id="test_framework", lm_facade=mock_lm)
+        orchestrator = AIOrchestrator(framework_id="test_framework", lm_facade=mock_lm, is_local_test=True)
         result = await orchestrator.run(session_data)
         assert mock_input.call_count == 2
         assert result
@@ -53,7 +53,7 @@ class TestAIOrchestrator():
         session_data = Session(id=session_id, created_at=datetime.datetime.now(), status=SessionStatus.STARTED, current_step_id="initial_input", result=initial_framework_result)
         mock_lm = MagicMock(spec=LMFacade)
         mock_lm.invoke_t2t.return_value = "Option 1||Option 2||Option 3"
-        orchestrator = AIOrchestrator(framework_id="test_framework", lm_facade=mock_lm)
+        orchestrator = AIOrchestrator(framework_id="test_framework", lm_facade=mock_lm, is_local_test=True)
         result = await orchestrator.run(session_data)
         assert mock_input.call_count == 1
         assert result
