@@ -15,6 +15,8 @@ class OutputModality(str, Enum):
     TEXT = "TEXT"
     IMAGE = "IMAGE"
     AUDIO = "AUDIO"
+    SPEECH = "SPEECH"
+    MUSIC = "MUSIC"
 
 
 class FewShot(BaseModel):
@@ -60,6 +62,7 @@ class Prompt(BaseModel):
     option_count: int = 3
     # expected_selection_count: int = 1
     parameters: List[str] = Field(default_factory=list)
+    params_format: Literal["dict", "list"] = "dict"
     output_instruction: Optional[str] = f"Give me {option_count} options, add `{options_delimiter}` between the options. Do not output anything else."
     expected_output_modality: OutputModality = OutputModality.TEXT
 
@@ -92,6 +95,7 @@ class FrameworkStep(BaseModel):
     next_step: Optional[str] = None
     requires_user_input: bool = False
     require_user_input_for_step_id: str = ""
+    result_display_allowed: bool = True
     
 
 class Framework(BaseModel):
@@ -121,7 +125,7 @@ class Framework(BaseModel):
     initial_step: str
     final_step: str
     prompt_base: str = """You are the best marketer on Earth specifically specialising in video storytelling that helps brands get reach on social media. You are weird like Vsauce, thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy like David Ogilvy. You do this by understanding what kind of content the brands want by taking them through a series of steps mentioned below, providing them a few options at each step, and then on the basis of the user's reply, proceeding to the next step. Your scripts are written in such a way to have some stimulation every 3-5 seconds."""
-    default_output_instruction: str = "Give me 3 options, add `||` between the options. Do not output anything else."
+    default_output_instruction: str = "Give me 3 options formatted as markdown, add `||` between the options. Do not output anything else."
 
 class MediaUri(BaseModel):
     uri: str
@@ -143,6 +147,7 @@ class FrameworkStepResult(BaseModel):
     """
     id: str
     result: List[ResultOptions]
+    display_to_user: bool = True
 
 class FrameworkResult(BaseModel):
     """Model for the results of executing the framework.

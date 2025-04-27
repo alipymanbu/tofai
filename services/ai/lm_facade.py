@@ -106,9 +106,7 @@ class LMFacade:
           audio += chunk
         return audio
     except Exception as e:
-      err_msg = f"Error generating speech: {e}"
-      logger.error(err_msg)
-      return err_msg
+      raise ValueError(f"Error generating music: {e}")
 
   def invoke_t2s(self, prompt: str) -> Union[bytes, str]:
     """
@@ -136,9 +134,7 @@ class LMFacade:
           audio += chunk
         return audio
     except Exception as e:
-      err_msg = f"Error generating speech: {e}"
-      logger.error(err_msg)
-      return err_msg
+      raise ValueError(f"Error generating speech: {e}")
 
   def _call_ollama(self, prompt: str, model: LMs) -> Union[str, list[bytes]]:
     llm = self._lm_clients[model]
@@ -169,8 +165,7 @@ class LMFacade:
       image_data = response.generated_images[0].image
       return image_data.image_bytes
     except Exception as e:
-      err_msg = bytes(f"Error generating image: {e}", encoding="utf-8")
-      return err_msg 
+      raise ValueError(f"Error generating image: {e}") 
 
   def _call_gemini(self, prompt: str, modality: Literal["text", "image"] = "text") -> Union[str, bytes]:
     if modality == "image":
@@ -217,5 +212,5 @@ class LMFacade:
 # For Local Testing Only:
 # if __name__ == "__main__":
 #    lm_facade = LMFacade()
-#    image_bytes = lm_facade.invoke_t2m("Create upbeat, curious music with clean electronic and warm acoustic elements. Playful rhythm, surprising moments. Think tech discovery excitement with a wink.")
+#    image_bytes = lm_facade.invoke_t2t("Write a short poem about a cat in less than 20 words.")
 #    print(f"Audio bytes: {image_bytes}")

@@ -72,13 +72,14 @@ class VideoCreationState(BaseModel):
         # print(f"result_options: {result_options.result_options[result_options.selected_option]}")
         return [result_options.result_options[result_options.selected_option]]
     
-    def set_step_result(self, step_id: str, result_options: ResultOptions, intermediate_framework_result: FrameworkResult = None) -> FrameworkResult:
+    def set_step_result(self, step_id: str, result_options: ResultOptions, intermediate_framework_result: FrameworkResult = None, display_to_user: bool = True) -> FrameworkResult:
         framework_result = intermediate_framework_result or self.framework_result.model_copy()
         step_result = self.get_step_result(step_id=step_id, framework_result=framework_result)
         if not step_result:
             step_result = FrameworkStepResult(id=step_id, result=[])
             framework_result.step_results.append(step_result)
         step_result.result.append(result_options)
+        step_result.display_to_user = display_to_user
         return framework_result
     
     def flatten_step_result(self, step_result: FrameworkStepResult, intermediate_framework_result: FrameworkResult = None) -> List[ResultOptions]:

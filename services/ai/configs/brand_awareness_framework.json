@@ -174,6 +174,7 @@
       "description": "Generate images' prompts for each scene in the script",
       "requires_user_input": false,
       "expected_selection_count": "ALL",
+      "result_display_allowed": false,
       "prompts": [
         {
           "id": "image_prompt_prompt",
@@ -201,6 +202,7 @@
       "name": "Images",
       "description": "Generate image for given prompt",
       "requires_user_input": false,
+      "result_display_allowed": false,
       "prompts": [
         {
           "id": "image_prompt",
@@ -211,7 +213,7 @@
           "option_count": 1,
           "options_delimiter": "",
           "expected_output_modality": "IMAGE",
-          "output_instruction": ""
+          "output_instruction": "."
         }
       ],
       "next_step": "voiceover_prompt"
@@ -222,6 +224,7 @@
       "description": "Generate prompt to synthesize the speech of the video.",
       "requires_user_input": false,
       "expected_selection_count": "ALL",
+      "result_display_allowed": false,
       "prompts": [
         {
           "id": "voiceover_prompt_prompt",
@@ -247,6 +250,7 @@
       "name": "Voiceover",
       "description": "Generate voiceover for the script",
       "requires_user_input": false,
+      "result_display_allowed": false,
       "prompts": [
         {
           "id": "voiceover_prompt",
@@ -254,9 +258,11 @@
           "ignore_prompt_base": true,
           "few_shots": [],
           "parameters": ["Voiceover Prompt"],
+          "params_format": "list",
           "option_count": 1,
           "options_delimiter": "",
-          "expected_output_modality": "AUDIO"
+          "expected_output_modality": "SPEECH",
+          "output_instruction": "."
         }
       ],
       "next_step": "background_music_prompt"
@@ -267,6 +273,7 @@
       "description": "Generate prompt to synthesize the music of the video.",
       "requires_user_input": false,
       "expected_selection_count": "ALL",
+      "result_display_allowed": false,
       "prompts": [
         {
           "id": "background_music_prompt_prompt",
@@ -292,6 +299,7 @@
       "name": "Background Music",
       "description": "Generate background music for the video",
       "requires_user_input": false,
+      "result_display_allowed": false,
       "prompts": [
         {
           "id": "background_music_prompt",
@@ -301,7 +309,8 @@
           "parameters": ["Background Music Prompt"],
           "option_count": 1,
           "options_delimiter": "",
-          "expected_output_modality": "AUDIO"
+          "expected_output_modality": "MUSIC",
+          "output_instruction": "."
         }
       ],
       "next_step": "final_video"

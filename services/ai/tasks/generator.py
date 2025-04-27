@@ -138,16 +138,18 @@ class Generator:
                 options_str = prompt.options_delimiter.join(fs.options)
                 few_shot_examples.append(options_str)
             # Join all few-shot examples
-            few_shot_str = "Examples:\n" + "\n\n".join(few_shot_examples)        
+            few_shot_str = "Examples:\n" + "\n\n".join(few_shot_examples) + "\n\nNow, your turn:"       
         # Build the parameter string
-        params_str = "\n".join([f"{key}: {value}" for key, value in param_values.items()])
+        if prompt.params_format == "list":
+            params_str = "\n".join([value for _, value in param_values.items()])
+        elif prompt.params_format == "dict":
+            params_str = "\n".join([f"{key}: {value}" for key, value in param_values.items()])
         output_instruction = prompt.output_instruction or self.framework.default_output_instruction
         template = f"""{{prompt_prefix}}
 {{output_instruction}}
         
 {{few_shot_str}}
 
-Now, your turn:
 {{params_str}}"""
         if not prompt.ignore_prompt_base:
             template = f"""{{prompt_base}}
@@ -221,12 +223,23 @@ Now, your turn:
                     index=idx,
                     input_prompt=full_prompt
                 )])
-            elif prompt.expected_output_modality == "AUDIO":
+            elif prompt.expected_output_modality == "SPEECH":
                 # For audio generation
                 audio_data = self.lm_facade.invoke_t2s(full_prompt)
                 result.append([self.put_media_to_s3_and_get_url(
                     data=audio_data,
                     type=MediaType.SPEECH,
+                    session_id=session_id,
+                    step_id=step.id,
+                    index=idx,
+                    input_prompt=full_prompt
+                )])
+            elif prompt.expected_output_modality == "MUSIC":
+                # For audio generation
+                audio_data = self.lm_facade.invoke_t2m(full_prompt)
+                result.append([self.put_media_to_s3_and_get_url(
+                    data=audio_data,
+                    type=MediaType.MUSIC,
                     session_id=session_id,
                     step_id=step.id,
                     index=idx,

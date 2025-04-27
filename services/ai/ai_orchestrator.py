@@ -137,7 +137,7 @@ class AIOrchestrator:
     print("Let's create a stunning brand awareness video!")
     brand_link = input("Got a link to your brand's website or online presence? ")
     result_options = ResultOptions(result_options=[brand_link], selected_option=0)
-    framework_result = state.set_step_result(step_id=state.current_step_id, result_options=result_options)
+    framework_result = state.set_step_result(step_id=state.current_step_id, result_options=result_options, display_to_user=self.generator.get_step_by_id(state.current_step_id).result_display_allowed)
     return {"framework_result": framework_result, "current_step_id": next_step}
 
   def _get_latest_param_values(self, step: FrameworkStep, state:VideoCreationState) -> dict[str, Union[str, List[str]]]:
@@ -174,7 +174,7 @@ class AIOrchestrator:
             options = ResultOptions(result_options=result)
             if len(result) == 1:
                 options.selected_option = 0  # Select the first option by default, if only one is available.
-            framework_result = state.set_step_result(state.current_step_id, result_options=options, intermediate_framework_result=framework_result)
+            framework_result = state.set_step_result(state.current_step_id, result_options=options, intermediate_framework_result=framework_result, display_to_user=step.result_display_allowed)
         return {"current_step_id": next_step, "framework_result": framework_result}
     except Exception as e:
         state.error = str(e)
