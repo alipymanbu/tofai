@@ -174,3 +174,4 @@ cython_debug/
 # Secrets
 secrets.py
 global-bundle.pem
+secrets.yaml
