@@ -87,7 +87,7 @@ class VideoGenerator:
       music: URL of the background music.
       video_filename: Name of the output video file to be written to S3.
     """
-    print(f"Generating video with {images} images, speech: {speech}, music: {music}")
+    # print(f"Generating video with {images} images, speech: {speech}, music: {music}")
     if len(images) == 0:
       raise ValueError("No images provided for video generation.")
         

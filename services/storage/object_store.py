@@ -36,7 +36,7 @@ class S3MediaManager:
         self.settings = Settings()  # Load settings from the Settings class
         self.aws_access_key_id = self.settings.AWS_ACCESS_KEY_ID
         self.aws_secret_access_key = self.settings.AWS_SECRET_ACCESS_KEY
-        self.region_name = self.settings.AWS_REGION
+        self.region_name = self.settings.S3_REGION
         self._s3_key_prefix = ""  # Initialize with an empty string
         self._s3 = boto3.client(
             "s3",

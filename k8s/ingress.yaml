@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tofai-backend-ingress
+  annotations:
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    # Remove certificate-arn annotation
+    # Remove SSL redirect annotation
+spec:
+  rules:
+  - http: # Remove host field
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tofai-backend-service
+            port:
+              number: 80

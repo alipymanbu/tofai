@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tofai-backend-service
+spec:
+  selector:
+    app: tofai-backend
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP

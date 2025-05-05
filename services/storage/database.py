@@ -76,7 +76,6 @@ class DataAccess:
     async def get_session(self, session_id: str) -> Optional[SessionDBModel]:
         cached_data = await self.redis_client.get(self._cache_key(ModelType.SESSIONS, session_id))
         if cached_data:
-            print(f"Cache hit for session ID: {session_id}")
             return pickle.loads(cached_data)
         print(f"Cache miss for session ID: {session_id}")
         session_data = await self.session_collection.find_one({"session.id": session_id})

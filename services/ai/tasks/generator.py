@@ -203,9 +203,9 @@ class Generator:
         result = []
         # print(f"Generating options from prompt: {step.prompts} {param_values}")
         full_prompts = []
-        print(f"Generating options from prompt: {len(step.prompts)} {param_values}")
+        # print(f"Generating options from prompt: {len(step.prompts)} {param_values}")
         param_values_flattened = self._generate_param_combinations(param_values)
-        print(f"param_values_flattened: {param_values_flattened}")
+        # print(f"param_values_flattened: {param_values_flattened}")
         for idx ,prompt in enumerate(step.prompts):
             for params_value_flattened in param_values_flattened:
                 full_prompts.append(self.generate_prompt(prompt, params_value_flattened))

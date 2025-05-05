@@ -49,6 +49,51 @@ graph TD
     TextToSpeech --> S3
 ```
 
+## Environment Setup
+
+The application uses environment variables for configuration. These are managed through a `.env` file in the project root directory.
+
+### Local Development Setup
+
+1. Create your `.env` file from the template:
+   ```bash
+   ./scripts/create-env-file.sh
+   ```
+
+2. Edit the `.env` file with your actual configuration values:
+   ```bash
+   # Use your preferred text editor
+   nano .env
+   ```
+
+3. The `.env` file is automatically loaded by the application at startup, and it's excluded from version control for security.
+
+### Environment Variables
+
+Key environment variables include:
+
+- **MongoDB**: `MONGODB_URI`, `DATABASE_NAME`
+- **Redis**: `REDIS_HOST`, `REDIS_PORT`, `REDIS_USER`, `REDIS_SECRET`
+- **AWS**: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
+- **S3**: `S3_BUCKET`, `S3_REGION`
+- **AI Services**: `GEMINI_API_PROJECT_NUMBER`, `GEMINI_API_SECRET`, `ELEVEN_TTS_SECRET`
+- **Google Search**: `GOOGLE_SEARCH_API_KEY`, `GOOGLE_CSE_ID`
+- **Cognito**: `COGNITO_REGION`, `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`, etc.
+
+### Kubernetes Deployment
+
+For Kubernetes deployment, the environment variables are managed as Kubernetes secrets:
+
+1. Set all required environment variables in your shell 
+2. Generate the Kubernetes secrets file:
+   ```bash
+   ./scripts/generate-k8s-secrets.sh
+   ```
+3. Apply the secrets to your cluster:
+   ```bash
+   kubectl apply -f k8s/secrets.yaml
+   ```
+
 ## API Endpoints
 
 ### Authentication

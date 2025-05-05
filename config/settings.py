@@ -1,42 +1,41 @@
 import os
 from pydantic_settings import BaseSettings
-from config.secrets import MONGO_DB_CREDS, AWS_CREDS, REDIS_CREDS, GEMINI_CREDS, ELEVEN_CREDS, GOOGLE_SEARCH_CREDS
 
 class Settings(BaseSettings):
+    model_config = {
+        "extra": "ignore", # Ignore extra fields in the environment
+        "env_file": ".tofai-secrets.env", # Load environment variables from .tofai.env
+    }  
     # Server
     PORT: int = int(os.getenv("PORT", 8000))
     DEBUG: bool = os.getenv("DEBUG", "True").lower() == "true"
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
     # Database
-    MONGODB_URI: str = os.getenv("MONGODB_URI", f"mongodb+srv://{MONGO_DB_CREDS["user"]}:{MONGO_DB_CREDS["password"]}@tofai-cluster0.kpxoiil.mongodb.net/?appName=tofai-cluster0&tlsAllowInvalidCertificates=true")
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "")
     DATABASE_NAME: str = os.getenv("DATABASE_NAME", "tofai")
     
     # Redis
-    REDIS_HOST: str = os.getenv("REDIS_HOST", "redis-14879.c285.us-west-2-2.ec2.redns.redis-cloud.com")
-    REDIS_PORT: str = os.getenv("REDIS_PORT", "14879")
-    REDIS_USER: str = os.getenv("REDIS_USER", REDIS_CREDS["user"])
-    REDIS_SECRET: str = os.getenv("REDIS_SECRET", REDIS_CREDS["password"])
+    REDIS_HOST: str = os.getenv("REDIS_HOST", "")
+    REDIS_PORT: str = os.getenv("REDIS_PORT", "")
+    REDIS_USER: str = os.getenv("REDIS_USER", "")
+    REDIS_SECRET: str = os.getenv("REDIS_SECRET", "")
     
     # AI Services
     CLAUDE_API_KEY: str = os.getenv("CLAUDE_API_KEY", "")
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    GEMINI_API_PROJECT_NUMBER: int = os.getenv("GEMINI_API_PROJECT_NUMBER", GEMINI_CREDS["project"])
-    GEMINI_API_SECRET: str = os.getenv("GEMINI_API_SECRET", GEMINI_CREDS["secret"])
-    ELEVEN_TTS_SECRET: str = os.getenv("ELEVEN_TTS_SECRET", ELEVEN_CREDS["secret"])
+    GEMINI_API_PROJECT_NUMBER: int = int(os.getenv("GEMINI_API_PROJECT_NUMBER", 0))
+    GEMINI_API_SECRET: str = os.getenv("GEMINI_API_SECRET", "")
+    ELEVEN_TTS_SECRET: str = os.getenv("ELEVEN_TTS_SECRET", "")
 
     # APIs
-    GOOGLE_SEARCH_API_KEY: str = os.getenv("GOOGLE_SEARCH_API_KEY", GOOGLE_SEARCH_CREDS["secret"])
-    GOOGLE_CSE_ID: str = os.getenv("GOOGLE_CSE_ID", GOOGLE_SEARCH_CREDS["cse_id"])
-    
-    
+    GOOGLE_SEARCH_API_KEY: str = os.getenv("GOOGLE_SEARCH_API_KEY", "")
+    GOOGLE_CSE_ID: str = os.getenv("GOOGLE_CSE_ID", "")
     
     # Storage
-    S3_BUCKET: str = os.getenv("S3_BUCKET", "tofai-media")
-    S3_REGION: str = os.getenv("S3_REGION", "us-east-1")
-    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", AWS_CREDS["key"])
-    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", AWS_CREDS["secret"])
-    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-2")
+    S3_REGION: str = os.getenv("S3_REGION", "us-east-2")
+    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
     
     # Celery settings
     CELERY_BROKER_URL: str = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/1")
@@ -44,8 +43,5 @@ class Settings(BaseSettings):
     
     # Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "development_secret_key")
-    
-    class Config:
-        env_file = ".env"
 
 settings = Settings()
