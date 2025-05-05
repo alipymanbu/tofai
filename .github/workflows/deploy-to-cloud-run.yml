@@ -1,0 +1,80 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: sonorous-folio-458117-g5
+  SERVICE_NAME: tofai-backend
+  REGION: us-west1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Google Auth
+        id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Build and push Docker image
+        run: |
+          gcloud builds submit --tag gcr.io/$PROJECT_ID/$SERVICE_NAME
+
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}
+          env_vars: |
+            PORT=${{ secrets.PORT }}
+            MONGODB_URI=${{ secrets.MONGODB_URI }}
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            REDIS_HOST=${{ secrets.REDIS_HOST }}
+            REDIS_PORT=${{ secrets.REDIS_PORT }}
+            REDIS_USER=${{ secrets.REDIS_USER }}
+            REDIS_SECRET=${{ secrets.REDIS_SECRET }}
+            DEBUG=${{ secrets.DEBUG }}
+            ENVIRONMENT=${{ secrets.ENVIRONMENT }}
+            COGNITO_REGION=${{ secrets.COGNITO_REGION }}
+            COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
+            COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}
+            COGNITO_CLIENT_SECRET=${{ secrets.COGNITO_CLIENT_SECRET }}
+            COGNITO_DOMAIN=${{ secrets.COGNITO_DOMAIN }}
+            COGNITO_REDIRECT_URL=${{ secrets.COGNITO_REDIRECT_URL }}
+            COGNITO_LOGOUT_URL=${{ secrets.COGNITO_LOGOUT_URL }}
+            COGNITO_SCOPE=${{ secrets.COGNITO_SCOPE }}
+            COGNITO_JWKS_URI=${{ secrets.COGNITO_JWKS_URI }}
+            CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            GEMINI_API_PROJECT_NUMBER=${{ secrets.GEMINI_API_PROJECT_NUMBER }}
+            GEMINI_API_SECRET=${{ secrets.GEMINI_API_SECRET }}
+            ELEVEN_TTS_SECRET=${{ secrets.ELEVEN_TTS_SECRET }}
+            GOOGLE_SEARCH_API_KEY=${{ secrets.GOOGLE_SEARCH_API_KEY }}
+            GOOGLE_CSE_ID=${{ secrets.GOOGLE_CSE_ID }}
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            S3_REGION=${{ secrets.S3_REGION }}
+            SECRET_KEY=${{ secrets.SECRET_KEY }}
+            CELERY_BROKER_URL=${{ secrets.CELERY_BROKER_URL }}
+            CELERY_RESULT_BACKEND=${{ secrets.CELERY_RESULT_BACKEND }}
+
+      - name: Show URL
+        run: gcloud run services describe ${{ env.SERVICE_NAME }} --region ${{ env.REGION }} --format 'value(status.url)'
