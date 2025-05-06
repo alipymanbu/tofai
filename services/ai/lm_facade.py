@@ -1,12 +1,7 @@
 """NO_AI_CODE=True
 """
 from enum import Enum
-from typing import Tuple, Any, Union, Literal
-from langchain_ollama import ChatOllama
-import os
-import base64
-from PIL import Image
-import io
+from typing import Any, Union, Literal
 import logging
 from elevenlabs.client import ElevenLabs
 from config.settings import settings
