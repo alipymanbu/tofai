@@ -1,13 +1,8 @@
-from langchain_core.runnables import RunnablePassthrough
-from langchain_core.output_parsers import StrOutputParser
 from langchain.agents import create_tool_calling_agent
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 import os
 from services.ai.tools import tools_list
-from langchain_core.tools import BaseTool
 from services.ai import lm_facade
-from config.settings import settings
 from langchain.agents import AgentExecutor
 
 class BrandAnalyzer:
