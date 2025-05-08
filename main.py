@@ -42,7 +42,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Specify exact origins instead of wildcard "*"
+    allow_origins=["http://localhost:3000", "https://tofai-frontend.web.app"],  # Specify exact origins instead of wildcard "*"
     allow_credentials=True,  # This is crucial
     allow_methods=["*"],
     allow_headers=["*"],
