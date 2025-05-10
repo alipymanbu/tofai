@@ -19,13 +19,30 @@ class ModelType(str, Enum):
 
 class DataAccess:
     def __init__(self, settings: Settings):
-        self.mongo_client = motor.motor_asyncio.AsyncIOMotorClient(settings.MONGODB_URI)
+        # Configure MongoDB connection
+        mongo_options = {
+            "ssl": True,
+            "ssl_cert_reqs": 'CERT_NONE',  # Accept any server certificate
+            "retryWrites": True,
+            "tlsAllowInvalidCertificates": True,
+        }
+        
+        # Create the MongoDB client with additional SSL options
+        self.mongo_client = motor.motor_asyncio.AsyncIOMotorClient(
+            settings.MONGODB_URI,
+            **mongo_options
+        )
+        
         self.mongo_db = self.mongo_client[settings.DATABASE_NAME]
+        
+        # Configure Redis connection
         self.redis_client = redis.Redis(
-            host=settings.REDIS_HOST, port=settings.REDIS_PORT,
+            host=settings.REDIS_HOST, 
+            port=settings.REDIS_PORT,
             username=settings.REDIS_USER, 
             password=settings.REDIS_SECRET
         )
+        
         self.session_collection = self.mongo_db[ModelType.SESSIONS]
         self.job_collection = self.mongo_db[ModelType.JOBS]
         self.user_collection = self.mongo_db[ModelType.USERS]
