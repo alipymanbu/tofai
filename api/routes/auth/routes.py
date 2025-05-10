@@ -37,6 +37,12 @@ async def callback(request: Request, response: Response, code: str, state: Optio
             raise HTTPException(status_code=401, detail="Invalid token")
         access_token = tokens.get("access_token")
         redirect_url = state or "http://localhost:3000/"
+        # # Default to frontend homepage if state is not provided
+        # redirect_url = state or "https://tofai-frontend.web.app/"
+        
+        # Ensure we're not redirecting to the login page
+        if redirect_url.endswith('/login'):
+            redirect_url = redirect_url.replace('/login', '/')
         redirect_response = RedirectResponse(redirect_url, status_code=status.HTTP_302_FOUND)
         redirect_response.set_cookie(
             key="access_token",
