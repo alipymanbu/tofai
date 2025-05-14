@@ -47,6 +47,32 @@ class Session(BaseModel):
     framework_id: str = "brand_awareness_video"
     current_step_id: str
 
+# ============ Feedback Models ============
+
+class FeedbackType(str, Enum):
+    """Enum for feedback types."""
+    POSITIVE = "positive"
+    NEGATIVE = "negative"
+
+class Feedback(BaseModel):
+    """Model for feedback on a generated option."""
+    id: str
+    session_id: str
+    step_id: str
+    context_id: str
+    created_at: datetime
+    feedback_type: FeedbackType
+    feedback_qual: Optional[str] = None
+    
+class CreateorUpdateFeedbackRequest(BaseModel):
+    """Request model for /api/feedback."""
+    id: Optional[str] = None # If present, existing feedback will be updated.
+    session_id: str
+    step_id: str
+    context_id: str
+    feedback_type: FeedbackType
+    feedback_qual: Optional[str] = None
+
 # ============ Framework Models ============
 
 class GenerateOptionsRequest(BaseModel):

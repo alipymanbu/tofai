@@ -168,10 +168,10 @@ class AIOrchestrator:
         step = self.generator.get_step_by_id(state.current_step_id)
         param_values = self._get_latest_param_values(step=step, state=state)
         # Generate options
-        results = self.generator.generate_options(state.current_step_id, param_values, session_id=state.session_id)
+        results, context_ids_deck = self.generator.generate_options(state.current_step_id, param_values, session_id=state.session_id)
         framework_result = None
-        for result in results:
-            options = ResultOptions(result_options=result)
+        for idx, result in enumerate(results):
+            options = ResultOptions(result_options=result, context_ids=context_ids_deck[idx])
             if len(result) == 1:
                 options.selected_option = 0  # Select the first option by default, if only one is available.
             framework_result = state.set_step_result(state.current_step_id, result_options=options, intermediate_framework_result=framework_result, display_to_user=step.result_display_allowed)

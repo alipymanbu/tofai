@@ -9,6 +9,7 @@ from config.settings import Settings
 from models.job_db import JobDBModel
 from models.session_db import SessionDBModel
 from models.user_session_db import UserSessionDBModel
+from models.feedback_db import FeedbackDBModel
 from api.models import User
 from enum import Enum
 
@@ -16,6 +17,7 @@ class ModelType(str, Enum):
     SESSIONS = "sessions"
     JOBS = "jobs"
     USERS = "users"
+    FEEDBACK = "feedback"
 
 class DataAccess:
     def __init__(self, settings: Settings):
@@ -34,6 +36,7 @@ class DataAccess:
         self.session_collection = self.mongo_db[ModelType.SESSIONS]
         self.job_collection = self.mongo_db[ModelType.JOBS]
         self.user_collection = self.mongo_db[ModelType.USERS]
+        self.feedback_collection = self.mongo_db[ModelType.FEEDBACK]
 
     def _cache_key(self, model_type: ModelType, model_id: str) -> str:
         return f"{model_type.value}:{model_id}"
@@ -181,3 +184,47 @@ class DataAccess:
             user_model = UserSessionDBModel.model_validate(user_data)
             return user_model.user
         return None
+
+    # Feedback Operations:
+    async def insert_feedback(self, feedback_db_model: FeedbackDBModel) -> None:
+        feedback_dict = feedback_db_model.model_dump()
+        await self.feedback_collection.insert_one(feedback_dict)
+        await self.redis_client.set(
+            self._cache_key(ModelType.FEEDBACK, feedback_db_model.feedback.id),
+            pickle.dumps(feedback_db_model),
+        )
+    
+    async def update_feedback(self, feedback_db_model: FeedbackDBModel) -> None:
+        feedback_dict = feedback_db_model.model_dump()
+        if not await self.feedback_collection.find_one({"feedback.id": feedback_dict["feedback"]["id"]}):
+            raise ValueError(f"Feedback with id {feedback_db_model.feedback.id} does not exist.")
+        await self.feedback_collection.replace_one(
+            {"feedback.id": feedback_dict["feedback"]["id"]},
+            feedback_dict,
+            upsert=True,
+        )
+        await self.redis_client.set(
+            self._cache_key(ModelType.FEEDBACK, feedback_db_model.feedback.id),
+            pickle.dumps(feedback_db_model),
+        )
+
+    async def get_feedback(self, feedback_id: str) -> Optional[FeedbackDBModel]:
+        cached_data = await self.redis_client.get(self._cache_key(ModelType.FEEDBACK, feedback_id))
+        if cached_data:
+            return pickle.loads(cached_data)
+
+        feedback_data = await self.feedback_collection.find_one({"feedback.id": feedback_id})
+        if feedback_data:
+            feedback_db_model = FeedbackDBModel.model_validate(feedback_data)
+            await self.redis_client.set(
+                self._cache_key(ModelType.FEEDBACK, feedback_id),
+                pickle.dumps(feedback_db_model),
+            )
+            return feedback_db_model
+        return None
+
+    async def delete_feedback(self, feedback_id: str) -> None:
+        if not await self.feedback_collection.find_one({"feedback.id": feedback_id}):
+            raise ValueError(f"Feedback with id {feedback_id} does not exist.")
+        await self.feedback_collection.delete_one({"feedback.id": feedback_id})
+        await self.redis_client.delete(self._cache_key(ModelType.FEEDBACK, feedback_id))
