@@ -3,7 +3,7 @@ Config-driven generator for AI prompts.
 This module provides a mechanism to generate prompts from configuration files.
 NO_AI_CODE=True
 """
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Tuple, Union
 import json
 import os
 from pathlib import Path
@@ -264,9 +264,31 @@ class Generator:
                 params_value_flattened=param_values_flattened,
                 param_values=param_values
                 ))
-        return result
+        return 
+
+    def generate_context_ids_for_results(self, results: List[List[Union[str, MediaUri]]]) -> List[List[str]]:
+        """
+        Generate context IDs for the results.
+        
+        Args:
+            results: The generated results
+        Returns:
+            List[str]: The context IDs for the results
+        """
+        context_ids_deck = []
+        for result in results:
+            context_ids = []
+            for item in result:
+                if isinstance(item, str):
+                    context_ids.append(generate_md5_hash(item))
+                elif isinstance(item, MediaUri):
+                    context_ids.append(generate_md5_hash(item.uri))
+                else:
+                    raise ValueError(f"Unsupported result type: {type(item)}")
+            context_ids_deck.append(context_ids)
+        return context_ids_deck
     
-    def generate_options(self, step_id: str, param_values: Dict[str, Union[str, List[str]]], session_id: str) -> List[List[Union[str, MediaUri]]]:
+    def generate_options(self, step_id: str, param_values: Dict[str, Union[str, List[str]]], session_id: str) -> Tuple[List[List[Union[str, MediaUri]]], List[List[str]]]:
         """
         Generate options for a step.
         
@@ -288,7 +310,7 @@ class Generator:
         result = []
         result += self.generate_options_from_prompt(step=step, param_values=param_values, session_id=session_id)
         result += self.generate_options_from_agent(step=step, param_values=param_values, session_id=session_id)
-        return result
+        return result, self.generate_context_ids_for_results(result)
 
     def get_selection_for_step_id(self, step_id: str) -> str:
         step = self.get_step_by_id(step_id=step_id)

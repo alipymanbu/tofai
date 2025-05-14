@@ -3,7 +3,7 @@ Config-driven framework for AI orchestration.
 This module defines Pydantic models for the workflow steps and prompt generation.
 NO_AI_CODE=True
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Dict, Optional, Union, Any, Literal
 from enum import Enum
 from services.ai.agents.agents_list import AgentId
@@ -134,10 +134,20 @@ class ResultOptions(BaseModel):
     """Model for the resulting options given by one prompt.
     Args:
         result_options (List[Union[str, bytes]]): the one or more options given as a result of a single prompt.
+        context_ids (List[str]): the context id (hash) of each option.
         selected_option (int): the option selected by user, or 0 if len(result_options)=1
     """
     result_options: List[Union[str, MediaUri]]
+    context_ids: List[str]
     selected_option: int = -1
+
+    @model_validator(mode="after")
+    def validate_result_options_and_context_ids(self):
+        result_options = self.result_options
+        context_ids = self.context_ids
+        if len(result_options) != len(context_ids):
+            raise ValueError("The length of result_options must be the same as the length of context_ids.")
+        return self
 
 class FrameworkStepResult(BaseModel):
     """Model for the result of a step.
