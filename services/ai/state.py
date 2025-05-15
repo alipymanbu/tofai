@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import List, Tuple, Optional, Union, Dict, Any, Set
 from services.ai.framework_model import FrameworkResult, FrameworkStepResult, ResultOptions, FrameworkStep, MediaUri
+from services.ai.tasks.generator import generate_context_id
 
 # ======== Define constants ========
 
@@ -88,7 +89,7 @@ class VideoCreationState(BaseModel):
         for result in step_result.result:
             if result.selected_option == "ALL":
                 for option in result.result_options:
-                    option = ResultOptions(result_options=[option], selected_option=0)
+                    option = ResultOptions(result_options=[option], context_ids=[generate_context_id(option)], selected_option=0)
                     flattened_result.append(option)
             else:
                 flattened_result.append(result.result_options)

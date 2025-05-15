@@ -7,7 +7,7 @@ from typing import Optional
 
 from api.middleware.auth_middleware import AuthMiddleware
 
-from api.routes import sessions, jobs, framework
+from api.routes import sessions, jobs, framework, feedback
 from api.routes.auth import router as auth_router
 from services.storage.database import DataAccess
 from config.settings import settings
@@ -57,6 +57,7 @@ app.include_router(sessions.router, prefix="/api", tags=["Sessions"])
 app.include_router(jobs.router, prefix="/api", tags=["Jobs"])
 app.include_router(framework.router, prefix="/api", tags=["Framework"])
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(feedback.router, prefix="/api", tags=["Feedback"])
 
 @app.get("/api/health")
 async def health_check(db: DataAccess = Depends(get_data_access)):

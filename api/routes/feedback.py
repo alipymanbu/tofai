@@ -28,7 +28,7 @@ async def create_or_update_feedback(
         feedback=Feedback(
             id=request.id or generate_feedback_id(request.session_id, request.step_id, request.context_id),
             session_id=request.session_id,
-            type=request.feedback_type,
+            feedback_type=request.feedback_type,
             feedback_qual=request.feedback_qual,
             step_id=request.step_id,
             context_id=request.context_id,

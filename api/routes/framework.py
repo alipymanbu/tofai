@@ -227,7 +227,7 @@ async def get_initial_input(
             step_results=[
                 FrameworkStepResult(
                     id=step.id,
-                     result=[ResultOptions(result_options=[initial_input.brand_link], selected_option=0)]
+                     result=[ResultOptions(result_options=[initial_input.brand_link], context_ids=["brand_url"], selected_option=0)]
                 )
             ]
         )
@@ -259,4 +259,5 @@ async def get_initial_input(
             wait_for_user_action = wait_for_user_action
         ).model_dump()
     except Exception as e:
+        print(f"Error in initial input: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error selecting option: {str(e)}")
