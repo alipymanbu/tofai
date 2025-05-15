@@ -136,7 +136,7 @@ class AIOrchestrator:
         return {"current_step_id": END}
     print("Let's create a stunning brand awareness video!")
     brand_link = input("Got a link to your brand's website or online presence? ")
-    result_options = ResultOptions(result_options=[brand_link], selected_option=0)
+    result_options = ResultOptions(result_options=[brand_link], context_ids=["brand_url"], selected_option=0)
     framework_result = state.set_step_result(step_id=state.current_step_id, result_options=result_options, display_to_user=self.generator.get_step_by_id(state.current_step_id).result_display_allowed)
     return {"framework_result": framework_result, "current_step_id": next_step}
 

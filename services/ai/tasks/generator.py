@@ -31,6 +31,23 @@ def generate_md5_hash(input_string):
     hashed_string = md5_hash.hexdigest()
     return hashed_string
 
+def generate_context_id(content: Union[str, MediaUri]) -> str:
+    """
+    Generate a context ID for the given content.
+    
+    Args:
+        content: The content to generate a context ID for (can be a string or MediaUri)
+        
+    Returns:
+        str: The generated context ID
+    """
+    if isinstance(content, str):
+        return generate_md5_hash(content)
+    elif isinstance(content, MediaUri):
+        return generate_md5_hash(content.uri)
+    else:
+        raise ValueError(f"Unsupported content type: {type(content)}")
+
 class Generator:
     """
     A generator that loads prompt configurations from a JSON file and generates prompts.
@@ -264,7 +281,7 @@ class Generator:
                 params_value_flattened=param_values_flattened,
                 param_values=param_values
                 ))
-        return 
+        return result
 
     def generate_context_ids_for_results(self, results: List[List[Union[str, MediaUri]]]) -> List[List[str]]:
         """
@@ -279,12 +296,7 @@ class Generator:
         for result in results:
             context_ids = []
             for item in result:
-                if isinstance(item, str):
-                    context_ids.append(generate_md5_hash(item))
-                elif isinstance(item, MediaUri):
-                    context_ids.append(generate_md5_hash(item.uri))
-                else:
-                    raise ValueError(f"Unsupported result type: {type(item)}")
+                context_ids.append(generate_context_id(item))
             context_ids_deck.append(context_ids)
         return context_ids_deck
     
