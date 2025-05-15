@@ -67,7 +67,7 @@ class VideoCreationState(BaseModel):
         if isinstance(expected_selection_count, str) and expected_selection_count == "ALL":
             # If the expected selection count is "ALL", return all options
             return result_options.result_options
-        print(f"result_options: {result_options.selected_option} {len(result_options.result_options)}")
+        # print(f"result_options: {result_options.selected_option} {len(result_options.result_options)}")
         if result_options.selected_option < 0 or result_options.selected_option >= len(result_options.result_options):
             return None
         # print(f"result_options: {result_options.result_options[result_options.selected_option]}")
