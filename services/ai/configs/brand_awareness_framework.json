@@ -12,7 +12,8 @@
       "description": "Collect initial inputs like the brand name and website link",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "link_research"
+      "next_step": "link_research",
+      "version": 0
     },
     {
       "id": "link_research",
@@ -26,7 +27,8 @@
           "parameters": ["Link"]
         }
       ],
-      "next_step": "user_persona"
+      "next_step": "user_persona",
+      "version": 0
     },
     {
       "id": "user_persona",
@@ -52,7 +54,8 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_user_persona"
+      "next_step": "select_user_persona",
+      "version": 0
     },
     {
       "id": "select_user_persona",
@@ -61,7 +64,8 @@
       "requires_user_input": true,
       "prompts": [],
       "next_step": "content_spaces",
-      "require_user_input_for_step_id": "user_persona"
+      "require_user_input_for_step_id": "user_persona",
+      "version": 0
     },
     {
       "id": "content_spaces",
@@ -87,7 +91,8 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_content_spaces"
+      "next_step": "select_content_spaces",
+      "version": 0
     },
     {
       "id": "select_content_spaces",
@@ -96,7 +101,8 @@
       "requires_user_input": true,
       "prompts": [],
       "next_step": "personality_tonality",
-      "require_user_input_for_step_id": "content_spaces"
+      "require_user_input_for_step_id": "content_spaces",
+      "version": 0
     },
     {
       "id": "personality_tonality",
@@ -122,7 +128,8 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_personality_tonality"
+      "next_step": "select_personality_tonality",
+      "version": 0
     },
     {
       "id": "select_personality_tonality",
@@ -131,7 +138,8 @@
       "requires_user_input": true,
       "prompts": [],
       "next_step": "script",
-      "require_user_input_for_step_id": "personality_tonality"
+      "require_user_input_for_step_id": "personality_tonality",
+      "version": 0
     },
     {
       "id": "script",
@@ -157,7 +165,8 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_script"
+      "next_step": "select_script",
+      "version": 0
     },
     {
       "id": "select_script",
@@ -166,7 +175,8 @@
       "requires_user_input": true,
       "prompts": [],
       "next_step": "image_prompts",
-      "require_user_input_for_step_id": "script"
+      "require_user_input_for_step_id": "script",
+      "version": 0
     },
     {
       "id": "image_prompts",
@@ -195,7 +205,8 @@
           "output_instruction": "Add `||` between each scene. Do not output anything else."
         }
       ],
-      "next_step": "images"
+      "next_step": "images",
+      "version": 0
     },
     {
       "id": "images",
@@ -216,7 +227,8 @@
           "output_instruction": "."
         }
       ],
-      "next_step": "voiceover_prompt"
+      "next_step": "voiceover_prompt",
+      "version": 0
     },
     {
       "id": "voiceover_prompt",
@@ -243,7 +255,8 @@
           "output_instruction": "Just output the speech text. Do not output anything else."
         }
       ],
-      "next_step": "voiceover"
+      "next_step": "voiceover",
+      "version": 0
     },
     {
       "id": "voiceover",
@@ -265,7 +278,8 @@
           "output_instruction": "."
         }
       ],
-      "next_step": "background_music_prompt"
+      "next_step": "background_music_prompt",
+      "version": 0
     },
     {
       "id": "background_music_prompt",
@@ -292,7 +306,8 @@
           "output_instruction": "The prompt should be less than 200 characters. Just output the text. Do not output anything else."
         }
       ],
-      "next_step": "background_music"
+      "next_step": "background_music",
+      "version": 0
     },
     {
       "id": "background_music",
@@ -313,7 +328,8 @@
           "output_instruction": "."
         }
       ],
-      "next_step": "final_video"
+      "next_step": "final_video",
+      "version": 0
     },
     {
       "id": "final_video",
@@ -327,7 +343,8 @@
           "parameters": ["Images", "Background Music", "Voiceover"]
         }
       ],
-      "next_step": null
+      "next_step": null,
+      "version": 0
     }
   ]
 }

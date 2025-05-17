@@ -115,6 +115,21 @@ class Generator:
             if step.id == step_id:
                 return step
         return None
+
+    def get_step_version(self, step_id: str) -> int:
+        """
+        Get the version of a step by ID.
+        
+        Args:
+            step_id: The ID of the step to get the version for
+            
+        Returns:
+            int: The version of the step
+        """
+        step = self.get_step_by_id(step_id)
+        if not step:
+            raise ValueError(f"Step with ID '{step_id}' not found.")
+        return step.version
     
     def get_step_by_index(self, index: int) -> Optional[FrameworkStep]:
         """
