@@ -7,6 +7,7 @@ from services.storage.database import DataAccess
 from api.models import Feedback, User, CreateorUpdateFeedbackRequest
 from models.feedback_db import FeedbackDBModel
 import logging
+from services.ai.tasks.generator import Generator
 from api.dependency.data import get_data_access
 from api.dependency.auth import get_current_user
 
@@ -23,7 +24,8 @@ async def create_or_update_feedback(
     user: User = Depends(get_current_user),
     db: DataAccess = Depends(get_data_access)
 ):
-    """Create a new session and associate it with the authenticated user."""
+    """Create or update a feedback."""
+    step_version = Generator(framework_id=request.framework_id).get_step_version(request.step_id)
     feedback_db_model = FeedbackDBModel(
         feedback=Feedback(
             id=request.id or generate_feedback_id(request.session_id, request.step_id, request.context_id),
@@ -32,7 +34,9 @@ async def create_or_update_feedback(
             feedback_qual=request.feedback_qual,
             step_id=request.step_id,
             context_id=request.context_id,
-            created_at=datetime.now(timezone.utc)
+            created_at=datetime.now(timezone.utc),
+            framework_id=request.framework_id,
+            step_version=step_version,
         )
     )
     try:

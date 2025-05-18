@@ -175,3 +175,6 @@ cython_debug/
 secrets.py
 global-bundle.pem
 secrets.yaml
+
+#output
+output_prompts.txt

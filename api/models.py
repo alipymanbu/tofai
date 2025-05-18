@@ -63,6 +63,8 @@ class Feedback(BaseModel):
     created_at: datetime
     feedback_type: FeedbackType
     feedback_qual: Optional[str] = None
+    framework_id: str = "brand_awareness_video"
+    step_version: Optional[int] = None
     
 class CreateorUpdateFeedbackRequest(BaseModel):
     """Request model for /api/feedback."""
@@ -72,6 +74,7 @@ class CreateorUpdateFeedbackRequest(BaseModel):
     context_id: str
     feedback_type: FeedbackType
     feedback_qual: Optional[str] = None
+    framework_id: str = "brand_awareness_video"
 
 # ============ Framework Models ============
 

@@ -87,7 +87,7 @@ class AIOrchestrator:
 
     # Callable to get the next node or end.
     def next_node_or_end(state: VideoCreationState) -> str:
-        print(f"next_node_or_end: {state.current_step_id}")
+        # print(f"next_node_or_end: {state.current_step_id}")
         if state.current_step_id:
            return state.current_step_id
         return END
@@ -146,7 +146,7 @@ class AIOrchestrator:
         params = params.union(set(prompt.parameters))
     for agent in step.agents:
         params = params.union(set(agent.parameters))
-    print(f"params: {params}")
+    # print(f"params: {params}")
     return state.get_param_values(params=params, framework_steps=self.generator.framework.steps)
 
   def _generate_options(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
@@ -200,7 +200,7 @@ class AIOrchestrator:
     if not self.is_local_test:
         return {"current_step_id": END}
     try:
-      print(f"\nChoose an option for '{state.current_step_id}':")
+    #   print(f"\nChoose an option for '{state.current_step_id}':")
       step_result = state.get_step_result(step_id=selection_for, framework_result=state.framework_result)
       for idx, opt in enumerate(state.get_options_for_result(step_result=step_result, result_index=0), 1):
           print(f"{idx}. {opt}")

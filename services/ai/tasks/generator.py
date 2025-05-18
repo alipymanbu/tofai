@@ -115,6 +115,21 @@ class Generator:
             if step.id == step_id:
                 return step
         return None
+
+    def get_step_version(self, step_id: str) -> int:
+        """
+        Get the version of a step by ID.
+        
+        Args:
+            step_id: The ID of the step to get the version for
+            
+        Returns:
+            int: The version of the step
+        """
+        step = self.get_step_by_id(step_id)
+        if not step:
+            raise ValueError(f"Step with ID '{step_id}' not found.")
+        return step.version
     
     def get_step_by_index(self, index: int) -> Optional[FrameworkStep]:
         """
@@ -129,6 +144,23 @@ class Generator:
         if index >= len(self.framework.steps) or index < 0:
             return None
         return self.framework.steps[index]
+
+    def generate_prompt_templates(self) -> dict[str, list[str]]:
+        """
+        Generate prompt templates for all steps based on the framework configuration."""
+        result = {}
+        valid_params = set()
+        for step in self.framework.steps:
+            for prompt in step.prompts:
+                params_dict = {}
+                for param in prompt.parameters:
+                    if param not in valid_params:
+                        raise ValueError(f"Parameter '{param}' is not valid parameter for step '{step.id}'. Valid parameters are: {valid_params}")
+                    params_dict[param] = "{" + f"{param}" + "}"
+                prompt_template = self.generate_prompt(prompt, params_dict)
+                result[step.id] = prompt_template
+            valid_params.add(step.name)
+        return result
     
     def generate_prompt(self, prompt: Prompt, param_values: Dict[str, str]) -> str:
         """

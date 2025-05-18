@@ -139,7 +139,6 @@ async def select_step_option(
         start_time = datetime.now(timezone.utc)
         # Get the session
         session_db_model = await db.get_session(session_id)
-        print(f"Session from storage: {session_db_model}")
         if not session_db_model:
             raise HTTPException(status_code=404, detail=f"Session not found: {session_id}")
         # Check if framework_result exists

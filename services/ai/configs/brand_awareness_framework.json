@@ -12,7 +12,8 @@
       "description": "Collect initial inputs like the brand name and website link",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "link_research"
+      "next_step": "link_research",
+      "version": 0
     },
     {
       "id": "link_research",
@@ -26,7 +27,8 @@
           "parameters": ["Link"]
         }
       ],
-      "next_step": "user_persona"
+      "next_step": "user_persona",
+      "version": 0
     },
     {
       "id": "user_persona",
@@ -36,13 +38,20 @@
       "prompts": [
         {
           "id": "user_persona_prompt",
-          "prefix": "Based on the brand website, do a thorough research on who the user could be. Try to create the persona of a person, give them a name, demographics, psychographics and other details and tell us what content do they like?",
+          "prefix": "Based on the brand website, do a thorough research on who the user could be. Total length for each user persona should not be more than 100 words. Try to create the persona of a person, give them a name, demographics, psychographics and other details and tell us what content do they like? The content that they like should not be connected to the brand or the category- they need to be based on the kind of youtube channels, movies & OTT shows that are this persona’s favorites. Also tell me the relative size of each persona with respect to other.",
           "few_shots": [
             {
               "options": [
-                "Option 1: Sophie, The Minimalist Aesthete\nDemographics: 32, female, urban professional, $80K/year, lives in a sleek Seattle loft.\nPsychographics: Values quality over flash, obsessed with timeless design, hates waste, meditates to lo-fi beats, scrolls Pinterest for Scandinavian inspo.\nContent Likes: Short, visually stunning videos—think ASMR unboxings, 'day in the life' minimalism hacks, or quirky 'how it's made' factory tours with a twist (e.g., 'This bag's leather has a secret…').\nWhy Italic?: She'd love the understated elegance and the 'same makers as luxury brands' flex without the pretension.",
-                "Option 2: Alex, The Conscious Consumer\nDemographics: 28, non-binary, tech startup employee, $95K/year, lives in a Portland apartment with sustainable everything.\nPsychographics: Research-driven, values transparency, follows DTC brands on social, belongs to multiple CSAs, reads Consumer Reports for fun.\nContent Likes: Deep dives into supply chains, ethical manufacturing explainers, and 'what you're really paying for' breakdowns that highlight quality vs. marketing costs.\nWhy Italic?: The transparent pricing model and factory-direct relationships would appeal to their desire for clarity and value consciousness.",
-                "Option 3: Marcus, The Quality Connoisseur\nDemographics: 42, male, creative director, $120K/year, renovated Brooklyn brownstone.\nPsychographics: Self-taught in quality markers, appreciates craftsmanship, willing to invest in 'forever items,' reads niche design blogs, collects mid-century furniture.\nContent Likes: Behind-the-scenes manufacturing tours, material science explainers, and 'Why This Costs What It Costs' content that justifies investment through longevity and quality.\nWhy Italic?: The promise of luxury manufacturing quality without brand markups aligns perfectly with his value system of investing in craftsmanship, not logos."
+                "Option 1: Liam Nguyen, 32, male, lives in San Francisco, CA. He’s a marketing manager earning $80K/year, single, renting a chic apartment. Liam craves quality, minimalism, and authenticity, loving curated experiences like craft coffee and vinyl records. Witty and curious, he rejects flashy logos, seeking style at value prices. His digital life buzzes on Instagram, curating his aesthetic. He researches purchases meticulously, prioritizing atelier-grade essentials. Stimulus Alert: Liam sips espresso, watching Vsauce unravel reality, planning a sleek dinner party. Content Preferences: Loves Vsauce (YouTube), Inception (movie), Succession (OTT show). Relative Audience Size: 3X (urban professionals, 35-40% of Italic’s market).",
+                "Option 2: Sofia Martinez, 27, female, resides in Brooklyn, NY. A freelance writer earning $65K/year, she’s single, sharing a loft. Sofia values understated elegance, creativity, and independence, frequenting art galleries and indie bookstores. Introspective yet stylish, she avoids ostentatious brands, craving luxury without markup. Her Pinterest is a mood-board masterpiece. Stimulus Alert: Sofia journals in a café, Vox’s quirky explainer sparking her next essay. She’s discerning, seeking unique, logo-free pieces that tell a story. Content Preferences: Loves Vox (YouTube), Amélie (movie), Fleabag (OTT show). Relative Audience Size: 2X (young creatives, 25-30% of Italic’s market).",
+                "Option 3: Ethan Patel, 40, male, lives in Chicago, IL. A tech consultant earning $120K/year, he’s married, owning a condo. Ethan prioritizes efficiency, quality, and practicality, enjoying podcasts and city runs. Analytical and confident, he dislikes wasteful spending, seeking durable, logo-free essentials. His LinkedIn is sharp, reflecting his professional edge. Stimulus Alert: Ethan jogs, Wendover’s logistics video fueling his next client pitch. He values function over flash, choosing Italic for timeless utility. Content Preferences: Loves Wendover Productions (YouTube), The Social Network (movie), The Morning Show (OTT show). Relative Audience Size: X (older professionals, 15-20% of Italic’s market)."
+              ]
+            },
+            {
+              "options": [
+                "Option 1: Priya Sharma, 34, female, lives in Bengaluru, India. A school teacher earning ₹8L/year, she’s married with a toddler. Priya champions sustainability, safety, and community, using non-toxic products for her family. She loves urban gardening and mommy blogs, distrusting chemical-heavy brands. Active on Instagram, she shares eco-tips. Stimulus Alert: Priya’s mixing a Born Good detergent, watching Kurzgesagt explain ocean cleanup, planning a green playdate. Content Preferences: Loves Kurzgesagt (YouTube), Zootopia (movie), Made in Heaven (OTT show). Relative Audience Size: 3X (urban parents, 40-45% of Born Good’s market, prioritizing safe, eco-friendly homes).",
+                "Option 2: Arjun Menon, 28, male, resides in Mumbai, India. A startup founder earning ₹12L/year, he’s single, renting a modern flat. Arjun values innovation, sustainability, and efficiency, experimenting with zero-waste hacks. He’s skeptical of greenwashing, active on LinkedIn. Stimulus Alert: Arjun’s testing Born Good’s dish liquid, Vox’s recycling video sparking a pitch idea. He seeks planet-friendly solutions with style. Content Preferences: Loves Vox (YouTube), The Martian (movie), The Great Indian Kapil Show (OTT show). Relative Audience Size: 2X (young professionals, 25-30% of Born Good’s market, drawn to eco-tech).",
+                "Option 3: Lakshmi Iyer, 55, female, lives in Chennai, India. A retired bank manager earning ₹6L/year pension, she’s widowed, living with family. Lakshmi prioritizes health, tradition, and eco-conscious living, using natural cleaners. She enjoys community events, distrusts harsh chemicals. Stimulus Alert: Lakshmi’s washing linens with Born Good, Tasty’s recipe video inspiring dinner. Content Preferences: Loves Tasty (YouTube), Lagaan (movie), Panchayat (OTT show). Relative Audience Size: X (older eco-conscious, 15-20% of Born Good’s market, valuing safety, tradition)." 
               ]
             }
           ],
@@ -52,7 +61,8 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_user_persona"
+      "next_step": "select_user_persona",
+      "version": 1
     },
     {
       "id": "select_user_persona",
@@ -61,7 +71,8 @@
       "requires_user_input": true,
       "prompts": [],
       "next_step": "content_spaces",
-      "require_user_input_for_step_id": "user_persona"
+      "require_user_input_for_step_id": "user_persona",
+      "version": 0
     },
     {
       "id": "content_spaces",
@@ -71,13 +82,20 @@
       "prompts": [
         {
           "id": "content_spaces_prompt",
-          "prefix": "What are the content spaces? These are the wide spaces that our brand would like to tell stories about. Remember these are not scripts, but spaces from which 50 scripts can come.",
+          "prefix": "What are the content spaces? These are the wide spaces that our brand would like to tell stories about. Remember these are not scripts, but spaces from which 50 scripts can come.The spaces do not have to be salesy at all. They do not have to be directly connected to the brand or the category. They might be about things that this brand might want to talk about, be about. It is the world view of the brand. They have to be spaces that might catch the attention of the user and things that they’d like to watch all by themselves",
           "few_shots": [
             {
               "options": [
-                "Option 1: The Quiet Luxury Code\nWhat's It About?: Celebrating the art of living well without shouting—Italic's logo-free, versatile pieces as the ultimate minimalist flex.\nWhy Sophie Loves It: It's her aesthetic dream: sleek, functional, timeless—content that mirrors her curated loft life.\nStory Seeds: 'One coat, three seasons, zero fuss,' 'The bag that doesn't scream—just whispers quality,' 'How to own less and live more.'\nSocial Media Fit: Ideal for 'day in the life' snippets or minimalist hacks that make her feel effortlessly chic.",
-                "Option 2: The Timeless Companions\nWhat's It About?: Italic's products as lifelong partners—durable, reliable, and quietly luxurious, built to outlast trends.\nWhy Sophie Loves It: She hates waste and loves permanence; stories of 'things that last' hit her right in the feels.\nStory Seeds: 'This scarf survived a decade—and still looks new,' 'The tote that's been to 12 cities,' 'Why my wallet's older than my cat.'\nSocial Media Fit: Great for cinematic 'object journey' tales or quirky 'test of time' experiments that hook her meditative vibe.",
-                "Option 3: The Maker's Journey\nWhat's It About?: Revealing the expert craftspeople and time-honored techniques behind Italic's pieces—putting faces to the 'same factories as luxury brands' promise.\nWhy Sophie Loves It: She's a sucker for process and provenance; seeing the hands that make her things gives emotional weight to her possessions.\nStory Seeds: 'Meet the artisan who stitched your jacket,' 'How a leather wallet gets its patina,' 'From raw material to your doorstep.'\nSocial Media Fit: Perfect for 'how it's made' micro-documentaries with ASMR-worthy details and stunning workshop cinematography."
+                "Option 1: Art of the less: Stories about finding beauty and meaning in simplicity—decluttering spaces, minds, or lives. Think a minimalist apartment tour with a single, striking piece of art (3-sec hook: a sleek shelf with one book). Or a profile of a chef who crafts a perfect dish with three ingredients (5-sec twist: it’s a recipe Liam can try tonight). Videos explore how less sparks creativity, focus, or joy, echoing Liam’s love for curated aesthetics and Inception’s layered simplicity. These resonate with his Pinterest-worthy lifestyle without screaming “buy this.”",
+                "Option 2: Urban whimsey: Quirky, unexpected moments in city life—street musicians, secret rooftop gardens, or pop-up art. Imagine a video on a barista doodling portraits on coffee cups (3-sec hook: latte art morphs into a face). Or a time-lapse of a mural appearing overnight (5-sec twist: it’s by an anonymous artist). Liam’s Inception-like love for layered surprises and Vsauce’s playful curiosity make these urban vignettes click. They reflect Italic’s understated elegance, grabbing Liam’s attention on TikTok.”",
+                "Option 3: A Quiet Rebellion: Profiles of people who defy norms subtly—quitting corporate for a micro-business or living off-grid in style. Think a coder building an app for niche hobbyists (3-sec hook: it’s for vinyl collectors!). Or a teacher turning a classroom into a philosophy club (5-sec twist: kids debate like Succession tycoons). Liam’s anti-logo stance and love for Inception’s subversive depth make these compelling. These Reels-worthy tales vibe with Italic’s bold yet understated identity, hooking Liam solo."
+              ]
+            },
+            {
+              "options": [
+                "Option 1: Everyday Eco wins: Stories celebrating small, sustainable actions by ordinary people—composting, upcycling, or seed-saving. Picture a mom crafting toys from scrap fabric (3-sec hook: a kid hugs a handmade doll). Or a neighbor swapping veggie seeds (5-sec twist: it grows a rare heirloom!). Priya’s Kurzgesagt-fueled curiosity loves practical green tips. These Reels vibe with her eco-mom life, mirroring Born Good’s planet-first mission, grabbing her attention solo without a sales pitch.",
+                "Option 2: Tales of creating nurturing, toxin-free environments—homes, schools, or parks. Imagine a classroom turned chemical-free art hub (3-sec hook: kids paint with natural dyes). Or a family’s plastic-free kitchen (5-sec fact: it’s all bamboo!). Priya’s Zootopia-like passion for safe communities connects here. These Instagram Stories reflect Born Good’s non-toxic ethos, with emotional hooks that make Priya pause her scroll and watch alone.", 
+                "Option 3: Explorations of nature’s lessons for human life—how plants or animals inspire harmony. Think a video on mangroves shielding coasts (3-sec hook: roots sway in waves). Or bees teaching community (5-sec twist: a kid mimics their teamwork!). Priya’s Made in Heaven love for emotional depth and Kurzgesagt’s big-picture thinking shine. These YouTube Shorts echo Born Good’s plant-based roots, captivating Priya with awe-inspiring visuals she’d savor by herself."
               ]
             }
           ],
@@ -87,7 +105,8 @@
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_content_spaces"
+      "next_step": "select_content_spaces",
+      "version": 1
     },
     {
       "id": "select_content_spaces",
@@ -95,43 +114,9 @@
       "description": "User selects a content space from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "personality_tonality",
-      "require_user_input_for_step_id": "content_spaces"
-    },
-    {
-      "id": "personality_tonality",
-      "name": "Personality and Tonality",
-      "description": "Generate personality and tonality options",
-      "requires_user_input": false,
-      "prompts": [
-        {
-          "id": "personality_tonality_prompt",
-          "prefix": "What kind of personality and tonality should the brand adopt? This is the brand's secret sauce, its distinctive voice that sets the stage for emotional resonance. A great personality and tonality should make the brand genuinely stand out.",
-          "few_shots": [
-            {
-              "options": [
-                "Option 1: The Quirky Minimalist Guide\nPersonality: The stylish friend who whispers luxury secrets with a playful twist—more Wes Anderson than Marie Kondo.\nTone: Light, clever, and gently ironic—treating quality as an inside joke we're all in on.\nSignature Move: The knack for making minimalism feel rebellious, not restrictive (Join the secret society of people who don't need logos).\nVisual Cues: Clean compositions with unexpected pops of whimsy—think someone using an Italic weekender bag as a pillow fort.\nCall-To-Action Style: Invitational with gentle urgency (The quiet revolution is accepting members).",
-                "Option 2: The Quality Confidant\nPersonality: The trusted friend who sees quality as poetry—finding beauty in durability, craft, and thoughtful design.\nTone: Warm, intimate, and slightly reverent—speaking about materials and craftsmanship with genuine wonder.\nSignature Move: Making the mundane feel magical through micro-details (This zipper will outlive your next three relationships).\nVisual Cues: Close-ups that feel like love letters to textures and stitching, bathed in golden-hour light.\nCall-To-Action Style: Soft suggestions that feel like shared wisdom (Life's too short for bags that don't age beautifully with you).",
-                "Option 3: The Minimal Maximalist\nPersonality: The paradoxical friend who finds freedom in constraints and abundance in simplicity.\nTone: Playfully philosophical with a dash of cosmic wonder—making minimalism feel expansive, not restrictive.\nSignature Move: Finding universe-sized meaning in tiny details (This jacket has pockets that understand you).\nVisual Cues: Spacious compositions that zoom dramatically between vast emptiness and intimate details.\nCall-To-Action Style: Mind-expanding invitations (Discover how less becomes everything)."
-              ]
-            }
-          ],
-          "parameters": ["Link Research", "User Persona", "Content Spaces"],
-          "option_count": 3,
-          "options_delimiter": "||",
-          "expected_output_modality": "TEXT"
-        }
-      ],
-      "next_step": "select_personality_tonality"
-    },
-    {
-      "id": "select_personality_tonality",
-      "name": "Select Personality and Tonality",
-      "description": "User selects a personality and tonality from the options",
-      "requires_user_input": true,
-      "prompts": [],
       "next_step": "script",
-      "require_user_input_for_step_id": "personality_tonality"
+      "require_user_input_for_step_id": "content_spaces",
+      "version": 0
     },
     {
       "id": "script",
@@ -141,23 +126,31 @@
       "prompts": [
         {
           "id": "script_prompt",
-          "prefix": "Write the scripts for the ideas shortlisted. Please ensure that you start with a hook that we had shortlisted earlier. Dont make the script salsey. The main point is to capture attention, get the user to reach the end of the video and remember/feel something about the brand.",
+          "prefix": "Write the instagram organic content scripts for the ideas shortlisted. Each script can be between 15 to 20 seconds long. Don’t make the script salsey. The main point is to capture attention, get the user to reach the end of the video and remember/feel something strongly about the brand's world view.",
           "few_shots": [
             {
               "options": [
-                "Script 1: The Quiet Luxury of Doing Less\nHOOK (0:00-0:05): (Close-up of hand caressing buttery leather bag) \"The coolest flex? Not flexing at all.\" (Slight smile)\n\nBODY (0:06-0:30):\n(Voiceover, conversational but slightly playful) \"So here's what I realized about quality: it doesn't need to scream.\" (Shot of person removing tiny logo from competitor bag)\n\"This bag? Made in the same factory as those with four-digit price tags.\" (Person tapping bag knowingly)\n\"But instead of paying for billboards and celebrity gifting—\" (Eye roll, comic timing)\n\"—I'm just paying for, you know... the actual bag.\" (Wide shot of person organizing remarkably neat closet with minimal, color-coordinated items)\n\"It's like joining a secret club where the password is 'I don't need logos to feel fancy.'\" (Whispering this like a conspiracy, slight wink)\n\nEND (0:31-0:40): (Person walking confidently through city) \"Italic. Luxury without the luxury markup.\" (Text appears: \"The quiet revolution is accepting members\")\nFeel: Quirky confidence—Italic's the cool friend who knows the real secret to style.",
-                "Script 2: What This Bag Doesn't Have\nHOOK (0:00-0:05): (Person at luxury boutique looking at price tag, jaw drops) \"Four thousand dollars... for THIS?\" (Zoom in on tiny logo)\n\nBODY (0:06-0:30):\n(Voiceover, warm and thoughtful) \"You know what my favorite bag doesn't have?\" (Quick cuts of various luxury logos)\n\"A giant logo that screams 'look how much I spent.'\" (Person confidently carrying an Italic bag)\n\"What it DOES have?\" (Close-ups begin, ASMR-style)\n\"Hand-stitched seams from the same artisans who make those four-figure bags.\" (Extreme close-up of perfect stitching)\n\"Butter-soft leather that gets better every year.\" (Time-lapse of leather developing patina)\n\"And somehow... it costs hundreds, not thousands.\" (Person looking satisfied, checking receipt)\n\nEND (0:31-0:40): (Split-screen of Italic bag vs. logo bag) \"Italic. Everything but the markup.\" (Text appears: \"Life's too short for bags that don't age beautifully with you\")\nFeel: Thoughtful revelation—Italic's the wise friend who helps you see through marketing noise.",
-                "Script 3: The Bag That Gets You\nHOOK (0:00-0:05): (Person struggling with overstuffed, complicated bag with giant logo) \"Why is this relationship so complicated?\" (Frustrated expression)\n\nBODY (0:06-0:30):\n(Voiceover, playfully philosophical) \"What if your bag... actually understood you?\" (Person switches to minimal Italic tote)\n\"No flashy hardware demanding attention.\" (Close-up of clean, minimal design)\n\"Just pockets that make sense—like this one, specifically sized for your phone.\" (Demonstration of thoughtful features)\n\"Materials that don't just last, but get more interesting with time—like the best friendships.\" (Montage of bag in different settings, developing character)\n\"Space that expands when you need it, because bags should adapt to life, not vice versa.\" (Demonstration of bag's versatility)\n\nEND (0:31-0:40): (Person using bag effortlessly) \"Italic. Design that gets you.\" (Text appears: \"Discover how less becomes everything\")\nFeel: Mindful wonder—Italic's the insightful friend who sees possibilities in simplicity."
+                "Script 1: Visuals/Editing: Upbeat lo-fi beat, quick cuts, text overlays in bold sans-serif.\nScript: [0-3 sec] Close-up: A hand twists a plastic bottle, LED flickers on. “Meet Ravi, who turns trash into light!”\n[4-7 sec] Montage: Ravi cuts bottles, wires LEDs, tests a glowing lamp. “Old bottles? He makes solar lamps for street vendors.”\n[8-12 sec] Wide shot: Vendor’s stall glows at night. “One hack lights up lives.”\n[13-18 sec] Text overlay: ‘Small ideas, big impact.’ Cut to Ravi grinning, lamp in hand. “What’s your eco-hack?”",
+                "Script 2: Visuals/Editing: Bright acoustic track, smooth zooms, vibrant colors, text pops.\nScript: [0-3 sec] Drone shot: Lush balcony garden in Mumbai. “Anita’s balcony? It’s a farm!”\n[4-8 sec] Clips: Anita waters herbs, picks tomatoes, composts scraps. “She grows 10 crops in 50 square feet.”\n[9-13 sec] Close-up: Tomato sliced for salad. “Zero-waste, homegrown meals? Yes!”\n[14-20 sec] Text overlay: ‘Live light, grow bold.’ Anita smiles, holding a basil sprig. “What’s your future-proof move?”\n",
+                "Script 3: Visuals/Editing: Energetic synth beat, fast cuts, neon text overlays in futuristic font.\nScript:\n[0-3 sec] Close-up: A circuit board sparks, LED glows. “Nisha’s turning e-waste into tech!”\n[4-7 sec] Montage: Nisha solders old phone parts, tests a glowing speaker. “Broken chargers? She builds Bluetooth speakers!”\n[8-12 sec] Wide shot: Speaker pulses at a night market. “One fix, less landfill.”\n[13-17 sec] Text overlay: ‘Hack the planet.’ Nisha grins, holding her creation. “What’s your eco-fix?”"
+              ]
+            },
+            {
+              "options": [
+                "Script 1: Visuals/Editing: Smooth jazz track, slow pans, minimalist white text overlays in sleek font.\nScript:\n[0-3 sec] Pan: A single wooden chair in a sunlit room. “Amit’s home? One chair.”\n[4-7 sec] Clips: Amit sips coffee, reads, naps on that chair. “No clutter, just moments.”\n[8-12 sec] Close-up: Chair’s polished grain glows. “One piece, endless stories.”\n[13-18 sec] Text overlay: ‘Less is enough.’ Amit smiles, sunlight hits chair. “What’s your one thing?” ",
+                "Script 2: Visuals/Editing: Lo-fi beat, quick cuts, bold text pops in neutral tones.\nScript:\n[0-3 sec] Zoom: Fingers strum three guitar notes. “Rhea’s song? Three notes.”\n[4-7 sec] Montage: Rhea plays on a rooftop, crowd sways. “Minimal chords, maximum soul.”\n[8-11 sec] Close-up: Her fingers dance on strings. “Less noise, more heart.”\n[12-16 sec] Text overlay: ‘Simplify to shine.’ Rhea winks, strumming softly. “What’s your simple spark?”\n",
+                "Script 3: Visuals/Editing: Upbeat indie guitar track, quick cuts, vibrant text overlays in handwritten font.\nScript:\n[0-3 sec] Zoom: A violinist plays on a busy SF sidewalk. “Nila’s music stops the city!”\n[4-7 sec] Montage: Commuters pause, a kid dances, phones film. “One bow, a street’s spellbound.”\n[8-12 sec] Close-up: Violin strings hum, her smile glows. “Magic in the everyday.”\n[13-17 sec] Text overlay: ‘Find the spark.’ Nila bows, crowd claps. “What’s your city magic?”"
               ]
             }
           ],
-          "parameters": ["Link Research", "User Persona", "Content Spaces", "Personality and Tonality"],
+          "parameters": ["Link Research", "User Persona", "Content Spaces"],
           "option_count": 3,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT"
         }
       ],
-      "next_step": "select_script"
+      "next_step": "select_script",
+      "version": 1
     },
     {
       "id": "select_script",
@@ -166,7 +159,8 @@
       "requires_user_input": true,
       "prompts": [],
       "next_step": "image_prompts",
-      "require_user_input_for_step_id": "script"
+      "require_user_input_for_step_id": "script",
+      "version": 0
     },
     {
       "id": "image_prompts",
@@ -195,7 +189,8 @@
           "output_instruction": "Add `||` between each scene. Do not output anything else."
         }
       ],
-      "next_step": "images"
+      "next_step": "images",
+      "version": 0
     },
     {
       "id": "images",
@@ -216,7 +211,8 @@
           "output_instruction": "."
         }
       ],
-      "next_step": "voiceover_prompt"
+      "next_step": "voiceover_prompt",
+      "version": 0
     },
     {
       "id": "voiceover_prompt",
@@ -243,7 +239,8 @@
           "output_instruction": "Just output the speech text. Do not output anything else."
         }
       ],
-      "next_step": "voiceover"
+      "next_step": "voiceover",
+      "version": 0
     },
     {
       "id": "voiceover",
@@ -265,7 +262,8 @@
           "output_instruction": "."
         }
       ],
-      "next_step": "background_music_prompt"
+      "next_step": "background_music_prompt",
+      "version": 0
     },
     {
       "id": "background_music_prompt",
@@ -285,14 +283,15 @@
               ]
             }
           ],
-          "parameters": ["Link", "Personality and Tonality"],
+          "parameters": ["Link", "Script"],
           "option_count": -1,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT",
           "output_instruction": "The prompt should be less than 200 characters. Just output the text. Do not output anything else."
         }
       ],
-      "next_step": "background_music"
+      "next_step": "background_music",
+      "version": 0
     },
     {
       "id": "background_music",
@@ -313,7 +312,8 @@
           "output_instruction": "."
         }
       ],
-      "next_step": "final_video"
+      "next_step": "final_video",
+      "version": 0
     },
     {
       "id": "final_video",
@@ -327,7 +327,8 @@
           "parameters": ["Images", "Background Music", "Voiceover"]
         }
       ],
-      "next_step": null
+      "next_step": null,
+      "version": 1
     }
   ]
 }

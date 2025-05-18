@@ -96,6 +96,7 @@ class FrameworkStep(BaseModel):
     requires_user_input: bool = False
     require_user_input_for_step_id: str = ""
     result_display_allowed: bool = True
+    version: int = 0
     
 
 class Framework(BaseModel):
