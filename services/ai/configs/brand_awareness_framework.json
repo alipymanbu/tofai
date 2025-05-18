@@ -1,7 +1,7 @@
 {
   "id": "brand_awareness_video",
   "name": "Brand Awareness Video Framework",
-  "description": "A framework for creating brand awareness videos by generating user personas, content spaces, tonality, and scripts.",
+  "description": "A framework for creating brand awareness videos by generating user personas, content spaces, tonality, and scripts. foo bar",
   "initial_step": "initial_input",
   "final_step": "final_video",
   "prompt_base": "You are the best marketer on Earth specifically specialising in video storytelling that helps brands get reach on social media. You are weird like Vsauce, thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy like David Ogilvy. You do this by understanding what kind of content the brands want by taking them through a series of steps mentioned below, providing them a few options at each step, and then on the basis of the user's reply, proceeding to the next step. Your scripts are written in such a way to have some stimulation every 3-5 seconds.",
