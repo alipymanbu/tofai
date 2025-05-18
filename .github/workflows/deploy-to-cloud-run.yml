@@ -60,9 +60,7 @@ jobs:
             COGNITO_REDIRECT_URL=${{ secrets.COGNITO_REDIRECT_URL }}
             COGNITO_LOGOUT_URL=${{ secrets.COGNITO_LOGOUT_URL }}
             COGNITO_SCOPE=${{ secrets.COGNITO_SCOPE }}
-            COGNITO_JWKS_URI=${{ secrets.COGNITO_JWKS_URI }}
-            CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            COGNITO_TOKEN_SIGNING_URL=${{ secrets.COGNITO_TOKEN_SIGNING_URL }}
             GEMINI_API_PROJECT_NUMBER=${{ secrets.GEMINI_API_PROJECT_NUMBER }}
             GEMINI_API_SECRET=${{ secrets.GEMINI_API_SECRET }}
             ELEVEN_TTS_SECRET=${{ secrets.ELEVEN_TTS_SECRET }}
@@ -70,7 +68,6 @@ jobs:
             GOOGLE_CSE_ID=${{ secrets.GOOGLE_CSE_ID }}
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            AWS_REGION=${{ secrets.AWS_REGION }}
             S3_REGION=${{ secrets.S3_REGION }}
             SECRET_KEY=${{ secrets.SECRET_KEY }}
             CELERY_BROKER_URL=${{ secrets.CELERY_BROKER_URL }}
