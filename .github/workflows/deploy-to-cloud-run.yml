@@ -43,7 +43,6 @@ jobs:
           region: ${{ env.REGION }}
           image: gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}
           env_vars: |
-            PORT=8000
             MONGODB_URI=${{ secrets.MONGODB_URI }}
             DATABASE_NAME=${{ secrets.DATABASE_NAME }}
             REDIS_HOST=${{ secrets.REDIS_HOST }}
