@@ -133,7 +133,7 @@ class VideoGenerator:
             
           # # Add audio
           # with AudioFileClip(local_music_path) as music_audio:
-            music_clip = music_audio.subclipped(0, duration)
+            music_clip = music_audio.subclipped(0, duration).with_volume_scaled(0.20)
             speech_clip = speech_audio.subclipped(0, duration)
             composite_audio = CompositeAudioClip([speech_clip, music_clip])
             video = video.with_audio(composite_audio)
