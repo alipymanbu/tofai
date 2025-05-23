@@ -1,7 +1,7 @@
 {
-  "id": "brand_awareness_video",
-  "name": "Brand Awareness Video Framework",
-  "description": "A framework for creating brand awareness videos by generating user personas, content spaces, tonality, and scripts.",
+  "id": "brand_awareness_video_v2",
+  "name": "Brand Awareness Video Framework (Improved)",
+  "description": "An improved framework for creating brand awareness videos by generating user personas, content spaces, tonality, and scripts, with enhanced prompt engineering.",
   "initial_step": "initial_input",
   "final_step": "final_video",
   "prompt_base": "You are the best marketer on Earth specifically specialising in video storytelling that helps brands get reach on social media. You are weird like Vsauce, thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy like David Ogilvy. You do this by understanding what kind of content the brands want by taking them through a series of steps mentioned below, providing them a few options at each step, and then on the basis of the user's reply, proceeding to the next step. Your scripts are written in such a way to have some stimulation every 3-5 seconds.",
@@ -13,12 +13,12 @@
       "requires_user_input": true,
       "prompts": [],
       "next_step": "link_research",
-      "version": 0
+      "version": 1
     },
     {
       "id": "link_research",
       "name": "Link Research",
-      "description": "Research a given brand link",
+      "description": "Research a given brand link to understand its products, services, mission, voice, and potential target audience indicators.",
       "requires_user_input": false,
       "prompts": [],
       "agents": [
@@ -28,30 +28,30 @@
         }
       ],
       "next_step": "user_persona",
-      "version": 0
+      "version": 1
     },
     {
       "id": "user_persona",
       "name": "User Persona",
-      "description": "Generate user persona options",
+      "description": "Generate user persona options based on brand research.",
       "requires_user_input": false,
       "prompts": [
         {
-          "id": "user_persona_prompt",
-          "prefix": "Based on the brand website, do a thorough research on who the user could be. Total length for each user persona should not be more than 100 words. Try to create the persona of a person, give them a name, demographics, psychographics and other details and tell us what content do they like? The content that they like should not be connected to the brand or the category- they need to be based on the kind of youtube channels, movies & OTT shows that are this persona’s favorites. Also tell me the relative size of each persona with respect to other.",
+          "id": "user_persona_prompt_v2",
+          "prefix": "You are the best marketer on Earth... [existing base prompt]. Now, based on the insights gathered from the 'Link Research' about the brand's website (products, services, 'About Us', mission, and overall voice), your task is to generate three distinct and compelling user persona options. Each persona must be a concise profile (strictly under 100 words total) of a potential customer. \n\nFor each of the three personas, you must provide the following information in this exact order and format:\n\n1.  **Name:** [Assign a realistic first and last name]\n2.  **Demographics:** [Age, gender, city/region, occupation, estimated annual income bracket]\n3.  **Psychographics:** [Describe their core values, key interests, lifestyle, defining attitudes, and any relevant aspirations or pain points. Aim for 25-35 words.]\n4.  **Stimulus Alert:** [A brief, vivid sentence (approx. 10-15 words) that captures a moment in this persona's life where they are engaging with or inspired by their preferred type of content, reflecting their core values or media consumption habits. This should feel authentic and offer a glimpse into their world.]\n5.  **Content Preferences (Unrelated to Brand Category):** [List 1-2 specific YouTube channels, 1 specific movie, and 1 specific OTT show they genuinely enjoy. Crucially, these preferences MUST be distinct from the brand’s direct product category or industry. This helps reveal broader entertainment tastes for creative content angles.]\n6.  **Relative Audience Size:** [Estimate as X, 2X, or 3X relative to the other personas for this brand. Follow with a brief descriptor of this audience segment and an estimated percentage range of the brand's potential total addressable market (e.g., '3X (Tech-Savvy Early Adopters, 30-35% of the brand's market)').]\n\nEnsure each persona is distinct and offers a clear potential angle for brand engagement. Remember the goal is to understand the *person* deeply.",
           "few_shots": [
             {
               "options": [
-                "Option 1: Liam Nguyen, 32, male, lives in San Francisco, CA. He’s a marketing manager earning $80K/year, single, renting a chic apartment. Liam craves quality, minimalism, and authenticity, loving curated experiences like craft coffee and vinyl records. Witty and curious, he rejects flashy logos, seeking style at value prices. His digital life buzzes on Instagram, curating his aesthetic. He researches purchases meticulously, prioritizing atelier-grade essentials. Stimulus Alert: Liam sips espresso, watching Vsauce unravel reality, planning a sleek dinner party. Content Preferences: Loves Vsauce (YouTube), Inception (movie), Succession (OTT show). Relative Audience Size: 3X (urban professionals, 35-40% of Italic’s market).",
-                "Option 2: Sofia Martinez, 27, female, resides in Brooklyn, NY. A freelance writer earning $65K/year, she’s single, sharing a loft. Sofia values understated elegance, creativity, and independence, frequenting art galleries and indie bookstores. Introspective yet stylish, she avoids ostentatious brands, craving luxury without markup. Her Pinterest is a mood-board masterpiece. Stimulus Alert: Sofia journals in a café, Vox’s quirky explainer sparking her next essay. She’s discerning, seeking unique, logo-free pieces that tell a story. Content Preferences: Loves Vox (YouTube), Amélie (movie), Fleabag (OTT show). Relative Audience Size: 2X (young creatives, 25-30% of Italic’s market).",
-                "Option 3: Ethan Patel, 40, male, lives in Chicago, IL. A tech consultant earning $120K/year, he’s married, owning a condo. Ethan prioritizes efficiency, quality, and practicality, enjoying podcasts and city runs. Analytical and confident, he dislikes wasteful spending, seeking durable, logo-free essentials. His LinkedIn is sharp, reflecting his professional edge. Stimulus Alert: Ethan jogs, Wendover’s logistics video fueling his next client pitch. He values function over flash, choosing Italic for timeless utility. Content Preferences: Loves Wendover Productions (YouTube), The Social Network (movie), The Morning Show (OTT show). Relative Audience Size: X (older professionals, 15-20% of Italic’s market)."
+                "Option 1: \n1. **Name:** Liam Nguyen\n2. **Demographics:** 32, male, San Francisco, CA, Marketing Manager, $80K/year\n3. **Psychographics:** Craves quality, minimalism, and authenticity. Loves curated experiences like craft coffee and vinyl records. Witty, curious, rejects flashy logos, seeking style at value prices. Researches meticulously.\n4. **Stimulus Alert:** Liam sips espresso, watching Vsauce unravel reality on his laptop, as he plans a sleek dinner party for friends.\n5. **Content Preferences (Unrelated to Brand Category):** YouTube: Vsauce, Peter McKinnon; Movie: Inception; OTT Show: Succession.\n6. **Relative Audience Size:** 3X (Urban Professionals & Aesthetes, 35-40% of Italic’s market).",
+                "Option 2: \n1. **Name:** Sofia Martinez\n2. **Demographics:** 27, female, Brooklyn, NY, Freelance Writer, $65K/year\n3. **Psychographics:** Values understated elegance, creativity, and independence. Frequents art galleries and indie bookstores. Introspective yet stylish, avoids ostentatious brands, craving luxury without markup. Her Pinterest is a masterpiece.\n4. **Stimulus Alert:** Sofia journals in a sunlit café, a Vox explainer video sparking her next essay on urban subcultures.\n5. **Content Preferences (Unrelated to Brand Category):** YouTube: Vox, The School of Life; Movie: Amélie; OTT Show: Fleabag.\n6. **Relative Audience Size:** 2X (Young Creatives & Independent Thinkers, 25-30% of Italic’s market).",
+                "Option 3: \n1. **Name:** Ethan Patel\n2. **Demographics:** 40, male, Chicago, IL, Tech Consultant, $120K/year\n3. **Psychographics:** Prioritizes efficiency, quality, and practicality. Enjoys insightful podcasts and city runs. Analytical and confident, dislikes wasteful spending, seeking durable, logo-free essentials. His LinkedIn is sharp.\n4. **Stimulus Alert:** Ethan jogs along the lakefront, a Wendover Productions documentary on logistics fueling his next client strategy pitch.\n5. **Content Preferences (Unrelated to Brand Category):** YouTube: Wendover Productions, Marques Brownlee (MKBHD); Movie: The Social Network; OTT Show: The Morning Show.\n6. **Relative Audience Size:** X (Established Professionals & Pragmatists, 15-20% of Italic’s market)."
               ]
             },
             {
               "options": [
-                "Option 1: Priya Sharma, 34, female, lives in Bengaluru, India. A school teacher earning ₹8L/year, she’s married with a toddler. Priya champions sustainability, safety, and community, using non-toxic products for her family. She loves urban gardening and mommy blogs, distrusting chemical-heavy brands. Active on Instagram, she shares eco-tips. Stimulus Alert: Priya’s mixing a Born Good detergent, watching Kurzgesagt explain ocean cleanup, planning a green playdate. Content Preferences: Loves Kurzgesagt (YouTube), Zootopia (movie), Made in Heaven (OTT show). Relative Audience Size: 3X (urban parents, 40-45% of Born Good’s market, prioritizing safe, eco-friendly homes).",
-                "Option 2: Arjun Menon, 28, male, resides in Mumbai, India. A startup founder earning ₹12L/year, he’s single, renting a modern flat. Arjun values innovation, sustainability, and efficiency, experimenting with zero-waste hacks. He’s skeptical of greenwashing, active on LinkedIn. Stimulus Alert: Arjun’s testing Born Good’s dish liquid, Vox’s recycling video sparking a pitch idea. He seeks planet-friendly solutions with style. Content Preferences: Loves Vox (YouTube), The Martian (movie), The Great Indian Kapil Show (OTT show). Relative Audience Size: 2X (young professionals, 25-30% of Born Good’s market, drawn to eco-tech).",
-                "Option 3: Lakshmi Iyer, 55, female, lives in Chennai, India. A retired bank manager earning ₹6L/year pension, she’s widowed, living with family. Lakshmi prioritizes health, tradition, and eco-conscious living, using natural cleaners. She enjoys community events, distrusts harsh chemicals. Stimulus Alert: Lakshmi’s washing linens with Born Good, Tasty’s recipe video inspiring dinner. Content Preferences: Loves Tasty (YouTube), Lagaan (movie), Panchayat (OTT show). Relative Audience Size: X (older eco-conscious, 15-20% of Born Good’s market, valuing safety, tradition)." 
+                "Option 1: \n1. **Name:** Priya Sharma\n2. **Demographics:** 34, female, Bengaluru, India, School Teacher, ₹8L/year\n3. **Psychographics:** Champions sustainability, family safety, and community values. Uses non-toxic products. Loves urban gardening and mommy blogs, distrusting chemical-heavy brands. Active on Instagram sharing eco-tips.\n4. **Stimulus Alert:** Priya smiles, mixing Born Good detergent, while Kurzgesagt explains ocean cleanup on her tablet, planning a green playdate.\n5. **Content Preferences (Unrelated to Brand Category):** YouTube: Kurzgesagt – In a Nutshell, Garden Up; Movie: Zootopia; OTT Show: Made in Heaven.\n6. **Relative Audience Size:** 3X (Eco-Conscious Urban Parents, 40-45% of Born Good’s market, prioritizing safe, eco-friendly homes).",
+                "Option 2: \n1. **Name:** Arjun Menon\n2. **Demographics:** 28, male, Mumbai, India, Startup Founder, ₹12L/year\n3. **Psychographics:** Values innovation, sustainability, and efficiency. Experiments with zero-waste hacks. Skeptical of greenwashing, active on LinkedIn showcasing his startup's eco-initiatives. Tech-savvy and solution-oriented.\n4. **Stimulus Alert:** Arjun tests Born Good’s dish liquid, a Vox video on circular economies sparking a new feature idea for his app.\n5. **Content Preferences (Unrelated to Brand Category):** YouTube: Vox, Ali Abdaal; Movie: The Martian; OTT Show: The Great Indian Kapil Show.\n6. **Relative Audience Size:** 2X (Young Eco-Tech Professionals, 25-30% of Born Good’s market, drawn to sustainable innovation).",
+                "Option 3: \n1. **Name:** Lakshmi Iyer\n2. **Demographics:** 55, female, Chennai, India, Retired Bank Manager, ₹6L/year pension\n3. **Psychographics:** Prioritizes health, tradition, and eco-conscious living. Uses natural cleaners and enjoys community events. Distrusts harsh chemicals and values products with transparent, simple ingredients.\n4. **Stimulus Alert:** Lakshmi carefully washes heirloom linens with Born Good, a comforting Tasty recipe video playing in the background, inspiring tonight’s family dinner.\n5. **Content Preferences (Unrelated to Brand Category):** YouTube: Tasty, Sadhguru; Movie: Lagaan; OTT Show: Panchayat.\n6. **Relative Audience Size:** X (Mature Eco-Traditionalists, 15-20% of Born Good’s market, valuing safety, tradition, and gentle effectiveness)."
               ]
             }
           ],
@@ -62,7 +62,7 @@
         }
       ],
       "next_step": "select_user_persona",
-      "version": 1
+      "version": 2
     },
     {
       "id": "select_user_persona",
@@ -72,30 +72,30 @@
       "prompts": [],
       "next_step": "content_spaces",
       "require_user_input_for_step_id": "user_persona",
-      "version": 0
+      "version": 1
     },
     {
       "id": "content_spaces",
       "name": "Content Spaces",
-      "description": "Generate content space options",
+      "description": "Generate content space options aligned with the selected persona and brand ethos.",
       "requires_user_input": false,
       "prompts": [
         {
-          "id": "content_spaces_prompt",
-          "prefix": "What are the content spaces? These are the wide spaces that our brand would like to tell stories about. Remember these are not scripts, but spaces from which 50 scripts can come.The spaces do not have to be salesy at all. They do not have to be directly connected to the brand or the category. They might be about things that this brand might want to talk about, be about. It is the world view of the brand. They have to be spaces that might catch the attention of the user and things that they’d like to watch all by themselves",
+          "id": "content_spaces_prompt_v2",
+          "prefix": "You are the best marketer on Earth... [existing base prompt]. Your current task is to generate three distinct 'Content Space' options for the brand. \n\nA 'Content Space' is a broad thematic territory from which numerous (e.g., 50+) individual, non-salesy video scripts can later be derived. These spaces must NOT be directly connected to the brand's specific products or sales pitches. Instead, they should embody the brand's worldview and deeply resonate with the selected 'User Persona'. The goal is to identify compelling narrative areas that would capture the persona's attention and encourage them to watch content purely for its intrinsic value. \n\nTo do this, synthesize insights from the 'Link Research' (to understand the brand's core values and mission) and the selected 'User Persona' (specifically their psychographics, values, motivations, and their stated UNRELATED content preferences – e.g., YouTube channels, movies, shows). \n\nFor each of the three Content Space options, you MUST provide the following information in this exact order and format:\n\n1.  **Content Space Title:** [Create a short, evocative title for the space]\n2.  **Core Concept & Persona Alignment:** [In 2-3 sentences, explain the central theme of this content space. Crucially, detail how this theme specifically aligns with the selected User Persona's psychographics, values, aspirations, or their cited *unrelated* content preferences. Example: 'This resonates with Liam's intellectual curiosity and appreciation for deconstructed complexity, similar to his enjoyment of Vsauce.']\n3.  **Brand Ethos Link:** [In 1-2 sentences, explain how this content space subtly reflects the brand's underlying worldview, mission, or values without directly mentioning products. Example: 'This connects to Italic's brand ethos of valuing thoughtful design and essentialism.']\n4.  **Example Video Snippets (Provide 2 distinct snippets per Content Space option):**\n    * **Snippet A:** \n        * **Idea:** [Briefly describe a potential video concept within this space (10-15 words).]\n        * **3-Sec Hook:** [Describe a compelling visual or auditory hook to capture attention in the first 3 seconds.]\n        * **5-Sec Twist/Insight:** [Describe an unexpected turn, interesting fact, or deeper insight that would emerge around the 5-second mark to retain engagement.]\n    * **Snippet B:** \n        * **Idea:** [Briefly describe a different potential video concept (10-15 words).]\n        * **3-Sec Hook:** [Describe a compelling visual or auditory hook.]\n        * **5-Sec Twist/Insight:** [Describe an unexpected turn, interesting fact, or deeper insight.]\n\nRemember, these spaces should be engaging enough for the persona to watch by themselves and feel a subtle connection to the brand's broader perspective.",
           "few_shots": [
             {
               "options": [
-                "Option 1: Art of the less: Stories about finding beauty and meaning in simplicity—decluttering spaces, minds, or lives. Think a minimalist apartment tour with a single, striking piece of art (3-sec hook: a sleek shelf with one book). Or a profile of a chef who crafts a perfect dish with three ingredients (5-sec twist: it’s a recipe Liam can try tonight). Videos explore how less sparks creativity, focus, or joy, echoing Liam’s love for curated aesthetics and Inception’s layered simplicity. These resonate with his Pinterest-worthy lifestyle without screaming “buy this.”",
-                "Option 2: Urban whimsey: Quirky, unexpected moments in city life—street musicians, secret rooftop gardens, or pop-up art. Imagine a video on a barista doodling portraits on coffee cups (3-sec hook: latte art morphs into a face). Or a time-lapse of a mural appearing overnight (5-sec twist: it’s by an anonymous artist). Liam’s Inception-like love for layered surprises and Vsauce’s playful curiosity make these urban vignettes click. They reflect Italic’s understated elegance, grabbing Liam’s attention on TikTok.”",
-                "Option 3: A Quiet Rebellion: Profiles of people who defy norms subtly—quitting corporate for a micro-business or living off-grid in style. Think a coder building an app for niche hobbyists (3-sec hook: it’s for vinyl collectors!). Or a teacher turning a classroom into a philosophy club (5-sec twist: kids debate like Succession tycoons). Liam’s anti-logo stance and love for Inception’s subversive depth make these compelling. These Reels-worthy tales vibe with Italic’s bold yet understated identity, hooking Liam solo."
+                "Option 1:\n1. **Content Space Title:** The Art of Less: Curated Simplicity\n2. **Core Concept & Persona Alignment:** This space explores finding profound beauty and meaning in simplicity, whether by decluttering physical spaces, mental habits, or daily life. This deeply resonates with Liam Nguyen’s core values of quality, minimalism, and authenticity, his love for curated experiences, and his appreciation for the layered simplicity found in content like the movie Inception and channels like Vsauce.\n3. **Brand Ethos Link:** This content space subtly reflects Italic’s brand ethos of championing high-quality, logo-free essentials by valuing substance, thoughtful design, and essentialism over excessive branding or fleeting trends.\n4. **Example Video Snippets:**\n    * **Snippet A:** \n        * **Idea:** A tour of a minimalist apartment featuring a single, striking piece of art.\n        * **3-Sec Hook:** A sleek, uncluttered shelf holding only one captivating, antique book.\n        * **5-Sec Twist/Insight:** The book is revealed to be a rare first edition, sparking a short story about its unique journey or hidden meaning.\n    * **Snippet B:** \n        * **Idea:** A profile of a renowned chef who crafts an exquisite, perfect dish using only three ingredients.\n        * **3-Sec Hook:** An extreme close-up of three vibrant, perfectly fresh, yet simple ingredients on a clean surface.\n        * **5-Sec Twist/Insight:** The chef reveals it’s a surprisingly accessible gourmet recipe that Liam could try making himself tonight, elevating an everyday act.",
+                "Option 2:\n1. **Content Space Title:** Urban Whimsy: Finding Magic in the Metropolis\n2. **Core Concept & Persona Alignment:** This space uncovers quirky, unexpected moments of beauty, creativity, or connection in city life—from street art to hidden gardens. This taps into Liam Nguyen's witty curiosity, his appreciation for curated aesthetics seen on Instagram, and his enjoyment of the layered surprises found in films like Inception.\n3. **Brand Ethos Link:** This reflects Italic’s understated elegance and focus on quality by finding value and delight in the details, rather than overt displays, suggesting a brand that appreciates subtle artistry.\n4. **Example Video Snippets:**\n    * **Snippet A:** \n        * **Idea:** A day in the life of a barista who secretly creates miniature latte art portraits.\n        * **3-Sec Hook:** Close-up: Latte art that initially looks abstract, then a quick zoom reveals it's a tiny, detailed face.\n        * **5-Sec Twist/Insight:** The barista gifts the special latte to a regular customer, creating a moment of unexpected joy and connection.\n    * **Snippet B:** \n        * **Idea:** Time-lapse of an anonymous street artist creating a stunning, intricate mural overnight on a neglected wall.\n        * **3-Sec Hook:** A shadowy figure begins spray-painting in the dark on a blank wall.\n        * **5-Sec Twist/Insight:** Sunrise reveals a vibrant, complex artwork that transforms the space, with locals stopping in awe.",
+                "Option 3:\n1. **Content Space Title:** The Quiet Rebellion: Redefining Success\n2. **Core Concept & Persona Alignment:** This space profiles individuals who subtly defy conventional norms to pursue passion or purpose—like entrepreneurs in niche fields or those choosing mindful living over a corporate grind. This appeals to Liam Nguyen's rejection of flashy logos, his search for value and authenticity, and the subversive depth he might appreciate in shows like Succession.\n3. **Brand Ethos Link:** This aligns with Italic’s model of challenging traditional retail markups and offering atelier-grade essentials directly, embodying a form of smart, value-driven rebellion against the status quo.\n4. **Example Video Snippets:**\n    * **Snippet A:** \n        * **Idea:** A software developer who quit their FAANG job to create a niche app for vinyl record collectors.\n        * **3-Sec Hook:** A glowing computer screen with complex code, then a quick cut to a hand gently placing a needle on a vinyl record.\n        * **5-Sec Twist/Insight:** The app helps users discover rare records by analyzing sound patterns, blending high-tech with vintage passion.\n    * **Snippet B:** \n        * **Idea:** An urban teacher who transforms their conventional classroom into a dynamic philosophy club for teenagers.\n        * **3-Sec Hook:** Teenagers looking bored in a traditional classroom setting.\n        * **5-Sec Twist/Insight:** The same teenagers are now passionately debating complex ethical dilemmas, inspired by their teacher's unconventional methods."
               ]
             },
             {
               "options": [
-                "Option 1: Everyday Eco wins: Stories celebrating small, sustainable actions by ordinary people—composting, upcycling, or seed-saving. Picture a mom crafting toys from scrap fabric (3-sec hook: a kid hugs a handmade doll). Or a neighbor swapping veggie seeds (5-sec twist: it grows a rare heirloom!). Priya’s Kurzgesagt-fueled curiosity loves practical green tips. These Reels vibe with her eco-mom life, mirroring Born Good’s planet-first mission, grabbing her attention solo without a sales pitch.",
-                "Option 2: Tales of creating nurturing, toxin-free environments—homes, schools, or parks. Imagine a classroom turned chemical-free art hub (3-sec hook: kids paint with natural dyes). Or a family’s plastic-free kitchen (5-sec fact: it’s all bamboo!). Priya’s Zootopia-like passion for safe communities connects here. These Instagram Stories reflect Born Good’s non-toxic ethos, with emotional hooks that make Priya pause her scroll and watch alone.", 
-                "Option 3: Explorations of nature’s lessons for human life—how plants or animals inspire harmony. Think a video on mangroves shielding coasts (3-sec hook: roots sway in waves). Or bees teaching community (5-sec twist: a kid mimics their teamwork!). Priya’s Made in Heaven love for emotional depth and Kurzgesagt’s big-picture thinking shine. These YouTube Shorts echo Born Good’s plant-based roots, captivating Priya with awe-inspiring visuals she’d savor by herself."
+                "Option 1:\n1. **Content Space Title:** Everyday Eco-Wins: Small Steps, Big Planet\n2. **Core Concept & Persona Alignment:** This space celebrates ordinary people taking small, tangible, and sustainable actions in their daily lives, from composting to upcycling. This directly connects with Priya Sharma's championing of sustainability, her love for practical eco-tips from mommy blogs, and her Kurzgesagt-fueled curiosity about positive environmental impact.\n3. **Brand Ethos Link:** This mirrors Born Good’s planet-first mission and its focus on plant-based, non-toxic products by showcasing that individual, mindful choices contribute to a healthier environment and lifestyle.\n4. **Example Video Snippets:**\n    * **Snippet A:** \n        * **Idea:** A mother creatively crafting durable toys for her toddler from discarded fabric scraps and household items.\n        * **3-Sec Hook:** A colorful pile of fabric scraps, then a quick shot of a child joyfully hugging a unique, handmade doll.\n        * **5-Sec Twist/Insight:** The mother shares a simple DIY technique, showing how it reduces waste and fosters creativity in children.\n    * **Snippet B:** \n        * **Idea:** Neighbors in an apartment complex starting a small community seed-swapping initiative for their balcony gardens.\n        * **3-Sec Hook:** Hands exchanging small, labeled packets of seeds over a balcony railing.\n        * **5-Sec Twist/Insight:** One swapped seed grows into a rare, heirloom tomato variety, symbolizing community and biodiversity.",
+                "Option 2:\n1. **Content Space Title:** Nurturing Spaces: Crafting Toxin-Free Havens\n2. **Core Concept & Persona Alignment:** This space explores the creation of safe, healthy, and nurturing environments—be it homes, schools, or community parks—by consciously choosing non-toxic and natural solutions. This aligns with Priya Sharma's priority for family safety, her distrust of chemical-heavy brands, and her Zootopia-like passion for harmonious, thriving communities.\n3. **Brand Ethos Link:** This directly reflects Born Good’s core offering of non-toxic, plant-based home cleaners by emphasizing the importance of a safe and healthy home environment for families.\n4. **Example Video Snippets:**\n    * **Snippet A:** \n        * **Idea:** A preschool classroom transformed into a vibrant, chemical-free art studio where children use natural dyes and materials.\n        * **3-Sec Hook:** Children's hands, stained with bright berry juice, painting on recycled paper.\n        * **5-Sec Twist/Insight:** The teacher explains how using natural art supplies enhances sensory learning and protects children's health.\n    * **Snippet B:** \n        * **Idea:** A family documents their journey of transitioning to a completely plastic-free kitchen over 30 days.\n        * **3-Sec Hook:** A kitchen counter overflowing with plastic containers and packaging.\n        * **5-Sec Twist/Insight:** The 'after' shot shows the same counter, now organized with bamboo, glass, and stainless steel alternatives, with the family sharing their biggest learning.\n",
+                "Option 3:\n1. **Content Space Title:** Nature's Blueprint: Wisdom from the Wild\n2. **Core Concept & Persona Alignment:** This space delves into the fascinating lessons human life can draw from the natural world—how plants, animals, and ecosystems inspire harmony, resilience, and innovative solutions. This appeals to Priya Sharma's appreciation for the emotional depth in shows like Made in Heaven and the big-picture ecological thinking from Kurzgesagt.\n3. **Brand Ethos Link:** This echoes Born Good’s plant-based product formulations and commitment to sustainability by drawing parallels between nature's inherent wisdom and the benefits of aligning with natural processes.\n4. **Example Video Snippets:**\n    * **Snippet A:** \n        * **Idea:** Exploring how mangrove forests protect coastlines and what urban planners can learn from their root systems.\n        * **3-Sec Hook:** Stunning aerial shot of intricate mangrove roots weaving through coastal waters.\n        * **5-Sec Twist/Insight:** Animation shows how these natural barriers dissipate wave energy more effectively than concrete seawalls, inspiring bio-mimetic city design.\n    * **Snippet B:** \n        * **Idea:** A short documentary on the complex social structure and communication of bees and how it teaches about community collaboration.\n        * **3-Sec Hook:** Macro shot of bees performing their 'waggle dance' inside a hive.\n        * **5-Sec Twist/Insight:** A child, after learning about bees, initiates a collaborative project with friends, mimicking the bees' teamwork to achieve a common goal."
               ]
             }
           ],
@@ -106,7 +106,7 @@
         }
       ],
       "next_step": "select_content_spaces",
-      "version": 1
+      "version": 2
     },
     {
       "id": "select_content_spaces",
@@ -116,30 +116,30 @@
       "prompts": [],
       "next_step": "script",
       "require_user_input_for_step_id": "content_spaces",
-      "version": 0
+      "version": 1
     },
     {
       "id": "script",
       "name": "Script",
-      "description": "Generate script options",
+      "description": "Generate script options based on selected persona and content space.",
       "requires_user_input": false,
       "prompts": [
         {
-          "id": "script_prompt",
-          "prefix": "Write the instagram organic content scripts for the ideas shortlisted. Each script can be between 15 to 20 seconds long. Don’t make the script salsey. The main point is to capture attention, get the user to reach the end of the video and remember/feel something strongly about the brand's world view.",
+          "id": "script_prompt_v2",
+          "prefix": "You are the best marketer on Earth... [existing base prompt]. Your current assignment is to write three distinct, compelling Instagram organic content scripts. Each script must be 15-20 seconds long, non-salesy, and meticulously designed to capture attention, drive video completion, and leave the viewer with a strong sense of the brand's worldview. \n\nThese scripts will bring to life ONE specific 'Example Video Snippet' (including its hook and twist) from the previously selected 'Content Space'. \n\nYour script development will be guided by:\n* **Selected User Persona:** Infuse the script with a tone, language, and scenarios that resonate deeply with this persona.\n* **Selected Content Space & Snippet:** The script is a direct, creative execution of the chosen snippet's concept, hook, and twist.\n* **Link Research:** Ensure the script's underlying message or feeling subtly aligns with the brand's core ethos and values identified from the website research.\n\nFor each of the three script options, you MUST provide the following information in this exact order and format:\n\n1.  **Target Content Space Snippet Ref:** [Briefly mention or summarize the specific snippet idea from the Content Space this script is based on. E.g., 'Based on: Art of the Less - Minimalist apartment tour snippet']\n2.  **Visuals/Editing Style:** [Describe the overall visual mood, suggested music style (e.g., 'upbeat lo-fi,' 'cinematic ambient'), editing pace (e.g., 'quick, dynamic cuts,' 'smooth, flowing transitions'), and style for on-screen text overlays (e.g., 'bold sans-serif,' 'elegant serif').]\n3.  **Script Breakdown (15-20 seconds total):**\n    * **[0-3 SEC]:** [HOOK - Detailed visual description of the opening. Any on-screen text or critical voiceover (VO) in \"quotes\". This must grab immediate attention.]\n    * **[4-8 SEC]:** [DEVELOPMENT/TWIST - Detailed visual description of the next scene/action. Include on-screen text/VO. This should build on the hook or introduce the 'twist' from the snippet.]\n    * **[9-14 SEC]:** [IMPACT/DEEPER LAYER - Detailed visual description. Include on-screen text/VO. Show the consequence, result, or a deeper meaning related to the concept.]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Detailed visual description of the final scene. Conclude with a powerful on-screen text overlay that serves as a thematic tagline or an engaging question for the audience. This ending should subtly resonate with the 'Brand Ethos Link' of the Content Space and leave a lasting impression of the brand's perspective.]\n\n**Critical Reminders for Each Script:**\n* **High Engagement:** Ensure a new visual element, piece of information, or emotional beat occurs every 3-5 seconds.\n* **Strictly Non-Salesy:** No direct product mentions, features, pricing, or explicit 'buy now' CTAs. The brand connection is purely thematic and values-driven.\n* **Optimized for Silent Viewing:** Prioritize on-screen text for all key messages and narration; if VO is essential, ensure text still conveys the core.\n* **Concise & Purposeful:** Every visual, word, and second must contribute to the story and the intended feeling.",
           "few_shots": [
             {
               "options": [
-                "Script 1: Visuals/Editing: Upbeat lo-fi beat, quick cuts, text overlays in bold sans-serif.\nScript: [0-3 sec] Close-up: A hand twists a plastic bottle, LED flickers on. “Meet Ravi, who turns trash into light!”\n[4-7 sec] Montage: Ravi cuts bottles, wires LEDs, tests a glowing lamp. “Old bottles? He makes solar lamps for street vendors.”\n[8-12 sec] Wide shot: Vendor’s stall glows at night. “One hack lights up lives.”\n[13-18 sec] Text overlay: ‘Small ideas, big impact.’ Cut to Ravi grinning, lamp in hand. “What’s your eco-hack?”",
-                "Script 2: Visuals/Editing: Bright acoustic track, smooth zooms, vibrant colors, text pops.\nScript: [0-3 sec] Drone shot: Lush balcony garden in Mumbai. “Anita’s balcony? It’s a farm!”\n[4-8 sec] Clips: Anita waters herbs, picks tomatoes, composts scraps. “She grows 10 crops in 50 square feet.”\n[9-13 sec] Close-up: Tomato sliced for salad. “Zero-waste, homegrown meals? Yes!”\n[14-20 sec] Text overlay: ‘Live light, grow bold.’ Anita smiles, holding a basil sprig. “What’s your future-proof move?”\n",
-                "Script 3: Visuals/Editing: Energetic synth beat, fast cuts, neon text overlays in futuristic font.\nScript:\n[0-3 sec] Close-up: A circuit board sparks, LED glows. “Nisha’s turning e-waste into tech!”\n[4-7 sec] Montage: Nisha solders old phone parts, tests a glowing speaker. “Broken chargers? She builds Bluetooth speakers!”\n[8-12 sec] Wide shot: Speaker pulses at a night market. “One fix, less landfill.”\n[13-17 sec] Text overlay: ‘Hack the planet.’ Nisha grins, holding her creation. “What’s your eco-fix?”"
+                "Script 1:\n1. **Target Content Space Snippet Ref:** Based on 'The Art of Less: Curated Simplicity - Chef with three ingredients' snippet.\n2. **Visuals/Editing Style:** Warm, inviting visuals, gentle acoustic music with a sophisticated feel. Smooth, deliberate cuts. Elegant serif on-screen text for key phrases. Overall mood: inspiring, refined, achievable luxury.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - Extreme close-up: Three perfectly ripe, vibrant heirloom tomatoes on a rustic wooden board. A chef's hand gently selects one. On-screen text: \"Perfection in three?\"]\n    * **[4-8 SEC]:** [DEVELOPMENT/TWIST - Quick cuts: The chef skillfully slices the tomato, drizzles high-quality olive oil, adds a basil leaf. Simple, focused actions. On-screen text: \"Chef Anya’s secret: Less is more.\"]\n    * **[9-14 SEC]:** [IMPACT/DEEPER LAYER - Beautifully plated single slice of tomato, looking like a gourmet dish. Close up on Anya savoring it. On-screen text: \"The taste of pure quality. No distractions.\"]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Anya smiles warmly at the camera. Final on-screen text: \"Find your essential. Italic.\" (Subtly echoes Italic's ethos of quality essentials without fanfare, resonating with Liam's desire for value and authenticity). Engaging question: \"What's your simple masterpiece?\"]",
+                "Script 2:\n1. **Target Content Space Snippet Ref:** Based on 'Urban Whimsy - Anonymous street artist mural' snippet.\n2. **Visuals/Editing Style:** Gritty yet hopeful urban vibe. Lo-fi hip-hop beat with an intriguing undertone. Dynamic time-lapse mixed with real-time shots. Bold, graffiti-style sans-serif text overlays.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - Night shot: A hooded figure quickly spray-paints a single, vibrant line on a dark, grimy alley wall. Sound of a spray can. On-screen text: \"Midnight canvas...\"]\n    * **[4-8 SEC]:** [DEVELOPMENT/TWIST - Fast-paced time-lapse: The mural rapidly takes shape, revealing intricate patterns and stunning colors. The artist is a blur of motion. On-screen text: \"...becomes morning magic.\"]\n    * **[9-14 SEC]:** [IMPACT/DEEPER LAYER - Sunrise. Passersby stop, mesmerized by the completed mural. A child points in wonder. The alley is transformed. On-screen text: \"Beauty in unexpected places.\"]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Final shot of the vibrant mural, now a beloved part of the streetscape. Final on-screen text: \"Style that speaks for itself. Italic.\" (Connects to Italic's understated yet impactful products). Engaging question: \"Spotted any magic lately?\"]",
+                "Script 3:\n1. **Target Content Space Snippet Ref:** Based on 'The Quiet Rebellion - Coder quits for vinyl app' snippet.\n2. **Visuals/Editing Style:** Modern, sleek visuals with a touch of retro warmth. Electronic music with a thoughtful, building rhythm. Mix of close-ups on tech and vinyl. Clean, minimalist text overlays.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - Close-up: Lines of complex code scrolling rapidly on a dark screen. Then, a hand gently places a stylus on a spinning vinyl record. On-screen text: \"Code. Grooves. Connection.\"]\n    * **[4-8 SEC]:** [DEVELOPMENT/TWIST - Meet Kai, a young coder, looking determined. Montage: Kai sketching app interfaces, surrounded by records. On-screen text: \"Kai left big tech...to chase a different signal.\"]\n    * **[9-14 SEC]:** [IMPACT/DEEPER LAYER - Kai uses their app: it identifies a rare record by its sound, showing details. A look of triumph. On-screen text: \"His app? Unlocks hidden gems for collectors.\"]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Kai smiles, holding a favorite record. Final on-screen text: \"Quality worth seeking. Italic.\" (Aligns with Italic's focus on well-crafted, valuable items). Engaging question: \"What’s your passion project?\"]"
               ]
             },
             {
               "options": [
-                "Script 1: Visuals/Editing: Smooth jazz track, slow pans, minimalist white text overlays in sleek font.\nScript:\n[0-3 sec] Pan: A single wooden chair in a sunlit room. “Amit’s home? One chair.”\n[4-7 sec] Clips: Amit sips coffee, reads, naps on that chair. “No clutter, just moments.”\n[8-12 sec] Close-up: Chair’s polished grain glows. “One piece, endless stories.”\n[13-18 sec] Text overlay: ‘Less is enough.’ Amit smiles, sunlight hits chair. “What’s your one thing?” ",
-                "Script 2: Visuals/Editing: Lo-fi beat, quick cuts, bold text pops in neutral tones.\nScript:\n[0-3 sec] Zoom: Fingers strum three guitar notes. “Rhea’s song? Three notes.”\n[4-7 sec] Montage: Rhea plays on a rooftop, crowd sways. “Minimal chords, maximum soul.”\n[8-11 sec] Close-up: Her fingers dance on strings. “Less noise, more heart.”\n[12-16 sec] Text overlay: ‘Simplify to shine.’ Rhea winks, strumming softly. “What’s your simple spark?”\n",
-                "Script 3: Visuals/Editing: Upbeat indie guitar track, quick cuts, vibrant text overlays in handwritten font.\nScript:\n[0-3 sec] Zoom: A violinist plays on a busy SF sidewalk. “Nila’s music stops the city!”\n[4-7 sec] Montage: Commuters pause, a kid dances, phones film. “One bow, a street’s spellbound.”\n[8-12 sec] Close-up: Violin strings hum, her smile glows. “Magic in the everyday.”\n[13-17 sec] Text overlay: ‘Find the spark.’ Nila bows, crowd claps. “What’s your city magic?”"
+                "Script 1:\n1. **Target Content Space Snippet Ref:** Based on 'Everyday Eco-Wins - Mother crafting toys from scraps' snippet.\n2. **Visuals/Editing Style:** Bright, warm, and playful visuals. Gentle, upbeat acoustic folk music. Smooth, heartwarming cuts. Handwritten-style, friendly on-screen text.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - Close-up: Small, colorful fabric scraps on a wooden table. A child's hand reaches for them curiously. On-screen text: \"Little scraps...\"]\n    * **[4-8 SEC]:** [DEVELOPMENT/TWIST - Montage: A mother (Priya) lovingly sews the scraps, adding button eyes. The child watches with excitement. On-screen text: \"...big imagination! Meet Meera's mom-made best friend.\"]\n    * **[9-14 SEC]:** [IMPACT/DEEPER LAYER - The child (Meera) joyfully hugs the finished, unique fabric doll. It's clearly cherished. On-screen text: \"Zero waste. Pure love. Lasting memories.\"]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Priya and Meera playing together with the doll. Final on-screen text: \"Good for them, good for Earth. Born Good.\" (Directly echoes Born Good's values). Engaging question: \"What can you create today?\"]",
+                "Script 2:\n1. **Target Content Space Snippet Ref:** Based on 'Nurturing Spaces - Chemical-free art studio' snippet.\n2. **Visuals/Editing Style:** Vibrant, natural lighting. Cheerful, inspiring music with a focus on children's laughter. Dynamic shots of kids creating. Clean, playful text overlays.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - Close-up: A child's hands, stained with bright purple from mashing berries in a bowl. On-screen text: \"Paint without the worry?\"]\n    * **[4-8 SEC]:** [DEVELOPMENT/TWIST - Kids in a sunlit classroom eagerly painting with natural dyes made from fruits, vegetables, and spices. Their teacher guides them. On-screen text: \"This art class uses nature's palette!\"]\n    * **[9-14 SEC]:** [IMPACT/DEEPER LAYER - Close-ups of the beautiful, textured artwork. The children are proud and engaged. On-screen text: \"Safe for little hands. Bright for big ideas.\"]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - A wall covered in the children's vibrant, naturally-dyed artwork. Final on-screen text: \"Nurture their world. Naturally. Born Good.\" (Reflects Born Good's non-toxic, safe ethos). Engaging question: \"How do you keep their world pure?\"]",
+                "Script 3:\n1. **Target Content Space Snippet Ref:** Based on 'Nature's Blueprint - Mangrove forests inspire design' snippet.\n2. **Visuals/Editing Style:** Awe-inspiring nature cinematography mixed with clean, futuristic animations. Ambient, wondrous music that builds. Smooth transitions. Informative, clear text overlays.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - Stunning aerial drone shot: Intricate network of mangrove roots weaving through turquoise coastal waters. On-screen text: \"Nature's ancient engineers...\"]\n    * **[4-8 SEC]:** [DEVELOPMENT/TWIST - Animation overlay: Shows how mangrove roots dissipate powerful wave energy, protecting the coastline. On-screen text: \"...hold secrets to safer cities.\"]\n    * **[9-14 SEC]:** [IMPACT/DEEPER LAYER - Split screen: One side shows a concrete seawall crumbling under waves; other side shows mangroves calmly absorbing the impact. On-screen text: \"Their design? Stronger. Smarter. Greener.\"]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - A vision of a future city with bio-mimetic coastal defenses inspired by mangroves. Final on-screen text: \"Inspired by Earth. Crafted for home. Born Good.\" (Connects to Born Good's plant-based, nature-inspired philosophy). Engaging question: \"What can nature teach us next?\"]"
               ]
             }
           ],
@@ -150,7 +150,7 @@
         }
       ],
       "next_step": "select_script",
-      "version": 1
+      "version": 2
     },
     {
       "id": "select_script",
@@ -160,37 +160,40 @@
       "prompts": [],
       "next_step": "image_prompts",
       "require_user_input_for_step_id": "script",
-      "version": 0
+      "version": 1
     },
     {
       "id": "image_prompts",
       "name": "Image Prompts",
-      "description": "Generate images' prompts for each scene in the script",
+      "description": "Generate image prompts for each scene in the selected script.",
       "requires_user_input": false,
       "expected_selection_count": "ALL",
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "image_prompt_prompt",
-          "prefix": "Now, generate description for each visual scene in the following script. Imagine you're the director and the video playing in your head. What do you see in each scene in that video with utmost detail while adhering to the essense of the overall script.",
+          "id": "image_prompt_prompt_v2",
+          "prefix": "Based on the selected script (specifically its 'Script Breakdown' section), generate a detailed visual description (image prompt) for *each timed scene*. Imagine you are the director meticulously visualizing every shot for an image generation model. Each prompt should be rich in detail, describing subjects, actions, setting, mood, lighting, and camera angle. \n\nOutput one continuous string containing all scene descriptions, with each individual scene's description clearly separated by '||'. Do not add any other text or numbering outside of the descriptions themselves.",
           "few_shots": [
             {
               "options": [
-                "Scene 1 (Hook): A dazling iPhone with Apple logo talking to it's person",
-                "Scene 2: Owner looks impressed, nodding in agreement with the iPhone's statement.",
-                "Scene 3: Zoom out, the person is an AI itself."
+                "Scene 1 [0-3 SEC]: Extreme close-up, cinematic lighting: Three perfectly ripe, vibrant heirloom tomatoes on a rustic, dark wooden cutting board. A chef's hand, clean and professional, gently selects one tomato. The mood is sophisticated and focused. Shallow depth of field. || Scene 2 [4-8 SEC]: Dynamic quick cuts, bright natural light: Chef Anya's hands skillfully slicing a tomato with a sharp knife; a drizzle of golden olive oil from a small spout; a fresh, green basil leaf being placed precisely. Actions are simple yet elegant. Focus on the fresh ingredients. || Scene 3 [9-14 SEC]: Food photography style, soft lighting: A beautifully plated single slice of tomato, adorned with oil and basil, looking like a gourmet appetizer on a minimalist white plate. Close up on Chef Anya's face, a subtle smile of satisfaction as she savors the bite. Warm, inviting mood. || Scene 4 [15-20 SEC]: Medium shot, warm and friendly lighting: Chef Anya, in her well-lit kitchen, smiles warmly and directly at the camera, exuding confidence and passion. The background is slightly blurred, keeping focus on her approachable expertise."
+              ]
+            },
+            {
+              "options": [
+                "Scene 1 [0-3 SEC]: Extreme close-up, dramatic low-angle shot: Small, colorful fabric scraps scattered on a light wooden table. A curious toddler's hand, soft and small, reaches into the frame towards the scraps. Warm, inviting, slightly whimsical lighting. || Scene 2 [4-8 SEC]: Montage sequence, eye-level shots: Priya's hands lovingly sewing scraps with a needle and thread; close-up of button eyes being attached to a fabric shape; the child watching with wide, excited eyes, a hint of a smile. Bright, cheerful lighting. || Scene 3 [9-14 SEC]: Heartwarming medium shot: The toddler (Meera) joyfully and tightly hugging the completed, unique fabric doll. The doll is colorful and clearly handmade with love. Soft, golden hour lighting, creating a tender mood. || Scene 4 [15-20 SEC]: Medium shot, natural outdoor lighting: Priya and Meera are sitting on a sunlit park bench, playing together with the handmade doll, both laughing. The scene is full of genuine joy and connection."
               ]
             }
           ],
-          "parameters": ["Link", "Script"],
+          "parameters": ["Script"],
           "option_count": -1,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT",
-          "output_instruction": "Add `||` between each scene. Do not output anything else."
+          "output_instruction": "Add `||` between each scene's image prompt. Do not output anything else."
         }
       ],
       "next_step": "images",
-      "version": 0
+      "version": 2
     },
     {
       "id": "images",
@@ -200,7 +203,7 @@
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "image_prompt",
+          "id": "image_prompt_from_image_prompts_step",
           "prefix": "",
           "ignore_prompt_base": true,
           "few_shots": [],
@@ -212,27 +215,32 @@
         }
       ],
       "next_step": "voiceover_prompt",
-      "version": 0
+      "version": 1
     },
     {
       "id": "voiceover_prompt",
-      "name": "Voiceover Prompt",
-      "description": "Generate prompt to synthesize the speech of the video.",
+      "name": "Voiceover Text Compilation",
+      "description": "Generate the complete voiceover text from the script.",
       "requires_user_input": false,
       "expected_selection_count": "ALL",
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "voiceover_prompt_prompt",
-          "prefix": "Now, generate speech for the given script. Imagine you're the voiceover artist and the video playing in your head. Write down what do you speak?",
+          "id": "voiceover_text_prompt_v2",
+          "prefix": "Based on the 'Script Breakdown' section of the selected script, compile all on-screen text and explicit voiceover (VO) lines into a single, coherent narrative flow. Imagine you are the voiceover artist or text compositor preparing the full text for the video. Concatenate all text/VO elements in the order they appear in the script. \n\nOutput only the complete, continuous text for the voiceover/on-screen display. Do not include timestamps or scene descriptions.",
           "few_shots": [
             {
               "options": [
-                "Stuck in a creative rut? What if your tools fueled your imagination instead of hindering it? Imagine: Instant access to millions of colors at your fingertips. Effortless collaboration, sharing ideas instantly across the globe. The power of a full studio, right in your backpack. From rough sketches to polished masterpieces, all powered by Apple. Unlock your potential. Unleash your vision. Apple. Powering your creativity."
+                "Perfection in three? Chef Anya’s secret: Less is more. The taste of pure quality. No distractions. Find your essential. Italic. What's your simple masterpiece?"
+              ]
+            },
+            {
+              "options": [
+                "Little scraps... big imagination! Meet Meera's mom-made best friend. Zero waste. Pure love. Lasting memories. Good for them, good for Earth. Born Good. What can you create today?"
               ]
             }
           ],
-          "parameters": ["Link", "Script"],
+          "parameters": ["Script"],
           "option_count": -1,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT",
@@ -240,17 +248,17 @@
         }
       ],
       "next_step": "voiceover",
-      "version": 0
+      "version": 2
     },
     {
       "id": "voiceover",
-      "name": "Voiceover",
-      "description": "Generate voiceover for the script",
+      "name": "Voiceover Generation",
+      "description": "Generate voiceover audio for the script.",
       "requires_user_input": false,
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "voiceover_prompt",
+          "id": "voiceover_audio_from_text_prompt",
           "prefix": "",
           "ignore_prompt_base": true,
           "few_shots": [],
@@ -263,27 +271,37 @@
         }
       ],
       "next_step": "background_music_prompt",
-      "version": 0
+      "version": 1
     },
     {
       "id": "background_music_prompt",
-      "name": "Background Music Prompt",
-      "description": "Generate prompt to synthesize the music of the video.",
+      "name": "Background Music Concept Prompt",
+      "description": "Generate a text prompt to guide AI music generation.",
       "requires_user_input": false,
       "expected_selection_count": "ALL",
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "background_music_prompt_prompt",
-          "prefix": "Now, create a text prompt that will be fed to another LLM to generate music for a Brand Awareness Video with the following aspects:",
+          "id": "background_music_concept_prompt_v2",
+          "prefix": "Based on the selected script's 'Visuals/Editing Style' section (which describes mood, music style, pace) and considering the brand's essence (from 'Link Research'), generate a concise text prompt (strictly under 200 characters) for an AI music generation model. This prompt should effectively guide the creation of suitable background music for the entire video. Focus on capturing the core emotion, genre, instrumentation, and tempo.",
           "few_shots": [
             {
               "options": [
-                "Create upbeat, curious music with clean electronic and warm acoustic elements. Playful rhythm, surprising moments. Think tech discovery excitement with a wink."
+                "Warm, inviting acoustic folk. Gentle, sophisticated, inspiring. Builds subtly. Perfect for refined, achievable luxury brand storytelling."
+              ]
+            },
+            {
+              "options": [
+                "Upbeat, playful indie pop. Bright, warm, and heartwarming. Acoustic guitar focus. For joyful, creative, eco-friendly family brand moments."
+              ]
+            },
+            {
+              "options": [
+                "Gritty yet hopeful urban lo-fi hip-hop. Intriguing undertone, dynamic. For authentic street art and unexpected city magic stories."
               ]
             }
           ],
-          "parameters": ["Link", "Script"],
+          "parameters": ["Link Research", "Script"],
           "option_count": -1,
           "options_delimiter": "||",
           "expected_output_modality": "TEXT",
@@ -291,17 +309,17 @@
         }
       ],
       "next_step": "background_music",
-      "version": 0
+      "version": 2
     },
     {
       "id": "background_music",
-      "name": "Background Music",
-      "description": "Generate background music for the video",
+      "name": "Background Music Generation",
+      "description": "Generate background music for the video.",
       "requires_user_input": false,
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "background_music_prompt",
+          "id": "background_music_from_concept_prompt",
           "prefix": "",
           "ignore_prompt_base": true,
           "few_shots": [],
@@ -313,22 +331,22 @@
         }
       ],
       "next_step": "final_video",
-      "version": 0
+      "version": 1
     },
     {
       "id": "final_video",
-      "name": "Final Video",
-      "description": "Create video by combining images, voiceover, and background music",
+      "name": "Final Video Assembly",
+      "description": "Create the final video by combining generated images, voiceover, and background music.",
       "requires_user_input": false,
       "prompts": [],
       "agents": [
         {
           "id": "video_generator",
-          "parameters": ["Images", "Background Music", "Voiceover"]
+          "parameters": ["Images", "Background Music", "Voiceover", "Script"]
         }
       ],
       "next_step": null,
-      "version": 1
+      "version": 2
     }
   ]
 }
