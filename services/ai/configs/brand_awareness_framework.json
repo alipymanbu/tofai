@@ -1,7 +1,7 @@
 {
-  "id": "brand_awareness_video_v2",
-  "name": "Brand Awareness Video Framework (Improved)",
-  "description": "An improved framework for creating brand awareness videos by generating user personas, human insights, tonality, and scripts, with enhanced prompt engineering.",
+  "id": "brand_awareness_video",
+  "name": "Brand Awareness Video Framework",
+  "description": "A framework for creating brand awareness videos by generating user personas, human insights, tonality, and scripts, with enhanced prompt engineering.",
   "initial_step": "initial_input",
   "final_step": "final_video",
   "prompt_base": "You are the best marketer on Earth specifically specialising in video storytelling that helps brands get reach on social media. You are weird like Vsauce, thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy like David Ogilvy. You do this by understanding what kind of content the brands want by taking them through a series of steps mentioned below, providing them a few options at each step, and then on the basis of the user's reply, proceeding to the next step. Your scripts are written in such a way to have some stimulation every 3-5 seconds.",
@@ -13,7 +13,7 @@
       "requires_user_input": true,
       "prompts": [],
       "next_step": "link_research",
-      "version": 1
+      "version": 0
     },
     {
       "id": "link_research",
@@ -28,7 +28,7 @@
         }
       ],
       "next_step": "user_persona",
-      "version": 1
+      "version": 0
     },
     {
       "id": "user_persona",
@@ -37,8 +37,8 @@
       "requires_user_input": false,
       "prompts": [
         {
-          "id": "user_persona_prompt_v2",
-          "prefix": "You are the best marketer on Earth... [existing base prompt]. Now, based on the insights gathered from the 'Link Research' about the brand's website (products, services, 'About Us', mission, and overall voice), your task is to generate three distinct and compelling user persona options. Each persona must be a concise profile (strictly under 100 words total) of a potential customer. \n\nFor each of the three personas, you must provide the following information in this exact order and format:\n\n1.  **Name:** [Assign a realistic first and last name]\n2.  **Demographics:** [Age, gender, city/region, occupation, estimated annual income bracket]\n3.  **Psychographics:** [Describe their core values, key interests, lifestyle, defining attitudes, and any relevant aspirations or pain points. Aim for 25-35 words.]\n4.  **Stimulus Alert:** [A brief, vivid sentence (approx. 10-15 words) that captures a moment in this persona's life where they are engaging with or inspired by their preferred type of content, reflecting their core values or media consumption habits. This should feel authentic and offer a glimpse into their world.]\n5.  **Content Preferences (Unrelated to Brand Category):** [List 1-2 specific YouTube channels, 1 specific movie, and 1 specific OTT show they genuinely enjoy. Crucially, these preferences MUST be distinct from the brand’s direct product category or industry. This helps reveal broader entertainment tastes for creative content angles.]\n6.  **Relative Audience Size:** [Estimate as X, 2X, or 3X relative to the other personas for this brand. Follow with a brief descriptor of this audience segment and an estimated percentage range of the brand's potential total addressable market (e.g., '3X (Tech-Savvy Early Adopters, 30-35% of the brand's market)').]\n\nEnsure each persona is distinct and offers a clear potential angle for brand engagement. Remember the goal is to understand the *person* deeply.",
+          "id": "user_persona_prompt",
+          "prefix": "Now, based on the insights gathered from the 'Link Research' about the brand's website (products, services, 'About Us', mission, and overall voice), your task is to generate three distinct and compelling user persona options. Each persona must be a concise profile (strictly under 100 words total) of a potential customer. \n\nFor each of the three personas, you must provide the following information in this exact order and format:\n\n1.  **Name:** [Assign a realistic first and last name]\n2.  **Demographics:** [Age, gender, city/region, occupation, estimated annual income bracket]\n3.  **Psychographics:** [Describe their core values, key interests, lifestyle, defining attitudes, and any relevant aspirations or pain points. Aim for 25-35 words.]\n4.  **Stimulus Alert:** [A brief, vivid sentence (approx. 10-15 words) that captures a moment in this persona's life where they are engaging with or inspired by their preferred type of content, reflecting their core values or media consumption habits. This should feel authentic and offer a glimpse into their world.]\n5.  **Content Preferences (Unrelated to Brand Category):** [List 1-2 specific YouTube channels, 1 specific movie, and 1 specific OTT show they genuinely enjoy. Crucially, these preferences MUST be distinct from the brand’s direct product category or industry. This helps reveal broader entertainment tastes for creative content angles.]\n6.  **Relative Audience Size:** [Estimate as X, 2X, or 3X relative to the other personas for this brand. Follow with a brief descriptor of this audience segment and an estimated percentage range of the brand's potential total addressable market (e.g., '3X (Tech-Savvy Early Adopters, 30-35% of the brand's market)').]\n\nEnsure each persona is distinct and offers a clear potential angle for brand engagement. Remember the goal is to understand the *person* deeply.",
           "few_shots": [
             {
               "options": [
@@ -82,7 +82,7 @@
       "prompts": [
         {
           "id": "human_insights_prompt",
-          "prefix": "You are the best marketer on Earth... [existing base prompt]. Based on the 'Link Research' and the selected 'User Persona', your task is to generate three distinct 'Human Insights'. These insights are foundational truths or observations about human experience, desires, or conflicts that resonate deeply and can serve as the core of compelling video storytelling. \n\nWhat are Human Insights? They are wide spaces that our brand would like to tell stories about. Remember these are not scripts, but insights that are grounded in human truths that a lot of people would agree to. These do not have to be salesy at all. They do not have to be necessarily directly connected to the brand or the category, since that can at times be salesy and the scripts they generate might end up looking like an ad. They could be tangentially connected to the brand purpose, i.e. they might be about things that this brand might want to talk about, be about. These insights showcase the worldview of the brand. These insights are often surprising for the user when framed in that specific way. They could be made up of a single human truth or multiple human truths that are somehow at odds with each other. Most importantly: An effective brand insight should create emotional friction, but ultimately pull the user towards the product’s worldview, not away from it.\n\nPresent each insight as a concise, thought-provoking statement or short paragraph.",
+          "prefix": "What are the Insights that our brand would like to tell stories about. Remember these are not scripts, but insights that are grounded in human truths that a lot of people would agree to. These do not have to be salesy at all. They do not have to be necessarily directly connected to the brand or the category, since that can at times be salesy and the scripts they generate might end up looking like an ad. They could be tangentially connected to the brand purpose, i.e. they might be about things that this brand might want to talk about, be about. These insights showcase the worldview of the brand. These insights are often surprising for the user when framed in that specific way. They could be made up of a single human truth or multiple human truths that are somehow at odds with each other. Most importantly: An effective brand insight should *create emotional friction*, but ultimately *pull the user towards the product’s worldview*, not away from it.",
           "few_shots": [
             {
               "options": [
@@ -132,14 +132,35 @@
       "requires_user_input": false,
       "prompts": [
         {
-          "id": "script_prompt_v2",
-          "prefix": "You are the best marketer on Earth... [existing base prompt]. Your current assignment is to write three distinct, compelling Instagram organic content scripts. Each script must be 15-20 seconds long, non-salesy, and meticulously designed to capture attention, drive video completion, and leave the viewer with a strong sense of the brand's worldview. \n\nThese scripts will bring to life the selected 'Human Insight'. Your task is to translate this abstract human truth into a concrete and relatable video narrative. \n\nYour script development will be guided by:\n* **Selected User Persona:** Infuse the script with a tone, language, and scenarios that resonate deeply with this persona.\n* **Selected Human Insight:** The script must be a creative interpretation and dramatization of this insight, making it tangible and emotionally engaging.\n* **Link Research:** Ensure the script's underlying message or feeling subtly aligns with the brand's core ethos and values identified from the website research.\n\nFor each of the three script options, you MUST provide the following information in this exact order and format:\n\n1.  **Target Human Insight Ref:** [State the selected Human Insight this script is based on.]\n2.  **Visuals/Editing Style:** [Describe the overall visual mood, suggested music style (e.g., 'upbeat lo-fi,' 'cinematic ambient'), editing pace (e.g., 'quick, dynamic cuts,' 'smooth, flowing transitions'), and style for on-screen text overlays (e.g., 'bold sans-serif,' 'elegant serif').]\n3.  **Script Breakdown (15-20 seconds total):**\n    * **[0-3 SEC]:** [HOOK - Detailed visual description of the opening. Any on-screen text or critical voiceover (VO) in \"quotes\". This must grab immediate attention and hint at the insight.]\n    * **[4-8 SEC]:** [DEVELOPMENT - Detailed visual description of the next scene/action. Include on-screen text/VO. This should start to illustrate the insight through a relatable scenario.]\n    * **[9-14 SEC]:** [IMPACT/REFLECTION - Detailed visual description. Include on-screen text/VO. Show the emotional core or a moment of realization related to the insight.]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Detailed visual description of the final scene. Conclude with a powerful on-screen text overlay that serves as a thematic tagline or an engaging question for the audience. This ending should subtly resonate with the brand's perspective on the insight and leave a lasting impression.]\n\n**Critical Reminders for Each Script:**\n* **High Engagement:** Ensure a new visual element, piece of information, or emotional beat occurs every 3-5 seconds.\n* **Strictly Non-Salesy:** No direct product mentions, features, pricing, or explicit 'buy now' CTAs. The brand connection is purely thematic and values-driven.\n* **Optimized for Silent Viewing:** Prioritize on-screen text for all key messages and narration; if VO is essential, ensure text still conveys the core.\n* **Concise & Purposeful:** Every visual, word, and second must contribute to the story and the intended feeling.",
+          "id": "script_prompt",
+          "prefix": "Write the instagram organic content scripts for the insight shortlisted. Each script can be between 30s long. Don’t make the script salsey. Let it be emotional, something that elucidates the insight very well and brings it out in a narrative. The main point is to capture attention, get the user to reach the end of the video and remember/feel something strongly about the brand's world view.",
           "few_shots": [
             {
               "options": [
-                "Script 1:\n1. **Target Human Insight Ref:** Sometimes when everything seems difficult, the world seems to be crumbling down and being meaninglessly cruel to my dreams, it is the simple moments of companionship that make life worth living.\n2. **Visuals/Editing Style:** Warm, slightly melancholic turning hopeful. Gentle acoustic guitar music. Soft focus, intimate shots. Handheld feel. Text overlays: elegant, empathetic font.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - Close-up on a person's face, looking tired and overwhelmed, staring out a rainy window. On-screen text: \"World weighing down?\"]\n    * **[4-8 SEC]:** [DEVELOPMENT - A hand gently rests on their shoulder. Camera pulls back slightly to show a friend offering a warm smile and a cup of tea. On-screen text: \"A small gesture...\"]\n    * **[9-14 SEC]:** [IMPACT/REFLECTION - The two friends are now sharing a quiet, comfortable moment, perhaps a soft laugh. The atmosphere shifts to warmth and connection. On-screen text: \"...can change everything.\"]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Final shot of them clinking mugs, a genuine moment of comfort. Final on-screen text: \"Moments that matter. [Brand Name - if applicable, e.g., 'Everyday Comfort. BrandX.']\" Engaging question: \"Who lifts your spirits?\"]",
-                "Script 2:\n1. **Target Human Insight Ref:** I want to explore the world, live through experiences that enliven my spirit and connect me to others, but the fear of the unknown keeps me hesitating. I know that I need to let go of my strong need for certainty, only then can I fulfill my desires.\n2. **Visuals/Editing Style:** Starts slightly hesitant, transitions to adventurous and inspiring. Uplifting, rhythmic music. Mix of close-ups on thoughtful expressions and expansive scenic shots. Dynamic text overlays.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - A person looks thoughtfully at a world map or a travel photo, a hint of longing and hesitation on their face. On-screen text: \"Dreaming of out there?\"]\n    * **[4-8 SEC]:** [DEVELOPMENT - Quick cuts: a backpack being packed, a bus ticket, a nervous smile. Then, a decisive moment – they take a deep breath and step out the door. On-screen text: \"But fear holds you back?\"]\n    * **[9-14 SEC]:** [IMPACT/REFLECTION - Montage of breathtaking travel moments: mountain views, bustling markets, new faces. The person is visibly joyful and free. On-screen text: \"What if you just... went?\"]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - The person stands on a viewpoint, looking out at a stunning landscape, feeling empowered. Final on-screen text: \"Discover your courage. [Brand Name - if applicable, e.g., 'Explore More. BrandY.']\" Engaging question: \"What adventure awaits you?\"]",
-                "Script 3:\n1. **Target Human Insight Ref:** As kids, we didn’t need motivation to move. We played for hours — without tracking steps, without watching the clock, without feeling guilty. It wasn’t discipline. It was friendship. Now, I have goals, gadgets, plans… but no one to say, ‘Come on, let’s go.’ I don’t just miss being active. I miss the joy of moving with someone who cared enough to show up every day.\n2. **Visuals/Editing Style:** Nostalgic and warm, transitioning to energetic and connected. Upbeat, playful music. Quick cuts of past and present. Friendly, approachable text.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - Grainy, home-video style shot of kids laughing and running freely in a park. On-screen text: \"Remember this feeling?\"]\n    * **[4-8 SEC]:** [DEVELOPMENT - Modern day: An adult sits on a couch, scrolling on their phone, looking uninspired. Quick flash to a fitness tracker showing low activity. On-screen text: \"When did movement become a chore?\"]\n    * **[9-14 SEC]:** [IMPACT/REFLECTION - The adult receives a text, smiles. Cut to them meeting a friend, both laughing as they start a light jog or a fun activity together. On-screen text: \"It's not about the steps. It's about the company.\"]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - The two friends high-five, genuinely enjoying themselves. Final on-screen text: \"Rediscover the joy of moving together. [Brand Name - if applicable, e.g., 'Play On. BrandZ.']\" Engaging question: \"Who's your playmate?\"]"
+                "Script 1:\n1. **Target Human Insight Ref:** \"As a mother I am always crossed between teaching my child the right values of cleanliness & discipline and giving them freedom so that they can learn and grow from their own mistakes. I want to err on the side of giving them freedom because I know that is the best way for my children to build their own lives.”\n2. **Visuals/Editing Style:** Voiceover + storytelling montage (warm, reflective, layered with small real-life moments). Sound: Playful, childhood memories, gentle music.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-3 SEC]:** [HOOK - A kid walks into frame — white kurta, curious eyes, holding a paintbrush. Background: a quiet Sunday afternoon. Voiceover (female, calm): “Parenting… can be tricky.”]\n    * **[4-8 SEC]:** [DEVELOPMENT/TWIST - Flashbacks: Mom folding clothes neatly. The child climbing a chair to sneak cookies. Mom noticing, smiling slightly. Voiceover: “You want them to be tidy. Respectful. Careful.”]\n    * **[9-14 SEC]:** [IMPACT/REFLECTION - Cut to: The child spills paint on the kurta, looks startled. Mom pauses, walks over, doesn’t scold, dips her finger in paint and adds a dot to his nose. He laughs. Voiceover: “But more than that... you want them to be free.”]\n    * **[15-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Child helping clean the floor, messy but proud. Kurta hangs to dry, boy runs outside. Voiceover: “Because sometimes, learning happens after the mess. Sometimes, discipline is letting them discover it themselves. And sometimes, love means not saying ‘no’... even when it’s hard. Let them fall. Let them learn. Let them grow.” Final on-screen text: \"Let them fall. Let them learn. Let them grow.\"]",
+                "Script 2:\n1. **Target Human Insight Ref:** \"I would love it if my life could be a force of goodness in the world... Despite this scepticism, I know I would still choose to be the optimist that drives goodness.\"\n2. **Visuals/Editing Style:** Voiceover. Sound: Warm piano + subtle ambient sounds (kettle whistle, birds, traffic far away).\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-4 SEC]:** [HOOK - A woman staring at her to-do list: “Call plumber. Finish deck. Pick up groceries. Save the planet?” She laughs under her breath. Voiceover: “Let’s be real... being ‘good’ sometimes feels like just another task.”]\n    * **[5-10 SEC]:** [DEVELOPMENT/TWIST - Montage: She’s rushing with a child and laptop. News on TV shows climate stats. She turns it off. Voiceover: “The world feels... too big. Too broken. And I feel—too small.”]\n    * **[11-16 SEC]:** [IMPACT/REFLECTION - Cut to her separating waste, refilling a glass bottle, kid plants a sapling. Voiceover: “But then I remember… goodness isn’t a revolution. It’s a choice. Made quietly. Repeated daily.”]\n    * **[17-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Close-ups: reusable bag, switching off lights, offering water to a street dog. She smiles. Voiceover: “Maybe I won’t fix everything... But I’ll still try.” Final on-screen text: \"Small choices. Quiet impact. Still goodness.\"]",
+                "Script 3:\n1. **Target Human Insight Ref:** \"Yes, I have good hair days and bad hair days... My hair isn't just a part of me, they define me. My relationship with them defines my relationship with myself.\"\n2. **Visuals/Editing Style:** Voiceover. Sound: Ambient strings or slow tabla fusion + natural sound design (breeze, water, comb through hair).\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-4 SEC]:** [HOOK - Close-up: strands of hair on a pillow, morning light. Hand gently brushes them. Voiceover: “Some days, they just… fall into place. Other days, they refuse.”]\n    * **[5-10 SEC]:** [DEVELOPMENT/TWIST - Montage: tugging comb through knots, sigh, redoing bun. Flashback: Amma oiling hair, first haircut. Voiceover: “They demand time. Effort. Energy... But I wouldn’t trade this mess... They’ve held stories. Fears. Joys. Me.”]\n    * **[11-15 SEC]:** [IMPACT/REFLECTION - Current-day: Person looking in mirror, running fingers through scalp. Voiceover: “Some days they look strong. Some days they feel fragile. Just like me.”]\n    * **[16-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Windy day. Person smiles, hair flies freely. Voiceover: “But always—always—they remind me of who I am. And who I’m still becoming.” Final on-screen text: \"My hair. My relationship with me.\"]"
+              ]
+            },
+            {
+              "options": [
+                "Script 1:\n1. **Target Human Insight Ref:** \"Sometimes when everything seems difficult, the world seems to be crumbling down and being meaninglessly cruel to my dreams, it is the simple moments of companionship that make life worth living.\"\n2. **Visuals/Editing Style:** Voiceover. Sound: Soft acoustic guitar + city ambient + chai pouring/ stirring sounds.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-4 SEC]:** [HOOK - Wide shot: Tired young woman enters dark apartment, drops bag, sits silently. Voiceover: “Some days… it feels like the world is laughing at your plans.”]\n    * **[5-10 SEC]:** [DEVELOPMENT/TWIST - She opens a rejection email, stares blankly. Doorbell rings. Friend enters with a quiet smile, a warm hug. Voiceover: “You do everything right. And still... it doesn’t work out. And then, without fixing anything… someone shows up.”]\n    * **[11-16 SEC]:** [IMPACT/REFLECTION - They make chai, sit on floor, laugh softly at an old photo. Golden light. Voiceover: “And for a while… life doesn’t need to make sense. It just needs to feel held... It’s not a solution... But it’s enough.”]\n    * **[17-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Close-up: Steam rising from mug. Voiceover: “A cup of chai. A person who gets it. And suddenly... you’re okay again.” Final on-screen text: \"When nothing else works, comfort still does.\"]",
+                "Script 2:\n1. **Target Human Insight Ref:** \"Sometimes when everything seems difficult... it is the simple moments of companionship that make life worth living.\"\n2. **Visuals/Editing Style:** Dialogues. Naturalistic sound design. Focus on subtle interactions and shared silence. Authentic, relatable feel.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-4 SEC]:** [HOOK - Two friends in a cafe. Friend 1: “I cried in the office bathroom today.” Friend 2: “Shit.” Silence, stirring chai.]\n    * **[5-9 SEC]:** [DEVELOPMENT/TWIST - Couple on a staircase. Person 1: “I don’t think I’m built for ambition… I feel guilty.” Person 2 listens quietly, offering silent support.]\n    * **[10-15 SEC]:** [IMPACT/REFLECTION - Two students under a flyover. Student 1: “My parents think I’m okay.” Student 2: “Are you?” Student 1: “…No.” Shared, understanding silence. A car passes.]\n    * **[16-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Montage: Steam rising from cups, a hand reaching across a table, a head leaning closer. Final on-screen text: “Not everything needs fixing. Some things just need a witness. #ChaayosConversations #SipsAndSilence”]",
+                "Script 3:\n1. **Target Human Insight Ref:** \"Yes, I have good hair days and bad hair days... My hair isn't just a part of me, they define me. My relationship with them defines my relationship with myself.\"\n2. **Visuals/Editing Style:** Dialogues. Soft morning light. Ambient room tone, traffic faintly outside, wardrobe creaking, comb through hair. No music. Naturalistic, intimate.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-4 SEC]:** [HOOK - Friend 2 struggling with her hair in front of a mirror. Friend 2: “God. My hair looks like it’s mad at me.” Friend 1 (brushing her hair): laughs, “It kinda does. What did you do?”]\n    * **[5-10 SEC]:** [DEVELOPMENT/TWIST - Friend 2 gives up on her bun: “It’s so stupid how this affects my whole mood.” Friend 1 (softly): “…It’s not stupid.”]\n    * **[11-16 SEC]:** [IMPACT/REFLECTION - Friend 1: “Like, when I stop caring about it… it usually means I’ve stopped caring about myself too.” Friend 2 looks thoughtful. Friend 1: “My hair… it kinda tells me how I’m doing.”]\n    * **[17-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Friend 2 touches her hair gently. Friend 2: “Yeah. Same here. It’s almost like hair isn’t just about hair.” Friend 1: “Haha. yeah. It’s about us.” Final on-screen text: “It’s not just hair. It’s how we’re doing. #MyHairMySelf #ParachuteRealTalk”]"
+              ]
+            },
+            {
+              "options": [
+                "Script 1:\n1. **Target Human Insight Ref:** \"I want to explore the world, live through experiences that enliven my spirit and connect me to others, but the fear of the unknown keeps me hesitating. I know that I need to let go of my strong need for certainty, only then can I fulfill my desires.\"\n2. **Visuals/Editing Style:** Voiceover. Sound: Low ambient drone + soft wind + occasional engine rumble in the far distance. No music score, just atmosphere. Visuals: Desolate roads, close-ups of textures — leather gloves, dust, sunlight through trees.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-5 SEC]:** [HOOK - A man standing next to his Royal Enfield. Helmet in hand. Just breathing. Thinking. Voiceover: “There’s a version of me I keep seeing in my head…”]\n    * **[6-12 SEC]:** [DEVELOPMENT/TWIST - Flashes: Empty mountain road. A map with scribbles. A sky too wide to capture. He’s still standing there, bag packed. Voiceover: “He’s out there somewhere... But most days... I stay. Because the road asks questions I don’t have answers to.”]\n    * **[13-20 SEC]:** [IMPACT/REFLECTION - Hands gripping the handlebar. Then letting go. Then gripping again. Close-up: He finally puts on his helmet. Slides the key in. Pause. Voiceover: “What if I get lost? What if I break down? What if I find something I can’t come back from?”]\n    * **[21-28 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - The engine starts. Slow pull-away shot as he rides into a foggy path. Not fast. But finally moving. Voiceover: “But then again… what if I don’t leave, and miss the version of me I was meant to meet? Maybe certainty isn’t the point. Maybe the point is to feel the fear… and go anyway.” Final on-screen text: “The road won’t promise answers. Just presence. #LetTheJourneyMakeYou #RoyalEnfieldSpirit”]",
+                "Script 2:\n1. **Target Human Insight Ref:** \"I want to explore the world, live through experiences that enliven my spirit and connect me to others, but the fear of the unknown keeps me hesitating. I know that I need to let go of my strong need for certainty, only then can I fulfill my desires.\"\n2. **Visuals/Editing Style:** Dialogue. Roadside dhaba, dusty. Ambient sounds (trucks passing, chai pouring). No music. Realistic, conversational.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-5 SEC]:** [HOOK - Two friends at a dhaba. Friend 1 (rider, with tea): “You sure you don’t want to come?” Friend 2 (staring at horizon, quiet): “I don’t know, man.”]\n    * **[6-12 SEC]:** [DEVELOPMENT/TWIST - Friend 1: “Is it the road? The bike? The distance?” Friend 2 (shrugs): “It’s not that. I just… I like knowing where I’m headed, y’know?”]\n    * **[13-18 SEC]:** [IMPACT/REFLECTION - Friend 1 sips tea: “Yeah. I used to think that too. Until I realised I wasn’t going anywhere anyway.” Friend 2 fidgets with helmet strap: “What if I get lost?” Friend 1: “You will. But not the way you think.”]\n    * **[19-25 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Friend 2 (quietly): “I hate not knowing what’s ahead.” Friend 1: “Maybe that’s exactly why you should go.” Friend 2 stares at the road, helmet in lap. Final on-screen text: “The map can wait. The ride can’t. #RoyalEnfield #UncertaintyIsFuel”]",
+                "Script 3:\n1. **Target Human Insight Ref:** \"As a mother I am always crossed between teaching my child the right values of cleanliness & discipline and giving them freedom so that they can learn and grow from their own mistakes. I want to err on the side of giving them freedom because I know that is the best way for my children to build their own lives.”\n2. **Visuals/Editing Style:** Dialogue. Parent & child after school. Quiet light, intimate frame. Sound: Cloth brushing, water trickling, quiet breeze.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-5 SEC]:** [HOOK - Parent squeezes water from a muddied sleeve. Child sits on a low stool, looking unsure. Child (small voice): “I didn’t mean to get dirty…”]\n    * **[6-12 SEC]:** [DEVELOPMENT/TWIST - Parent (calmly): “You were playing?” Child: “We were building a dam. In the rainwater. It collapsed. Twice.” Parent smiles quietly, continues scrubbing.]\n    * **[13-20 SEC]:** [IMPACT/REFLECTION - Child (surprised): “You’re not upset?” Parent: “Listen… I’d rather wash mud off your clothes than fear off your heart. It means — don’t stop getting into things just because they might go wrong.”]\n    * **[21-28 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Child is silent, then slowly smiles. Child: “Tomorrow we’re building a bridge.” Parent (chuckles): “Just don’t build it on the neighbour’s plants again.” Parent lifts clean shirt, sunlight catches it. Final on-screen text: “If it made you brave, it was worth the mess. #DaagAccheHain #SurfExcelSpirit”]"
+              ]
+            },
+            {
+              "options": [
+                "Script 1:\n1. **Target Human Insight Ref:** \"What matters to me the most is my family’s future. However I sometimes forget that to prioritize them, I need to prioritize myself. My health.\"\n2. **Visuals/Editing Style:** Voiceover narrative (male). Minimalist piano, ambient office sounds, heavy silence moments. Reflective, slightly melancholic, ending with resolve.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-4 SEC]:** [HOOK - Alarm buzzes. Man already at his desk, tired. Time: 5:49 AM. Voiceover: “They say you should start your day with intention. I start mine with emails.”]\n    * **[5-10 SEC]:** [DEVELOPMENT/TWIST - Fast cuts: Online meeting, Slack pings. Close-up: Family photo on desk. He touches it absently. Voiceover: “There’s always something urgent. And I always say yes. Because they’re the reason.”]\n    * **[11-16 SEC]:** [IMPACT/REFLECTION - Caffeine pills. Blood pressure machine ignored. Calendar alert: “Annual check-up – overdue.” Snoozes it. Hears daughter laughing, watches disconnected. Voiceover: “I provide. I protect... But what happens when I pause? I’m building their future. But will I be in it?”]\n    * **[17-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Morning light. Closes laptop, picks up shoes, walks out for exercise. Voiceover: “They don’t need a hero. They just need me — healthy. Present. Alive.” Final on-screen text: “The most important meeting… is with yourself. #CultFit #StartWithYou #HealthIsFamilyToo”]",
+                "Script 2:\n1. **Target Human Insight Ref:** \"What matters to me the most is my family’s future. However I sometimes forget that to prioritize them, I need to prioritize myself. My health.\"\n2. **Visuals/Editing Style:** Dialogue. Evening, dining table. Quiet tension. Low ambient sounds (fridge hum, traffic, cutlery).\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-5 SEC]:** [HOOK - Dad typing furiously at dinner. Daughter eats silently. Daughter: “You always say you’re doing this for us.” Dad (still typing): “I am.”]\n    * **[6-10 SEC]:** [DEVELOPMENT/TWIST - Daughter: “But you’re never really… here.” Dad (pauses): “I’m sitting right in front of you.” Daughter (shrugs): “Your eyes aren’t.”]\n    * **[11-16 SEC]:** [IMPACT/REFLECTION - Dad: “I’m trying to give you a good life.” Daughter: “I didn’t say stop working. I said maybe... don’t disappear inside it.” She gets up. Daughter (quietly): “Mumma says you haven’t gone to the doctor in a year.” Dad (defensive): “I’m fine.” Daughter (without turning): “That's what Dadu used to say too.”]\n    * **[17-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - Dad sits back, looks at her empty chair, flips phone face down. Opens health app. Walks to her room. Dad: “I booked a check-up.” Daughter: “Cool. Also come watch that dumb show with me.” Final on-screen text: “The people who love you… need you. Not just what you provide. #CultFit #BeThereFully #HealthIsLoveToo”]",
+                "Script 3:\n1. **Target Human Insight Ref:** \"As kids, we didn’t need motivation to move... I don’t just miss being active. I miss the joy of moving with someone who cared enough to show up every day.\"\n2. **Visuals/Editing Style:** Voiceover + real dialogue moments. Upbeat lo-fi groove + ambient class sounds. Humorous, relatable.\n3. **Script Breakdown (15-20 seconds total):\n    * **[0-5 SEC]:** [HOOK - Door opens. Person 1 (late 30s, quiet energy) peeks in, unrolls mat backwards. Voiceover: “First day. Felt like a new kid in gym school.”]\n    * **[6-12 SEC]:** [DEVELOPMENT/TWIST - Person 1 tries to mirror instructor, fails, looks around. Voiceover: “I just wanted to survive 45 minutes without dying… or farting.” Person 2 (early 40s, confident chaos) enters, dramatic stretch, picks mat next to Person 1. They exchange a 'you're lost too?' look.]\n    * **[13-18 SEC]:** [IMPACT/REFLECTION - Montage: Both doing wrong moves, dropping bottle, laughing silently. One mouths, “I hate burpees,” other nods. Mid-class, instructor says, “One more round!” Both groan, fist bump. Voiceover: “We didn’t become friends. We became... survivors. Pain’s funnier when someone else is also pretending it’s not painful.”]\n    * **[19-20 SEC]:** [RESOLUTION & BRAND WORLDVIEW ECHO - After class, on steps. P1: “So we’re like… accountability buddies now?” P2: “Nah. We’re anti-gym bros. We just show up.” P2 shouts: “Hey! If you don’t come next week — I will find you!” P1: “Yeah yeah, Liam Neeson.” Final on-screen text: “You don’t need a coach. You need a co-survivor. #TwoMatsApart #CultFit #BetterTogether”]"
               ]
             }
           ],
@@ -171,17 +192,22 @@
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "image_prompt_prompt_v2",
-          "prefix": "Based on the selected script (specifically its 'Script Breakdown' section), generate a detailed visual description (image prompt) for *each timed scene*. Imagine you are the director meticulously visualizing every shot for an image generation model. Each prompt should be rich in detail, describing subjects, actions, setting, mood, lighting, and camera angle. \n\nOutput one continuous string containing all scene descriptions, with each individual scene's description clearly separated by '||'. Do not add any other text or numbering outside of the descriptions themselves.",
+          "id": "image_prompt_prompt",
+          "prefix": "Based on the script (specifically its 'Script Breakdown' section), generate a detailed visual description (image prompt) for *each timed scene*. Imagine you are the director meticulously visualizing every shot for an image generation model. Each prompt should be rich in detail, describing subjects, actions, setting, mood, lighting, and camera angle. \n\nOutput one continuous string containing all scene descriptions, with each individual scene's description clearly separated by '||'. Do not add any other text or numbering outside of the descriptions themselves.",
           "few_shots": [
             {
               "options": [
-                "Scene 1 [0-3 SEC]: Extreme close-up, cinematic lighting: Three perfectly ripe, vibrant heirloom tomatoes on a rustic, dark wooden cutting board. A chef's hand, clean and professional, gently selects one tomato. The mood is sophisticated and focused. Shallow depth of field. || Scene 2 [4-8 SEC]: Dynamic quick cuts, bright natural light: Chef Anya's hands skillfully slicing a tomato with a sharp knife; a drizzle of golden olive oil from a small spout; a fresh, green basil leaf being placed precisely. Actions are simple yet elegant. Focus on the fresh ingredients. || Scene 3 [9-14 SEC]: Food photography style, soft lighting: A beautifully plated single slice of tomato, adorned with oil and basil, looking like a gourmet appetizer on a minimalist white plate. Close up on Chef Anya's face, a subtle smile of satisfaction as she savors the bite. Warm, inviting mood. || Scene 4 [15-20 SEC]: Medium shot, warm and friendly lighting: Chef Anya, in her well-lit kitchen, smiles warmly and directly at the camera, exuding confidence and passion. The background is slightly blurred, keeping focus on her approachable expertise."
+                "Scene 1 [0-3 SEC]: Extreme close-up, cinematic lighting: Three perfectly ripe, vibrant heirloom tomatoes on a rustic, dark wooden cutting board. A chef's hand, clean and professional, gently selects one tomato. The mood is sophisticated and focused. Shallow depth of field.",
+                "Scene 2 [4-8 SEC]: Dynamic quick cuts, bright natural light: Chef Anya's hands skillfully slicing a tomato with a sharp knife; a drizzle of golden olive oil from a small spout; a fresh, green basil leaf being placed precisely. Actions are simple yet elegant. Focus on the fresh ingredients.",
+                "Scene 3 [9-14 SEC]: Food photography style, soft lighting: A beautifully plated single slice of tomato, adorned with oil and basil, looking like a gourmet appetizer on a minimalist white plate. Close up on Chef Anya's face, a subtle smile of satisfaction as she savors the bite. Warm, inviting mood. || Scene 4 [15-20 SEC]: Medium shot, warm and friendly lighting: Chef Anya, in her well-lit kitchen, smiles warmly and directly at the camera, exuding confidence and passion. The background is slightly blurred, keeping focus on her approachable expertise."
               ]
             },
             {
               "options": [
-                "Scene 1 [0-3 SEC]: Extreme close-up, dramatic low-angle shot: Small, colorful fabric scraps scattered on a light wooden table. A curious toddler's hand, soft and small, reaches into the frame towards the scraps. Warm, inviting, slightly whimsical lighting. || Scene 2 [4-8 SEC]: Montage sequence, eye-level shots: Priya's hands lovingly sewing scraps with a needle and thread; close-up of button eyes being attached to a fabric shape; the child watching with wide, excited eyes, a hint of a smile. Bright, cheerful lighting. || Scene 3 [9-14 SEC]: Heartwarming medium shot: The toddler (Meera) joyfully and tightly hugging the completed, unique fabric doll. The doll is colorful and clearly handmade with love. Soft, golden hour lighting, creating a tender mood. || Scene 4 [15-20 SEC]: Medium shot, natural outdoor lighting: Priya and Meera are sitting on a sunlit park bench, playing together with the handmade doll, both laughing. The scene is full of genuine joy and connection."
+                "Scene 1 [0-3 SEC]: Extreme close-up, dramatic low-angle shot: Small, colorful fabric scraps scattered on a light wooden table. A curious toddler's hand, soft and small, reaches into the frame towards the scraps. Warm, inviting, slightly whimsical lighting.",
+                "Scene 2 [4-8 SEC]: Montage sequence, eye-level shots: Priya's hands lovingly sewing scraps with a needle and thread; close-up of button eyes being attached to a fabric shape; the child watching with wide, excited eyes, a hint of a smile. Bright, cheerful lighting.",
+                "Scene 3 [9-14 SEC]: Heartwarming medium shot: The toddler (Meera) joyfully and tightly hugging the completed, unique fabric doll. The doll is colorful and clearly handmade with love. Soft, golden hour lighting, creating a tender mood.",
+                "Scene 4 [15-20 SEC]: Medium shot, natural outdoor lighting: Priya and Meera are sitting on a sunlit park bench, playing together with the handmade doll, both laughing. The scene is full of genuine joy and connection."
               ]
             }
           ],
@@ -193,7 +219,7 @@
         }
       ],
       "next_step": "images",
-      "version": 2
+      "version": 1
     },
     {
       "id": "images",
@@ -203,7 +229,7 @@
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "image_prompt_from_image_prompts_step",
+          "id": "image_prompt",
           "prefix": "",
           "ignore_prompt_base": true,
           "few_shots": [],
@@ -219,14 +245,14 @@
     },
     {
       "id": "voiceover_prompt",
-      "name": "Voiceover Text Compilation",
-      "description": "Generate the complete voiceover text from the script.",
+      "name": "Voiceover Prompt",
+      "description": "Generate prompt to synthesize the speech of the video.",
       "requires_user_input": false,
       "expected_selection_count": "ALL",
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "voiceover_text_prompt_v2",
+          "id": "voiceover_text_prompt",
           "prefix": "Based on the 'Script Breakdown' section of the selected script, compile all on-screen text and explicit voiceover (VO) lines into a single, coherent narrative flow. Imagine you are the voiceover artist or text compositor preparing the full text for the video. Concatenate all text/VO elements in the order they appear in the script. \n\nOutput only the complete, continuous text for the voiceover/on-screen display. Do not include timestamps or scene descriptions.",
           "few_shots": [
             {
@@ -248,17 +274,17 @@
         }
       ],
       "next_step": "voiceover",
-      "version": 2
+      "version": 1
     },
     {
       "id": "voiceover",
-      "name": "Voiceover Generation",
-      "description": "Generate voiceover audio for the script.",
+      "name": "Voiceover",
+      "description": "Generate voiceover for the script",
       "requires_user_input": false,
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "voiceover_audio_from_text_prompt",
+          "id": "voiceover_prompt",
           "prefix": "",
           "ignore_prompt_base": true,
           "few_shots": [],
@@ -271,18 +297,18 @@
         }
       ],
       "next_step": "background_music_prompt",
-      "version": 1
+      "version": 0
     },
     {
       "id": "background_music_prompt",
-      "name": "Background Music Concept Prompt",
-      "description": "Generate a text prompt to guide AI music generation.",
+      "name": "Background Music Prompt",
+      "description": "Generate prompt to synthesize the music of the video.",
       "requires_user_input": false,
       "expected_selection_count": "ALL",
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "background_music_concept_prompt_v2",
+          "id": "background_music_prompt_prompt",
           "prefix": "Based on the selected script's 'Visuals/Editing Style' section (which describes mood, music style, pace) and considering the brand's essence (from 'Link Research'), generate a concise text prompt (strictly under 200 characters) for an AI music generation model. This prompt should effectively guide the creation of suitable background music for the entire video. Focus on capturing the core emotion, genre, instrumentation, and tempo.",
           "few_shots": [
             {
@@ -309,17 +335,17 @@
         }
       ],
       "next_step": "background_music",
-      "version": 2
+      "version": 1
     },
     {
       "id": "background_music",
-      "name": "Background Music Generation",
-      "description": "Generate background music for the video.",
+      "name": "Background Music",
+      "description": "Generate background music for the video",
       "requires_user_input": false,
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "background_music_from_concept_prompt",
+          "id": "background_music_prompt",
           "prefix": "",
           "ignore_prompt_base": true,
           "few_shots": [],
@@ -335,18 +361,18 @@
     },
     {
       "id": "final_video",
-      "name": "Final Video Assembly",
-      "description": "Create the final video by combining generated images, voiceover, and background music.",
+      "name": "Final Video",
+      "description": "Create video by combining images, voiceover, and background music",
       "requires_user_input": false,
       "prompts": [],
       "agents": [
         {
           "id": "video_generator",
-          "parameters": ["Images", "Background Music", "Voiceover", "Script"]
+          "parameters": ["Images", "Background Music", "Voiceover"]
         }
       ],
       "next_step": null,
-      "version": 2
+      "version": 1
     }
   ]
 }
