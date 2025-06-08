@@ -199,7 +199,8 @@
               "options": [
                 "Scene 1 [0-3 SEC]: Extreme close-up, cinematic lighting: Three perfectly ripe, vibrant heirloom tomatoes on a rustic, dark wooden cutting board. A chef's hand, clean and professional, gently selects one tomato. The mood is sophisticated and focused. Shallow depth of field.",
                 "Scene 2 [4-8 SEC]: Dynamic quick cuts, bright natural light: Chef Anya's hands skillfully slicing a tomato with a sharp knife; a drizzle of golden olive oil from a small spout; a fresh, green basil leaf being placed precisely. Actions are simple yet elegant. Focus on the fresh ingredients.",
-                "Scene 3 [9-14 SEC]: Food photography style, soft lighting: A beautifully plated single slice of tomato, adorned with oil and basil, looking like a gourmet appetizer on a minimalist white plate. Close up on Chef Anya's face, a subtle smile of satisfaction as she savors the bite. Warm, inviting mood. || Scene 4 [15-20 SEC]: Medium shot, warm and friendly lighting: Chef Anya, in her well-lit kitchen, smiles warmly and directly at the camera, exuding confidence and passion. The background is slightly blurred, keeping focus on her approachable expertise."
+                "Scene 3 [9-14 SEC]: Food photography style, soft lighting: A beautifully plated single slice of tomato, adorned with oil and basil, looking like a gourmet appetizer on a minimalist white plate. Close up on Chef Anya's face, a subtle smile of satisfaction as she savors the bite. Warm, inviting mood.",
+                "Scene 4 [15-20 SEC]: Medium shot, warm and friendly lighting: Chef Anya, in her well-lit kitchen, smiles warmly and directly at the camera, exuding confidence and passion. The background is slightly blurred, keeping focus on her approachable expertise."
               ]
             },
             {
@@ -253,16 +254,16 @@
       "prompts": [
         {
           "id": "voiceover_text_prompt",
-          "prefix": "Based on the 'Script Breakdown' section of the selected script, compile all on-screen text and explicit voiceover (VO) lines into a single, coherent narrative flow. Imagine you are the voiceover artist or text compositor preparing the full text for the video. Concatenate all text/VO elements in the order they appear in the script. \n\nOutput only the complete, continuous text for the voiceover/on-screen display. Do not include timestamps or scene descriptions.",
+          "prefix": "Based on the 'Script Breakdown' section of the selected script, compile all on-screen text and explicit voiceover (VO) lines into a single, coherent narrative flow. Imagine you are the voiceover artist or text compositor preparing the full text for the video. Concatenate all text/VO elements in the order they appear in the script.\n\nStart with a style instruction, then output only the complete, continuous text for the voiceover/on-screen display. Do not include timestamps or scene descriptions.",
           "few_shots": [
             {
               "options": [
-                "Perfection in three? Chef Anya’s secret: Less is more. The taste of pure quality. No distractions. Find your essential. Italic. What's your simple masterpiece?"
+                "Tell this like a wise old storyteller captivating an audience:\nPerfection in three? Chef Anya’s secret: Less is more. The taste of pure quality. No distractions. Find your essential. Italic. What's your simple masterpiece?"
               ]
             },
             {
               "options": [
-                "Little scraps... big imagination! Meet Meera's mom-made best friend. Zero waste. Pure love. Lasting memories. Good for them, good for Earth. Born Good. What can you create today?"
+                "Say this in a soft, secretive whisper:\nLittle scraps... big imagination! Meet Meera's mom-made best friend. Zero waste. Pure love. Lasting memories. Good for them, good for Earth. Born Good. What can you create today?"
               ]
             }
           ],
@@ -309,16 +310,16 @@
       "prompts": [
         {
           "id": "background_music_prompt_prompt",
-          "prefix": "Based on the selected script's 'Visuals/Editing Style' section (which describes mood, music style, pace) and considering the brand's essence (from 'Link Research'), generate a concise text prompt (strictly under 200 characters) for an AI music generation model. This prompt should effectively guide the creation of suitable background music for the entire video. Focus on capturing the core emotion, genre, instrumentation, and tempo.",
+          "prefix": "Based on the script's 'Visuals/Editing Style' section (which describes mood, music style, pace) and considering the brand's essence (from 'Link Research'), generate a concise text prompt (strictly under 200 characters) for an AI music generation model. This prompt should effectively guide the creation of suitable background music for the entire video. Focus on capturing the core emotion, genre, instrumentation, and tempo.",
           "few_shots": [
             {
               "options": [
-                "Warm, inviting acoustic folk. Gentle, sophisticated, inspiring. Builds subtly. Perfect for refined, achievable luxury brand storytelling."
+                "Warm piano + subtle ambient sounds (kettle whistle, birds, traffic far away)."
               ]
             },
             {
               "options": [
-                "Upbeat, playful indie pop. Bright, warm, and heartwarming. Acoustic guitar focus. For joyful, creative, eco-friendly family brand moments."
+                "Low ambient drone + soft wind + occasional engine rumble in the far distance. No music score, just atmosphere."
               ]
             },
             {

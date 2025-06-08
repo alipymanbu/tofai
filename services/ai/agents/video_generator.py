@@ -6,7 +6,7 @@ import uuid
 import mimetypes
 from typing import List, Dict, Any
 from contextlib import contextmanager
-from moviepy import ImageClip, AudioFileClip, concatenate_videoclips, CompositeAudioClip
+from moviepy import ImageClip, AudioFileClip, concatenate_videoclips, CompositeAudioClip, concatenate_audioclips
 from services.ai.framework_model import MediaUri
 from services.ai.lm_facade import LMFacade
 from services.storage.object_store import S3MediaManager, MediaType
@@ -116,7 +116,7 @@ class VideoGenerator:
         with AudioFileClip(local_music_path) as music_audio:
           speech_duration = speech_audio.duration
           music_duration = music_audio.duration
-          duration = min(speech_duration, music_duration)
+          duration = speech_duration
           
           # Calculate duration per image
           image_duration = float(duration / len(images))
@@ -131,9 +131,15 @@ class VideoGenerator:
             # Combine clips
             video = concatenate_videoclips(image_clips, method="compose")
             
-          # # Add audio
-          # with AudioFileClip(local_music_path) as music_audio:
-            music_clip = music_audio.subclipped(0, duration).with_volume_scaled(0.25)
+            # # Add audio
+            # with AudioFileClip(local_music_path) as music_audio:
+            if music_duration < duration:
+              loops_needed = int(duration / music_duration) + 1
+              music_clips = [music_audio] * loops_needed
+              looped_music = concatenate_audioclips(music_clips)
+              music_clip = looped_music.subclipped(0, duration).with_volume_scaled(0.25)
+            else:
+              music_clip = music_audio.subclipped(0, duration).with_volume_scaled(0.25)
             speech_clip = speech_audio.subclipped(0, duration)
             composite_audio = CompositeAudioClip([speech_clip, music_clip])
             video = video.with_audio(composite_audio)
