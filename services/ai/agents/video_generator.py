@@ -137,9 +137,9 @@ class VideoGenerator:
               loops_needed = int(duration / music_duration) + 1
               music_clips = [music_audio] * loops_needed
               looped_music = concatenate_audioclips(music_clips)
-              music_clip = looped_music.subclipped(0, duration).with_volume_scaled(0.25)
+              music_clip = looped_music.subclipped(0, duration).with_volume_scaled(0.20)
             else:
-              music_clip = music_audio.subclipped(0, duration).with_volume_scaled(0.25)
+              music_clip = music_audio.subclipped(0, duration).with_volume_scaled(0.20)
             speech_clip = speech_audio.subclipped(0, duration)
             composite_audio = CompositeAudioClip([speech_clip, music_clip])
             video = video.with_audio(composite_audio)
