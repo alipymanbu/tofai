@@ -6,7 +6,7 @@ import uuid
 import mimetypes
 from typing import List, Dict, Any
 from contextlib import contextmanager
-from moviepy import ImageClip, AudioFileClip, concatenate_videoclips, CompositeAudioClip, concatenate_audioclips
+from moviepy import ImageClip, AudioFileClip, VideoFileClip, concatenate_videoclips, CompositeAudioClip, concatenate_audioclips
 from services.ai.framework_model import MediaUri
 from services.ai.lm_facade import LMFacade
 from services.storage.object_store import S3MediaManager, MediaType
@@ -119,28 +119,40 @@ class VideoGenerator:
           duration = speech_duration
           
           # Calculate duration per image
-          image_duration = float(duration / len(images))
+          # image_duration = float(duration / len(images))
           
           # Create video clips
           image_clips = []
           try:
             for img_path in local_image_paths:
-              clip = ImageClip(img_path).with_duration(image_duration).with_fps(24)
+              if mimetypes.guess_type(img_path)[0].startswith("image"):
+                clip = ImageClip(img_path).set_duration(duration / len(images)).set_fps(24)
+              else:
+                clip = VideoFileClip(img_path)
+              # clip = ImageClip(img_path).with_duration(image_duration).with_fps(24)
+              # clip = VideoFileClip(img_path)
               image_clips.append(clip)
             
             # Combine clips
             video = concatenate_videoclips(image_clips, method="compose")
+            total_video_duration = video.duration
             
             # # Add audio
-            # with AudioFileClip(local_music_path) as music_audio:
-            if music_duration < duration:
-              loops_needed = int(duration / music_duration) + 1
+            if music_duration < total_video_duration:
+              loops_needed = int(total_video_duration / music_duration) + 1
               music_clips = [music_audio] * loops_needed
               looped_music = concatenate_audioclips(music_clips)
-              music_clip = looped_music.subclipped(0, duration).with_volume_scaled(0.20)
+              music_clip = looped_music.subclipped(0, total_video_duration).with_volume_scaled(0.20)
             else:
-              music_clip = music_audio.subclipped(0, duration).with_volume_scaled(0.20)
-            speech_clip = speech_audio.subclipped(0, duration)
+              music_clip = music_audio.subclipped(0, total_video_duration).with_volume_scaled(0.20)
+
+            silence_duration = total_video_duration - speech_duration
+            if silence_duration > 0:
+              silence_audio = AudioFileClip(io.BytesIO(b'\x00' * int(silence_duration * speech_audio.fps)))
+              silence_audio = silence_audio.set_duration(silence_duration)
+              speech_clip = concatenate_audioclips([speech_audio, silence_audio])
+            else:
+              speech_clip = speech_audio.subclipped(0, total_video_duration)
             composite_audio = CompositeAudioClip([speech_clip, music_clip])
             video = video.with_audio(composite_audio)
             

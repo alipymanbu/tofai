@@ -193,7 +193,7 @@
       "prompts": [
         {
           "id": "image_prompt_prompt",
-          "prefix": "Based on the script (specifically its 'Script Breakdown' section), generate a detailed visual description (image prompt) for *each timed scene*. Imagine you are the director meticulously visualizing every shot for an image generation model. Each prompt should be rich in detail, describing subjects, actions, setting, mood, lighting, and camera angle. \n\nOutput one continuous string containing all scene descriptions, with each individual scene's description clearly separated by '||'. Do not add any other text or numbering outside of the descriptions themselves.",
+          "prefix": "Based on the script (specifically its 'Script Breakdown' section), generate a detailed visual description (veo prompt) for *each timed scene*. Imagine you are the director meticulously visualizing every shot for a video generation model. Each prompt should be rich in detail, describing subjects, actions, setting, mood, lighting, and camera angle. \n\nOutput one continuous string containing all scene descriptions, with each individual scene's description clearly separated by '||'. Do not add any other text or numbering outside of the descriptions themselves.",
           "few_shots": [
             {
               "options": [
@@ -237,7 +237,7 @@
           "parameters": ["Image Prompts"],
           "option_count": 1,
           "options_delimiter": "",
-          "expected_output_modality": "IMAGE",
+          "expected_output_modality": "VIDEO",
           "output_instruction": "."
         }
       ],

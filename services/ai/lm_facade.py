@@ -12,6 +12,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from functools import lru_cache
 import mimetypes
 import struct
+import time
+from ratelimit import limits, sleep_and_retry
 
 
 logger = logging.getLogger(__name__)
@@ -103,32 +105,24 @@ def _calculate_audio_duration(accumulated_audio_data: bytes, audio_mime_type: st
     return duration_seconds
 
 class LMs(Enum):
-  GPT_40_MINI = 1
-  OLLAMA_QWEN_2_5_7B = 2
-  GEMMA_3_12B = 3
-  ELEVEN = 4
-  GEMINI_2_0_FLASH = 5
-  GEMINI_IMAGEN_3 = 6
-  GOOGLE_TEXT_TO_SPEECH = 7
-  GEMINI_2_5_FLASH = 8
-  GEMINI_2_5_FLASH_TTS = 9
+  GOOGLE = 1
+  OPENAI = 2
+  ELEVEN = 3
+  OLLAMA = 4
 
 class LMFacade:
   def __init__(self, max_tokens: int = 1000, temperature: float = 0.7):
-    self._text_to_text = LMs.GEMINI_2_0_FLASH
-    self._text_to_image = LMs.GEMINI_IMAGEN_3
-    self._text_to_speech = LMs.ELEVEN
+    self._text_to_text = LMs.GOOGLE
+    self._text_to_image = LMs.GOOGLE
+    self._text_to_speech = LMs.GOOGLE
     self._text_to_music = LMs.ELEVEN
+    self._prompt_to_video = LMs.GOOGLE
     
     # Initialize clients
     try:
       self._lm_clients = {
-        # LMs.GEMMA_3_12B: ChatOllama(model="gemma3:12b", num_predict=max_tokens, temperature=temperature),
-        LMs.GEMINI_2_0_FLASH: genai.Client(api_key=settings.GEMINI_API_SECRET),
-        LMs.GEMINI_2_5_FLASH: genai.Client(api_key=settings.GEMINI_API_SECRET),
-        LMs.GEMINI_2_5_FLASH_TTS: genai.Client(api_key=settings.GEMINI_API_SECRET),
+        LMs.GOOGLE: genai.Client(api_key=settings.GEMINI_API_SECRET),
         LMs.ELEVEN: ElevenLabs(api_key=settings.ELEVEN_TTS_SECRET),
-        LMs.GEMINI_IMAGEN_3: genai.Client(api_key=settings.GEMINI_API_SECRET),
       }
     except Exception as e:
       err_msg = f"Error initializing LM clients: {e}"
@@ -139,14 +133,13 @@ class LMFacade:
     self._cached_t2i = lru_cache(maxsize=10, typed=True)(self._invoke_t2i_impl)
     self._cached_t2s = lru_cache(maxsize=2, typed=True)(self._invoke_t2s_impl)
     self._cached_t2m = lru_cache(maxsize=2, typed=True)(self._invoke_t2m_impl)
+    self._cached_p2v = lru_cache(maxsize=2, typed=True)(self._invoke_p2v_impl)
 
   def get_langchain_llm(self) -> Any:
     """
     Returns a Langchain-compatible LLM instance based on the currently selected text-to-text model.
     """
-    if self._text_to_text == LMs.GEMINI_2_0_FLASH:
-        return ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=settings.GEMINI_API_SECRET)
-    if self._text_to_text == LMs.GEMINI_2_5_FLASH:
+    if self._text_to_text == LMs.GOOGLE:
         return ChatGoogleGenerativeAI(model="gemini-2.5-pro-preview-05-06", google_api_key=settings.GEMINI_API_SECRET)
     else:
         raise ValueError(f"No Langchain LLM configured for {self._text_to_text}")
@@ -162,12 +155,15 @@ class LMFacade:
 
   def invoke_t2m(self, prompt: str) -> Union[bytes, str]:
       return self._cached_t2m(prompt)
+  
+  def invoke_p2v(self, prompt: str) -> bytes:
+      return self._cached_p2v(prompt)
 
   # Invoke LLM for text to text inference.
   def _invoke_t2t_impl(self, prompt: str) -> str:
-    if self._text_to_text in {LMs.GEMMA_3_12B, LMs.OLLAMA_QWEN_2_5_7B}:
+    if self._text_to_text in {LMs.OLLAMA}:
       return self._call_ollama(prompt, self._text_to_text)
-    elif self._text_to_text == LMs.GEMINI_2_0_FLASH:
+    elif self._text_to_text == LMs.GOOGLE:
       return self._call_gemini(prompt, modality="text")
     err_msg = f"Text to Text LLM {self._text_to_text} not supported"
     logger.error(err_msg)
@@ -191,6 +187,26 @@ class LMFacade:
       err_msg = f"Error generating image: {e}"
       logger.error(err_msg)
       raise ValueError(err_msg)
+
+  def _invoke_p2v_impl(self, prompt: str) -> bytes:
+    """
+    Generate a video from a multi-modal prompt.
+    
+    Args:
+        prompt: multi-modal prompt
+        
+    Returns:
+        bytes: The generated video data
+    """
+    try:
+      if not self._prompt_to_video or not self._lm_clients[self._prompt_to_video]:
+        raise ValueError("Prompt to Video LLM not setup")
+      return self._call_gemini(prompt, modality="video")
+    except Exception as e:
+      err_msg = f"Error generating video: {e}"
+      logger.error(err_msg)
+      raise ValueError(err_msg)
+
 
   def _invoke_t2m_impl(self, prompt: str) -> Union[bytes, str]:
     """
@@ -233,6 +249,7 @@ class LMFacade:
     except Exception as e:
       logger.error(f"Error generating speech with Gemini: {e}")
     try:
+      # If Gemini fails, try ElevenLabs
       if self._text_to_speech and self._lm_clients.get(self._text_to_speech):
         logger.info(f"Generating speech.")
         client = self._lm_clients[self._text_to_speech]
@@ -259,7 +276,7 @@ class LMFacade:
   def _call_gemini_for_image_generation(self, prompt: str) -> bytes:
     print(f"Generating image with prompt: {prompt}")
     try:
-      client = self._lm_clients[LMs.GEMINI_IMAGEN_3]
+      client = self._lm_clients[LMs.GOOGLE]
       model = "imagen-3.0-generate-002"
       response: types.GenerateImagesResponse = client.models.generate_images(
         model=model,
@@ -286,7 +303,7 @@ class LMFacade:
 
   def _call_gemini_for_speech_generation(self, prompt: str) -> bytes:
     try:
-      client = self._lm_clients[LMs.GEMINI_2_5_FLASH_TTS]
+      client = self._lm_clients[LMs.GOOGLE]
       model = "gemini-2.5-flash-preview-tts"
       contents = [
           types.Content(
@@ -329,13 +346,53 @@ class LMFacade:
     except Exception as e:
       raise ValueError(f"Error generating speech: {e}")
 
-  def _call_gemini(self, prompt: str, modality: Literal["text", "image", "speech"] = "text") -> Union[str, bytes]:
+  @sleep_and_retry
+  @limits(calls=1, period=60)  # Limit to 1 call per minute
+  def _call_gemini_for_video_generation(self, prompt: str) -> bytes:
+    client: genai.Client = self._lm_clients[LMs.GOOGLE]
+    model = "veo-2.0-generate-001"
+    video_config = types.GenerateVideosConfig(
+        person_generation="allow_adult", # supported values: "dont_allow" or "allow_adult" or "allow_all"
+        aspect_ratio="9:16", # supported values: "16:9" or "16:10"
+        number_of_videos=1, # supported values: 1 - 4
+        duration_seconds=5, # supported values: 5 - 8
+    )
+    operation = client.models.generate_videos(
+        model=model,
+        prompt=prompt,
+        config=video_config,
+    )
+
+    # Waiting for the video(s) to be generated
+    while not operation.done:
+        print("Video has not been generated yet. Check again in 5 seconds...")
+        time.sleep(5)
+        operation = client.operations.get(operation)
+    result = operation.result
+    if not result:
+        err_msg = f"No result returned from video generation operation. Error may have occurred {operation.error}"
+        print(err_msg)
+        raise ValueError(err_msg)
+
+    generated_videos = result.generated_videos
+    if not generated_videos:
+        err_msg = "No videos were generated."
+        print(err_msg)
+        raise ValueError(err_msg)
+    generated_video = generated_videos[0]
+    return client.files.download(
+        file=generated_video.video,
+    )
+
+  def _call_gemini(self, prompt: str, modality: Literal["text", "image", "speech", "video"] = "text") -> Union[str, bytes]:
     if modality == "image":
         return self._call_gemini_for_image_generation(prompt)
     if modality == "speech":
         return self._call_gemini_for_speech_generation(prompt)
+    if modality == "video":
+        return self._call_gemini_for_video_generation(prompt)
     # For text generation
-    client = self._lm_clients[LMs.GEMINI_2_5_FLASH]
+    client = self._lm_clients[LMs.GOOGLE]
     model = "gemini-2.5-flash-preview-05-20"
     contents = [
         Content(
@@ -393,4 +450,5 @@ class LMFacade:
 # For Local Testing Only:
 if __name__ == "__main__":
   lm_facade = LMFacade()
-  image_bytes = lm_facade._call_gemini_for_speech_generation("In bold voice: What is the capital of france?")
+  image_bytes = lm_facade._call_gemini_for_video_generation("Scene 1 [0-3 SEC]: Extreme close-up, cinematic lighting: Three perfectly ripe, vibrant heirloom tomatoes on a rustic, dark wooden cutting board. A chef's hand, clean and professional, gently selects one tomato. The mood is sophisticated and focused. Shallow depth of field.")
+  # print(image_bytes)

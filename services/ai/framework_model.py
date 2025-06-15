@@ -17,6 +17,7 @@ class OutputModality(str, Enum):
     AUDIO = "AUDIO"
     SPEECH = "SPEECH"
     MUSIC = "MUSIC"
+    VIDEO = "VIDEO"
 
 
 class FewShot(BaseModel):

@@ -294,6 +294,28 @@ class Generator:
                     index=idx,
                     input_prompt=full_prompt
                 )])
+            elif prompt.expected_output_modality == "VIDEO":
+                try:
+                    video_data = self.lm_facade.invoke_p2v(full_prompt)
+                    result.append([self.put_media_to_s3_and_get_url(
+                        data=video_data,
+                        type=MediaType.VIDEO,
+                        session_id=session_id,
+                        step_id=step.id,
+                        index=idx,
+                        input_prompt=full_prompt
+                    )])
+                except Exception as e:
+                    print(f"Error generating video for prompt '{e}'. Falling back to image.")
+                    image_data = self.lm_facade.invoke_t2i(full_prompt)
+                    result.append([self.put_media_to_s3_and_get_url(
+                        data=image_data,
+                        type=MediaType.IMAGE,
+                        session_id=session_id,
+                        step_id=step.id,
+                        index=idx,
+                        input_prompt=full_prompt
+                    )])
             else:  # Default to TEXT
                 # Generate text options using the LM facade
                 response = self.lm_facade.invoke_t2t(full_prompt)
