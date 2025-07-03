@@ -3,17 +3,24 @@ Config-driven generator for AI prompts.
 This module provides a mechanism to generate prompts from configuration files.
 NO_AI_CODE=True
 """
-from typing import Dict, List, Optional, Any, Tuple, Union
+from typing import Dict, List, Optional, Any, Tuple, Union, Type
+from pydantic import BaseModel
 import json
 import os
 from pathlib import Path
 
-from services.ai.framework_model import Framework, FrameworkStep, Prompt, MediaUri
+from services.ai.framework_model import Framework, FrameworkStep, Prompt, MediaUri, Screenplay, MultipleTextOutputSchema, FewShot
 from services.ai.lm_facade import LMFacade
 from services.ai.agents import agents_getter
 from services.storage.object_store import S3MediaManager, MediaType
 import hashlib
 import magic
+import re
+
+SCHEMA_REGISTRY: Dict[str, Type[BaseModel]] = {
+    "Screenplay": Screenplay,
+    "MultipleTextOutputSchema": MultipleTextOutputSchema,
+}
 
 def detect_file_type_from_bytes(byte_data):
     # Create a Magic instance
@@ -157,12 +164,53 @@ class Generator:
                     if param not in valid_params:
                         raise ValueError(f"Parameter '{param}' is not valid parameter for step '{step.id}'. Valid parameters are: {valid_params}")
                     params_dict[param] = "{" + f"{param}" + "}"
-                prompt_template = self.generate_prompt(prompt, params_dict)
+                prompt_template, _ = self.generate_prompt(prompt, params_dict)
                 result[step.id] = prompt_template
             valid_params.add(step.name)
         return result
+
+    def generate_few_shot_str(self, few_shots: List[FewShot], schema: Union[str, None], output_delimiter: str = "||", options_count: int=1) -> str:
+        """
+        Generate a few-shot string from a list of FewShot examples.
+        
+        Args:
+            few_shots: List of FewShot examples
+            schema: The schema to use for the examples
+            output_delimiter: The delimiter to use for separating options
+        Returns:
+            str: The generated few-shot string
+        """
+        if not few_shots:
+            return ""
+        for fs in few_shots:
+            if options_count > 0 and len(fs.options) != options_count:
+                raise ValueError(f"FewShot options count {len(fs.options)} does not match expected count {options_count}.")
+        # If schema is provided, use it to validate the examples
+        if schema and schema in SCHEMA_REGISTRY:
+            schema_class = SCHEMA_REGISTRY[schema]
+            if schema_class == MultipleTextOutputSchema:
+                json_strs = []
+                for fs in few_shots:
+                    json_str = MultipleTextOutputSchema(outputs=fs.options).model_dump_json()
+                    json_strs.append(json_str)
+                return "Examples:\n" + "\n\n".join(json_strs) + "\n\nNow, your turn:"
+            elif schema_class == Screenplay:
+                screenplay_strs = []
+                for fs in few_shots:
+                    for option in fs.options:
+                        screenplay_instance = Screenplay.model_validate_json(option)
+                        screenplay_strs.append(screenplay_instance.model_dump_json())
+                return "Examples:\n" + "\n\n".join(screenplay_strs) + "\n\nNow, your turn:"
+        
+        # Build the few-shot string
+        few_shot_examples = []
+        for fs in few_shots:
+            options_str = output_delimiter.join(fs.options)
+            few_shot_examples.append(options_str)
+        
+        return "Examples:\n" + "\n\n".join(few_shot_examples) + "\n\nNow, your turn:"
     
-    def generate_prompt(self, prompt: Prompt, param_values: Dict[str, str]) -> str:
+    def generate_prompt(self, prompt: Prompt, param_values: Dict[str, str]) -> Tuple[str, Tuple[Union[str, None], str]]:
         """
         Generate a prompt from a configuration.
         
@@ -179,21 +227,18 @@ class Generator:
                 raise ValueError(f"Missing required parameter '{param}'")
         
         # Build the few-shot examples
-        few_shot_str = ""
-        if prompt.few_shots:
-            # For each few-shot example, join its options with the options_delimiter
-            few_shot_examples = []
-            for fs in prompt.few_shots:
-                options_str = prompt.options_delimiter.join(fs.options)
-                few_shot_examples.append(options_str)
-            # Join all few-shot examples
-            few_shot_str = "Examples:\n" + "\n\n".join(few_shot_examples) + "\n\nNow, your turn:"       
+        few_shot_str = self.generate_few_shot_str(
+            few_shots=prompt.few_shots,
+            schema=prompt.expected_output_schema,
+            output_delimiter=prompt.options_delimiter,
+            options_count=prompt.option_count
+        )     
         # Build the parameter string
         if prompt.params_format == "list":
             params_str = "\n".join([value for _, value in param_values.items()])
         elif prompt.params_format == "dict":
             params_str = "\n".join([f"{key}: {value}" for key, value in param_values.items()])
-        output_instruction = prompt.output_instruction or self.framework.default_output_instruction
+        output_instruction = prompt.output_instruction
         template = f"""{{prompt_prefix}}
 {{output_instruction}}
         
@@ -211,11 +256,11 @@ class Generator:
             output_instruction=output_instruction,
             few_shot_str=few_shot_str,
             params_str=params_str
-        )
+        ), (prompt.expected_output_schema, prompt.expected_output_modality)
 
     def put_media_to_s3_and_get_url(self, data: bytes, type: MediaType, session_id: str, step_id: str, index: int, input_prompt: str) -> MediaUri:
         content_type = detect_file_type_from_bytes(data)
-        s3_filename = S3MediaManager.create_key(session_id=session_id, framework_step_id=step_id, index=index, unique_key=generate_md5_hash(input_prompt))
+        s3_filename = S3MediaManager.create_key(session_id=session_id, framework_step_id=step_id, index=index, unique_key=generate_md5_hash(input_prompt), content_type=content_type)
         self.s3.upload_file(
             file_data=data,
             media_type=type,
@@ -248,6 +293,20 @@ class Generator:
         generate(0, [])
         return combinations
 
+    def get_durations_from_prompts(self, video_prompt: str, scene_idx: int) -> tuple[str, int]:
+        match = re.search(r"Duration Analysis.*?SCENE_DURATIONS_END", video_prompt, re.DOTALL)
+        if match:
+            duration_analysis = match.group(0)
+            video_prompt = video_prompt.replace(duration_analysis, "")
+            scene_pattern = re.compile(rf"Scene{{{scene_idx}}}: (\d+) seconds")
+            duration_match = scene_pattern.search(duration_analysis)
+            if duration_match:
+                duration = int(duration_match.group(1))
+            else:
+                duration = 0
+            return video_prompt, duration
+        return video_prompt, 0
+
     def generate_options_from_prompt(self, step: FrameworkStep, param_values: Dict[str, Union[str, List[str]]], session_id: str) -> List[List[Union[str, MediaUri]]]:
         result = []
         # print(f"Generating options from prompt: {step.prompts} {param_values}")
@@ -260,66 +319,72 @@ class Generator:
                 full_prompts.append(self.generate_prompt(prompt, params_value_flattened))
         for idx, full_prompt in enumerate(full_prompts):
             # Generate the full prompt
-            # full_prompt = self.generate_prompt(prompt, params_value_flattened)
-            if prompt.expected_output_modality == "IMAGE":
+            expected_modality = full_prompt[1][1]
+            if expected_modality == "IMAGE":
                 # For image generation
-                image_data = self.lm_facade.invoke_t2i(full_prompt)
+                image_data = self.lm_facade.invoke_t2i(full_prompt[0])
                 result.append([self.put_media_to_s3_and_get_url(
                     data=image_data,
                     type=MediaType.IMAGE,
                     session_id=session_id,
                     step_id=step.id,
                     index=idx,
-                    input_prompt=full_prompt
+                    input_prompt=full_prompt[0]
                 )])
-            elif prompt.expected_output_modality == "SPEECH":
+            elif expected_modality == "SPEECH":
                 # For audio generation
-                audio_data = self.lm_facade.invoke_t2s(full_prompt)
+                audio_data = self.lm_facade.invoke_t2s(full_prompt[0])
                 result.append([self.put_media_to_s3_and_get_url(
                     data=audio_data,
                     type=MediaType.SPEECH,
                     session_id=session_id,
                     step_id=step.id,
                     index=idx,
-                    input_prompt=full_prompt
+                    input_prompt=full_prompt[0]
                 )])
-            elif prompt.expected_output_modality == "MUSIC":
+            elif expected_modality == "MUSIC":
                 # For audio generation
-                audio_data = self.lm_facade.invoke_t2m(full_prompt)
+                audio_data = self.lm_facade.invoke_t2m(full_prompt[0])
                 result.append([self.put_media_to_s3_and_get_url(
                     data=audio_data,
                     type=MediaType.MUSIC,
                     session_id=session_id,
                     step_id=step.id,
                     index=idx,
-                    input_prompt=full_prompt
+                    input_prompt=full_prompt[0]
                 )])
-            elif prompt.expected_output_modality == "VIDEO":
+            elif expected_modality == "VIDEO":
+                full_prompt_without_durations, scene_duration = self.get_durations_from_prompts(full_prompt[0], idx)
                 try:
-                    video_data = self.lm_facade.invoke_p2v(full_prompt)
+                    video_data = self.lm_facade.invoke_p2v(full_prompt_without_durations, scene_duration_sec=scene_duration)
                     result.append([self.put_media_to_s3_and_get_url(
                         data=video_data,
                         type=MediaType.VIDEO,
                         session_id=session_id,
                         step_id=step.id,
                         index=idx,
-                        input_prompt=full_prompt
+                        input_prompt=full_prompt[0]
                     )])
                 except Exception as e:
                     print(f"Error generating video for prompt '{e}'. Falling back to image.")
-                    image_data = self.lm_facade.invoke_t2i(full_prompt)
+                    image_data = self.lm_facade.invoke_t2i(full_prompt_without_durations)
                     result.append([self.put_media_to_s3_and_get_url(
                         data=image_data,
                         type=MediaType.IMAGE,
                         session_id=session_id,
                         step_id=step.id,
                         index=idx,
-                        input_prompt=full_prompt
+                        input_prompt=full_prompt[0]
                     )])
             else:  # Default to TEXT
                 # Generate text options using the LM facade
-                response = self.lm_facade.invoke_t2t(full_prompt)
-                result.append(self._parse_options(response, prompt.options_delimiter))
+                expected_schema = full_prompt[1][0]
+                if expected_schema and expected_schema in SCHEMA_REGISTRY:
+                    schema = SCHEMA_REGISTRY[expected_schema]
+                else:
+                    schema = None
+                response = self.lm_facade.invoke_t2t(full_prompt[0], schema)
+                result.append(self._parse_options(response, prompt.options_delimiter, schema=expected_schema))
         return result
 
     def generate_options_from_agent(self, step: FrameworkStep, param_values: Dict[str, Union[str, List[str]]], session_id: str) -> List[List[Union[str, MediaUri]]]:
@@ -388,7 +453,7 @@ class Generator:
                 return step
         return None
     
-    def _parse_options(self, response: str, delimiter: str) -> List[str]:
+    def _parse_options(self, response: str, delimiter: str, schema: Union[str, None] = None) -> List[str]:
         """
         Parse options from a response string.
         
@@ -399,4 +464,15 @@ class Generator:
         Returns:
             List[str]: The parsed options
         """
+        if schema:
+            if schema in SCHEMA_REGISTRY:
+                schema_class = SCHEMA_REGISTRY[schema]
+                if schema_class == MultipleTextOutputSchema:
+                    output: MultipleTextOutputSchema = MultipleTextOutputSchema.model_validate_json(response)
+                    return output.outputs
+                if schema_class == Screenplay:
+                    output: Screenplay = Screenplay.model_validate_json(response)
+                    return [output.model_dump_json()]
+                else:
+                    raise ValueError(f"Unsupported schema '{schema}'")
         return [opt.strip() for opt in response.split(delimiter) if opt.strip()]

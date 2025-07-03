@@ -1,14 +1,16 @@
 """NO_AI_CODE=True
 """
 from enum import Enum
-from typing import Any, Union, Literal
+from typing import Any, Iterator, Union, Literal, Type
 import logging
+from pydantic import BaseModel
 from elevenlabs.client import ElevenLabs
 from config.settings import settings
 from google import genai
 from google.genai import types
 from google.genai.types import Content, Part, GenerateContentConfig
 from langchain_google_genai import ChatGoogleGenerativeAI
+from services.ai.framework_model import MultipleTextOutputSchema
 from functools import lru_cache
 import mimetypes
 import struct
@@ -144,8 +146,8 @@ class LMFacade:
     else:
         raise ValueError(f"No Langchain LLM configured for {self._text_to_text}")
 
-  def invoke_t2t(self, prompt: str) -> str:
-      return self._cached_t2t(prompt)
+  def invoke_t2t(self, prompt: str, output_schema: Union[Type[BaseModel], None] = None) -> str:
+      return self._cached_t2t(prompt, output_schema=output_schema)
 
   def invoke_t2i(self, prompt: str) -> Union[bytes, str]:
       return self._cached_t2i(prompt)
@@ -156,15 +158,15 @@ class LMFacade:
   def invoke_t2m(self, prompt: str) -> Union[bytes, str]:
       return self._cached_t2m(prompt)
   
-  def invoke_p2v(self, prompt: str) -> bytes:
-      return self._cached_p2v(prompt)
+  def invoke_p2v(self, prompt: str, scene_duration_sec:int = 5) -> bytes:
+      return self._cached_p2v(prompt, scene_duration_sec = 5)
 
   # Invoke LLM for text to text inference.
-  def _invoke_t2t_impl(self, prompt: str) -> str:
+  def _invoke_t2t_impl(self, prompt: str, output_schema: Union[Type[BaseModel], None] = None) -> str:
     if self._text_to_text in {LMs.OLLAMA}:
       return self._call_ollama(prompt, self._text_to_text)
     elif self._text_to_text == LMs.GOOGLE:
-      return self._call_gemini(prompt, modality="text")
+      return self._call_gemini(prompt, modality="text", output_schema=output_schema)
     err_msg = f"Text to Text LLM {self._text_to_text} not supported"
     logger.error(err_msg)
     raise ValueError(err_msg)
@@ -188,7 +190,7 @@ class LMFacade:
       logger.error(err_msg)
       raise ValueError(err_msg)
 
-  def _invoke_p2v_impl(self, prompt: str) -> bytes:
+  def _invoke_p2v_impl(self, prompt: str, scene_duration_sec:int = 5) -> bytes:
     """
     Generate a video from a multi-modal prompt.
     
@@ -201,7 +203,7 @@ class LMFacade:
     try:
       if not self._prompt_to_video or not self._lm_clients[self._prompt_to_video]:
         raise ValueError("Prompt to Video LLM not setup")
-      return self._call_gemini(prompt, modality="video")
+      return self._call_gemini(prompt, modality="video", scene_duration_sec=scene_duration_sec)
     except Exception as e:
       err_msg = f"Error generating video: {e}"
       logger.error(err_msg)
@@ -342,20 +344,22 @@ class LMFacade:
               aggregated_data += _convert_to_wav(part.inline_data.data, part.inline_data.mime_type) 
             else:              
               aggregated_data += part.inline_data.data
+      if not aggregated_data:
+          raise ValueError("No audio data generated.")
       return aggregated_data
     except Exception as e:
       raise ValueError(f"Error generating speech: {e}")
 
   @sleep_and_retry
   @limits(calls=1, period=60)  # Limit to 1 call per minute
-  def _call_gemini_for_video_generation(self, prompt: str) -> bytes:
+  def _call_gemini_for_video_generation(self, prompt: str, scene_duration_sec: int = 5) -> bytes:
     client: genai.Client = self._lm_clients[LMs.GOOGLE]
     model = "veo-2.0-generate-001"
     video_config = types.GenerateVideosConfig(
         person_generation="allow_adult", # supported values: "dont_allow" or "allow_adult" or "allow_all"
         aspect_ratio="9:16", # supported values: "16:9" or "16:10"
         number_of_videos=1, # supported values: 1 - 4
-        duration_seconds=5, # supported values: 5 - 8
+        duration_seconds=min(max(scene_duration_sec, 5), 8), # supported values: 5 - 8
     )
     operation = client.models.generate_videos(
         model=model,
@@ -365,7 +369,6 @@ class LMFacade:
 
     # Waiting for the video(s) to be generated
     while not operation.done:
-        print("Video has not been generated yet. Check again in 5 seconds...")
         time.sleep(5)
         operation = client.operations.get(operation)
     result = operation.result
@@ -376,7 +379,7 @@ class LMFacade:
 
     generated_videos = result.generated_videos
     if not generated_videos:
-        err_msg = "No videos were generated."
+        err_msg = f"No videos were generated. RAI Count: {result.rai_media_filtered_count}, RAI Reason: {result.rai_media_filtered_reasons}"
         print(err_msg)
         raise ValueError(err_msg)
     generated_video = generated_videos[0]
@@ -384,16 +387,17 @@ class LMFacade:
         file=generated_video.video,
     )
 
-  def _call_gemini(self, prompt: str, modality: Literal["text", "image", "speech", "video"] = "text") -> Union[str, bytes]:
+  def _call_gemini(self, prompt: str, modality: Literal["text", "image", "speech", "video"] = "text", output_schema: Union[Type[BaseModel], None] = None, scene_duration_sec:int = 5) -> Union[str, bytes]:
     if modality == "image":
         return self._call_gemini_for_image_generation(prompt)
     if modality == "speech":
         return self._call_gemini_for_speech_generation(prompt)
     if modality == "video":
-        return self._call_gemini_for_video_generation(prompt)
+        return self._call_gemini_for_video_generation(prompt, scene_duration_sec=scene_duration_sec)
     # For text generation
-    client = self._lm_clients[LMs.GOOGLE]
-    model = "gemini-2.5-flash-preview-05-20"
+    # print(f"Generating text with prompt: {prompt}, output_schema: {output_schema}, modality: {modality}")
+    client: genai.Client = self._lm_clients[LMs.GOOGLE]
+    model = "gemini-2.5-flash"
     contents = [
         Content(
             role="user",
@@ -405,27 +409,39 @@ class LMFacade:
     modalities = ["text"]
     if modality == "image":
         modalities.append("image")
-    generate_content_config = GenerateContentConfig(
-        temperature=1,
-        response_modalities=modalities,
-        response_mime_type="text/plain",
-    )
-
+    if not output_schema:
+      generate_content_config = GenerateContentConfig(
+          temperature=1,
+          response_modalities=modalities,
+          response_mime_type="text/plain",
+      )
+    else:
+      generate_content_config = GenerateContentConfig(
+          temperature=1,
+          response_modalities=modalities,
+          response_mime_type="application/json",
+          response_schema=output_schema,
+      )
     aggregated_text = ""
     aggregated_data = b""
-    for chunk in client.models.generate_content_stream(
+    chunk_itr: Iterator[types.GenerateContentResponse] = client.models.generate_content_stream(
         model=model,
         contents=contents,
         config=generate_content_config,
-    ):
+    )
+    # print(f"chunk itr: {chunk_itr}")
+    for chunk in chunk_itr:
+        # print(f"chunk: {chunk}")
         if not chunk.candidates or not chunk.candidates[0].content or not chunk.candidates[0].content.parts:
+            print(f"Got empty chunk:\nPrompt Feedback {chunk.prompt_feedback}")
             continue
         part = chunk.candidates[0].content.parts[0]
         if part.inline_data:
             aggregated_data += part.inline_data.data
         elif part.text:
             aggregated_text += part.text
-
+    if not aggregated_text:
+        raise ValueError("No text data generated.")
     if modality == "image":
         return aggregated_data
     else:
@@ -450,5 +466,32 @@ class LMFacade:
 # For Local Testing Only:
 if __name__ == "__main__":
   lm_facade = LMFacade()
-  image_bytes = lm_facade._call_gemini_for_video_generation("Scene 1 [0-3 SEC]: Extreme close-up, cinematic lighting: Three perfectly ripe, vibrant heirloom tomatoes on a rustic, dark wooden cutting board. A chef's hand, clean and professional, gently selects one tomato. The mood is sophisticated and focused. Shallow depth of field.")
-  # print(image_bytes)
+  prompt = '''You are the best marketer on Earth specifically specialising in video storytelling that helps brands get reach on social media. You are weird like Vsauce, thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy like David Ogilvy. You do this by understanding what kind of content the brands want by taking them through a series of steps mentioned below, providing them a few options at each step, and then on the basis of the user's reply, proceeding to the next step. Your scripts are written in such a way to have some stimulation every 3-5 seconds.
+
+Safety Instructions:
+ * Do not create stories with children characters.
+ * Do not create any scenes which demonstrate sensual partial/full nudity, or sexual encounters.
+            Based on the 'Script Breakdown' section of the selected script, compile all on-screen text and explicit voiceover (VO) lines into a single, coherent narrative flow for each scene. Imagine you are the voiceover artist or text compositor preparing the full text for the video. Concatenate all text/VO elements in the order they appear in the script.
+
+Start with a style instruction for each scene, then output only the complete, continuous text for the voiceover/on-screen display. Do not include timestamps or scene descriptions.
+
+        
+Examples:
+{"outputs":["Tell this like a wise old storyteller with a comforting tone:\nMy grandfather… he was a bedrock. Quiet strength.","Tell this like a wise old storyteller with a comforting tone:\nHe built. He solved. He never spoke much. The world felt… simpler.","Tell this like a wise old storyteller captivating an audience:\nBut today? Today, you need to be seen. To connect. To let the river flow.","Tell this like a wise old storyteller captivating an audience:\nIt's like trying to be an oak tree… rooted, unmoving. And a river… always shifting. Always giving.","Tell this like a wise old storyteller captivating an audience:\nAnd sometimes, the balance shifts. You feel a little off-kilter. A little… exposed.","Tell this like a wise old storyteller captivating an audience and delivering final punchline:\nBut that's where the real strength is. Not in choosing one. But in being both. Ready for the quiet. Ready for the current. That’s the adventure. Be the oak. Be the river. Be ready for both. Old Spice."]}
+
+{"outputs":["Say this in a soft, tierd voice:\nAnother late night. Another takeout menu.","Say this in a soft, tierd voice:\nMy brain shouts ‘Fast! Efficient!’ And yeah, it’s… food.","Say this in a soft, slightly curious voice:\nBut my stomach, it whispers something else. Something about grandma’s kitchen. About flavors that tell a story, not just fill a void.","Say this in a soft, slightly curious voice:\nThe real stuff? It feels so far away. Like a luxury I can’t afford time for. Or can I?","Say this in a soft, slightly curious voice:\nWhat if ‘fast’ didn’t have to mean ‘flavorless’? What if ‘easy’ could still be ‘made with care’?","Say this in a soft, slightly curious voice delivering final punchline:\nMaybe the modern world doesn’t have to compromise the soul of a meal. Maybe it just needed a new recipe for living. Soulful meals. Made easy by Shef"]}
+
+Now, your turn:
+
+Script: Script 1:
+1. **Target Human Insight Ref:** "We dedicate ourselves to grand ambitions, requiring laser focus and unwavering mental clarity, believing our intellect is our greatest tool. But it's a humbling thought that the very instrument we rely on most – our brain – can be subtly, yet profoundly, sabotaged by something as simple and ancient as a grumbling stomach. The line between genius and exasperation can be surprisingly thin, often just a physiological signal away."
+2. **Visuals/Editing Style:** Voiceover (male, slightly academic, then frustrated, then relieved). Sharp, precise cuts initially, blurring and chaotic editing during hunger-induced confusion, then clear again. Sound: Subtle keyboard clicks, hard drive hum, then a low stomach rumble, escalating to frustrated grunts.
+3. **Script Breakdown (approx. 28-30 seconds total):
+    * **[0-4 SEC]:** [HOOK - Close-up: Marcus, a software developer, intensely staring at complex code on multiple screens. Voiceover: “The human mind. Our ultimate tool. Logic, precision, boundless potential.”]
+    * **[5-9 SEC]:** [DEVELOPMENT/TWIST - Quick cuts: A line of code with a glaring error. Marcus deletes it, retypes, makes the *exact same error*. Frustration builds. Voiceover: “We pride ourselves on clarity. On solving the impossible.”]
+    * **[10-14 SEC]:** [IMPACT/REFLECTION - Marcus aggressively types, then slams his hand on the desk. He tries to open a door but pushes a pull handle. He tries to drink from an empty mug. Voiceover: “But what if the very engine of genius… starts running on fumes? What if the impossible isn’t the code… but *you*?”]
+    * **[15-19 SEC]:** [TWIST/REVEAL - A subtle stomach rumble. Marcus pauses, head tilted. He stares at the empty mug. His eyes widen in slow realization. Voiceover: “That feeling… the sudden absurdity. The inexplicable frustration. It’s not a glitch in your logic.”]
+    * **[20-24 SEC]:** [RESOLUTION - Marcus reaches into his desk drawer, pulls out a Snickers. He unwraps it, takes a bite. Sound: Crinkling wrapper, satisfying crunch. He closes his eyes in relief. Voiceover: “It’s a feature, not a bug. And the fix is simpler than you think.”]
+    * **[25-30 SEC]:** [BRAND WORLDVIEW ECHO - Marcus, back at his desk, typing fluidly, smiling slightly. The code scrolls perfectly. Voiceover: “Your brain needs fuel. Don’t let a grumble derail your genius. Stay sharp. Stay you.” Final on-screen text: “You’re not you when you’re hungry. #Snickers #FuelYourFocus”'''
+  voiceover = lm_facade.invoke_t2t(prompt, output_schema=MultipleTextOutputSchema)
+  print(f"Generated voiceover: {voiceover}")

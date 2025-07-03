@@ -17,15 +17,32 @@ import services.ai.state as st
 from services.ai.state import VideoCreationState
 from services.ai.lm_facade import LMFacade
 from services.ai.tasks.generator import Generator
+from services.storage.database import DataAccess
 
 logger = logging.getLogger(__name__)
+
+def track_latency(func):
+    async def wrapper(self, state: VideoCreationState, *args, **kwargs) -> dict:
+        import time
+        start_time = time.time()
+        step_id = state.current_step_id  # Use the current step from state
+        
+        try:
+            print(f"Starting step '{step_id}' at {datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}.")
+            result = await func(self, state, *args, **kwargs) if asyncio.iscoroutinefunction(func) else func(self, state, *args, **kwargs)
+            return result
+        finally:
+            end_time = time.time()
+            latency_ms = (end_time - start_time) * 1_000
+            print(f"Step '{step_id}' completed in {latency_ms: .2f} ms.")    
+    return wrapper
 
 class AIOrchestrator:
   """
   AI Orchestrator for brand awareness video creation using a config-driven framework.
   """
 
-  def __init__(self, framework_id: str = "brand_awareness_video", lm_facade: Union[LMFacade, None] = None, is_local_test: bool = False):
+  def __init__(self, framework_id: str = "brand_awareness_video", lm_facade: Union[LMFacade, None] = None, is_local_test: bool = False, db: DataAccess = None):
     """
     Initialize the AI orchestrator.
     
@@ -37,6 +54,7 @@ class AIOrchestrator:
     self.generator = Generator(framework_id, self.lm_facade)
     self.graph = self._orchestrate_graph()
     self.is_local_test = is_local_test
+    self._db = db
 
   async def run(self, session: Session, current_step_id: str = None) -> Dict[str, Any]:
     """
@@ -117,6 +135,7 @@ class AIOrchestrator:
         raise ValueError(f"Error building graph from framework: {e}")
     return graph
 
+  @track_latency
   def _initial_input(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
     """
     Handle initial input step.
@@ -149,7 +168,23 @@ class AIOrchestrator:
     # print(f"params: {params}")
     return state.get_param_values(params=params, framework_steps=self.generator.framework.steps)
 
-  def _generate_options(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
+  async def _persist_state_in_cache(self, session_id: str, result: FrameworkResult, current_step_id: str) -> None:
+    """
+    Persist the current state in cache.
+    
+    Args:
+        state: The current state
+    """
+    if not self._db:
+       return
+    await self._db.update_framework_result_in_cache(
+       session_id=session_id,
+       result=result,
+       current_step_id=current_step_id,
+    )
+
+  @track_latency
+  async def _generate_options(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
     """
     Generate options for the current step.
     
@@ -162,6 +197,7 @@ class AIOrchestrator:
     step_result = state.get_step_result(step_id=state.current_step_id, framework_result=state.framework_result)
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
     if step_result:
+        print(f"Step result already exists for step '{state.current_step_id}'. Moving to next step: {next_step}")
         return {"current_step_id": next_step}
     try:
         # Get the current step configuration
@@ -175,12 +211,14 @@ class AIOrchestrator:
             if len(result) == 1:
                 options.selected_option = 0  # Select the first option by default, if only one is available.
             framework_result = state.set_step_result(state.current_step_id, result_options=options, intermediate_framework_result=framework_result, display_to_user=step.result_display_allowed)
+        await self._persist_state_in_cache(session_id=state.session_id, result=framework_result, current_step_id=state.current_step_id)
         return {"current_step_id": next_step, "framework_result": framework_result}
     except Exception as e:
         state.error = str(e)
         logger.error(f"Error generating options: {e}")
         return {"current_step_id": state.current_step_id}
-
+  
+  @track_latency
   def _select_option(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
     """
     Handle user selection of an option.
