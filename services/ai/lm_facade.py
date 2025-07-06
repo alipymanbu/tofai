@@ -323,7 +323,7 @@ class LMFacade:
           speech_config=types.SpeechConfig(
               voice_config=types.VoiceConfig(
                   prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                      voice_name="Zephyr"
+                      voice_name="Orus"
                   )
               )
           ),
@@ -466,32 +466,7 @@ class LMFacade:
 # For Local Testing Only:
 if __name__ == "__main__":
   lm_facade = LMFacade()
-  prompt = '''You are the best marketer on Earth specifically specialising in video storytelling that helps brands get reach on social media. You are weird like Vsauce, thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy like David Ogilvy. You do this by understanding what kind of content the brands want by taking them through a series of steps mentioned below, providing them a few options at each step, and then on the basis of the user's reply, proceeding to the next step. Your scripts are written in such a way to have some stimulation every 3-5 seconds.
-
-Safety Instructions:
- * Do not create stories with children characters.
- * Do not create any scenes which demonstrate sensual partial/full nudity, or sexual encounters.
-            Based on the 'Script Breakdown' section of the selected script, compile all on-screen text and explicit voiceover (VO) lines into a single, coherent narrative flow for each scene. Imagine you are the voiceover artist or text compositor preparing the full text for the video. Concatenate all text/VO elements in the order they appear in the script.
-
-Start with a style instruction for each scene, then output only the complete, continuous text for the voiceover/on-screen display. Do not include timestamps or scene descriptions.
-
-        
-Examples:
-{"outputs":["Tell this like a wise old storyteller with a comforting tone:\nMy grandfather… he was a bedrock. Quiet strength.","Tell this like a wise old storyteller with a comforting tone:\nHe built. He solved. He never spoke much. The world felt… simpler.","Tell this like a wise old storyteller captivating an audience:\nBut today? Today, you need to be seen. To connect. To let the river flow.","Tell this like a wise old storyteller captivating an audience:\nIt's like trying to be an oak tree… rooted, unmoving. And a river… always shifting. Always giving.","Tell this like a wise old storyteller captivating an audience:\nAnd sometimes, the balance shifts. You feel a little off-kilter. A little… exposed.","Tell this like a wise old storyteller captivating an audience and delivering final punchline:\nBut that's where the real strength is. Not in choosing one. But in being both. Ready for the quiet. Ready for the current. That’s the adventure. Be the oak. Be the river. Be ready for both. Old Spice."]}
-
-{"outputs":["Say this in a soft, tierd voice:\nAnother late night. Another takeout menu.","Say this in a soft, tierd voice:\nMy brain shouts ‘Fast! Efficient!’ And yeah, it’s… food.","Say this in a soft, slightly curious voice:\nBut my stomach, it whispers something else. Something about grandma’s kitchen. About flavors that tell a story, not just fill a void.","Say this in a soft, slightly curious voice:\nThe real stuff? It feels so far away. Like a luxury I can’t afford time for. Or can I?","Say this in a soft, slightly curious voice:\nWhat if ‘fast’ didn’t have to mean ‘flavorless’? What if ‘easy’ could still be ‘made with care’?","Say this in a soft, slightly curious voice delivering final punchline:\nMaybe the modern world doesn’t have to compromise the soul of a meal. Maybe it just needed a new recipe for living. Soulful meals. Made easy by Shef"]}
-
-Now, your turn:
-
-Script: Script 1:
-1. **Target Human Insight Ref:** "We dedicate ourselves to grand ambitions, requiring laser focus and unwavering mental clarity, believing our intellect is our greatest tool. But it's a humbling thought that the very instrument we rely on most – our brain – can be subtly, yet profoundly, sabotaged by something as simple and ancient as a grumbling stomach. The line between genius and exasperation can be surprisingly thin, often just a physiological signal away."
-2. **Visuals/Editing Style:** Voiceover (male, slightly academic, then frustrated, then relieved). Sharp, precise cuts initially, blurring and chaotic editing during hunger-induced confusion, then clear again. Sound: Subtle keyboard clicks, hard drive hum, then a low stomach rumble, escalating to frustrated grunts.
-3. **Script Breakdown (approx. 28-30 seconds total):
-    * **[0-4 SEC]:** [HOOK - Close-up: Marcus, a software developer, intensely staring at complex code on multiple screens. Voiceover: “The human mind. Our ultimate tool. Logic, precision, boundless potential.”]
-    * **[5-9 SEC]:** [DEVELOPMENT/TWIST - Quick cuts: A line of code with a glaring error. Marcus deletes it, retypes, makes the *exact same error*. Frustration builds. Voiceover: “We pride ourselves on clarity. On solving the impossible.”]
-    * **[10-14 SEC]:** [IMPACT/REFLECTION - Marcus aggressively types, then slams his hand on the desk. He tries to open a door but pushes a pull handle. He tries to drink from an empty mug. Voiceover: “But what if the very engine of genius… starts running on fumes? What if the impossible isn’t the code… but *you*?”]
-    * **[15-19 SEC]:** [TWIST/REVEAL - A subtle stomach rumble. Marcus pauses, head tilted. He stares at the empty mug. His eyes widen in slow realization. Voiceover: “That feeling… the sudden absurdity. The inexplicable frustration. It’s not a glitch in your logic.”]
-    * **[20-24 SEC]:** [RESOLUTION - Marcus reaches into his desk drawer, pulls out a Snickers. He unwraps it, takes a bite. Sound: Crinkling wrapper, satisfying crunch. He closes his eyes in relief. Voiceover: “It’s a feature, not a bug. And the fix is simpler than you think.”]
-    * **[25-30 SEC]:** [BRAND WORLDVIEW ECHO - Marcus, back at his desk, typing fluidly, smiling slightly. The code scrolls perfectly. Voiceover: “Your brain needs fuel. Don’t let a grumble derail your genius. Stay sharp. Stay you.” Final on-screen text: “You’re not you when you’re hungry. #Snickers #FuelYourFocus”'''
-  voiceover = lm_facade.invoke_t2t(prompt, output_schema=MultipleTextOutputSchema)
-  print(f"Generated voiceover: {voiceover}")
+  prompt = '''Read softly in a natural indian accent:
+  Endless choices. Good, right? Until you're stuck in the scroll vortex.'''
+  voiceover = lm_facade.invoke_t2s(prompt)
+  print(voiceover)

@@ -137,16 +137,20 @@ class VideoGenerator:
           
           if media_type and media_type.startswith("image"):
             # For images, create a clip with speech duration
-            video_clip = ImageClip(media_path).set_duration(speech_duration).set_fps(24)
+            video_clip = ImageClip(media_path).with_duration(speech_duration).with_fps(24)
           elif media_type and media_type.startswith("video"):
             video_clip = VideoFileClip(media_path)
             video_duration = video_clip.duration
             
             if video_duration < speech_duration:
-              # Video is shorter - slow it down to match speech duration
-              speed_factor = video_duration / speech_duration
-              video_clip = video_clip.with_speed_scaled(speed_factor)
-            elif video_duration > speech_duration:
+              # Video is shorter - first try speeding up the speech by 1.2x.
+              # If that still doesn't match the video then slow the video down to match speech duration
+              speech_audio = speech_audio.with_speed_scaled(1.2)
+              speech_duration = speech_audio.duration
+              if video_duration < speech_duration:
+                speed_factor = video_duration / speech_duration
+                video_clip = video_clip.with_speed_scaled(speed_factor)
+            if video_duration > speech_duration:  # this is not elif because it's possible that the video is longer than the speech after speech speed adjustment
               # Video is longer - add silence after speech to match video duration
               silence_duration = video_duration - speech_duration
               
