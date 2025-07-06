@@ -1,0 +1,237 @@
+{
+  "id": "story_telling",
+  "name": "Story Telling",
+  "description": "A framework for interesting story telling",
+  "initial_step": "initial_input",
+  "final_step": "final_video",
+  "prompt_base": "You are a story teller explaining some true facts or concepts using video storytelling.\n\n",
+  "steps": [
+    {
+      "id": "initial_input",
+      "name": "Link",
+      "description": "Collect initial inputs like the brand name and website link",
+      "requires_user_input": true,
+      "prompts": [],
+      "next_step": "video_prompts",
+      "version": 0
+    },
+    {
+      "id": "video_prompts",
+      "name": "Video Prompts",
+      "description": "Generate videos' prompts for each scene in the script",
+      "requires_user_input": false,
+      "expected_selection_count": "ALL",
+      "result_display_allowed": false,
+      "prompts": [
+        {
+          "id": "video_prompt_prompt",
+          "prefix": "Based on the given script, generate a detailed visual description (veo prompt) for each scene. Make them animated. Imagine you are the director meticulously visualizing every shot for a video generation model. Each prompt should be rich in detail, describing subjects, actions, setting, mood, lighting, and camera angle.\n\nScene 1 – Fairground Wonder: “Outdoor German fairground 1904, golden-hour light, wide 24 mm tracking shot through striped tents toward a dapple-grey stallion with a white blaze and black mane standing by a chalkboard. Owner in bowler hat writes ‘7 + 5 =?’. Close-up of horse’s hoof tapping packed earth twelve times; onlookers gasp, vintage film-grain, warm Kodachrome color grade, faint calliope music in background.”\nWhat this establishes – Introduces Hans’s ‘talent’, fixes his coloring, era, and warm palette for belief/optimism.\n\nScene 2 – The Investigation: “Interior lamp-lit test pen, teal-and-sepia palette. Psychologist Oskar Pfungst (neat moustache, waistcoat) sets canvas blinders around the same dapple-grey stallion with white blaze and black mane. Overhead top-down shot as Pfungst asks ‘3 × 4 =?’; owner hidden behind curtain. Extreme close-up on Hans’s eye—uncertain silence, no taps. Heartbeat SFX, then soft exhale when truth dawns.”\nWhat this does – Shows the scientific control that breaks the illusion; cool palette marks scrutiny.\n\nScene 3 – Placebo Parallel: “1950s hospital ward, monochrome look. Nurses hand identical white pills to patients. Split-screen overlay: on left a patient smiles after sugar pill; on right line graph rises. Subtle hoof-tapping sound layered under scene, connecting to horse motif.”\nWhat this does – Bridges Hans’s cue-reading to the expectancy (placebo) effect in medicine.\n\nScene 4 – Modern Echoes Montage: “Rapid match-cuts: bright contemporary classroom where teacher believes certain kids are gifted—student’s posture lifts, scorecard flips to ‘A’. Corporate glass office—applicant power-poses, interviewer mirrors smile. Busy city street—violinist gains crowd after first coin drop. All shots share soft golden back-light and the faint rhythmic hoof-tap heard earlier.”\nWhat this does – Shows placebo-like belief loops in education, employment, society—all tied by sound motif.\n\nScene 5 – Quiet Epilogue: “Dusk in rustic stable, tungsten lantern glow. Same dapple-grey stallion with white blaze and black mane rests, munching hay. Slow crane shot rises; carousel lights from Scene 1 faintly echo in bokeh. Voice-over finale: ‘We never had a calculating horse—only eyes that answered our own expectations.’ Gentle piano resolves, fade to white title card: ‘Signals in the Silence’.”\nWhat this does – Closes the loop, re-using consistent horse details and blending warm/cool palettes into balanced twilight.",
+          "few_shots": [
+            {
+              "options": [
+                "Scene 1 [0-3 SEC]: Animated, Extreme close-up, cinematic lighting: Three perfectly ripe, vibrant heirloom tomatoes on a rustic, dark wooden cutting board. A chef's hand, clean and professional, gently selects one tomato. The mood is sophisticated and focused. Shallow depth of field.",
+                "Scene 2 [4-8 SEC]: Animated, Dynamic quick cuts, bright natural light: Chef Anya's hands skillfully slicing a tomato with a sharp knife; a drizzle of golden olive oil from a small spout; a fresh, green basil leaf being placed precisely. Actions are simple yet elegant. Focus on the fresh ingredients.",
+                "Scene 3 [9-14 SEC]: Animated, Food photography style, soft lighting: A beautifully plated single slice of tomato, adorned with oil and basil, looking like a gourmet appetizer on a minimalist white plate. Close up on Chef Anya's face, a subtle smile of satisfaction as she savors the bite. Warm, inviting mood.",
+                "Scene 4 [15-20 SEC]: Animated, Medium shot, warm and friendly lighting: Chef Anya, in her well-lit kitchen, smiles warmly and directly at the camera, exuding confidence and passion. The background is slightly blurred, keeping focus on her approachable expertise."
+              ]
+            },
+            {
+              "options": [
+                "Scene 1 [0-3 SEC]: Animated, Extreme close-up, dramatic low-angle shot: Small, colorful fabric scraps scattered on a light wooden table. A curious toddler's hand, soft and small, reaches into the frame towards the scraps. Warm, inviting, slightly whimsical lighting.",
+                "Scene 2 [4-8 SEC]: Animated, Montage sequence, eye-level shots: Priya's hands lovingly sewing scraps with a needle and thread; close-up of button eyes being attached to a fabric shape; the child watching with wide, excited eyes, a hint of a smile. Bright, cheerful lighting.",
+                "Scene 3 [9-14 SEC]: Animated, Heartwarming medium shot: The toddler (Meera) joyfully and tightly hugging the completed, unique fabric doll. The doll is colorful and clearly handmade with love. Soft, golden hour lighting, creating a tender mood.",
+                "Scene 4 [15-20 SEC]: Animated, Medium shot, natural outdoor lighting: Priya and Meera are sitting on a sunlit park bench, playing together with the handmade doll, both laughing. The scene is full of genuine joy and connection."
+              ]
+            }
+          ],
+          "parameters": [],
+          "option_count": -1,
+          "expected_output_modality": "TEXT",
+          "output_instruction": "",
+          "expected_output_schema": "MultipleTextOutputSchema"
+        }
+      ],
+      "next_step": "voiceover_prompt",
+      "version": 1
+    },
+    {
+      "id": "voiceover_prompt",
+      "name": "Voiceover Prompt",
+      "description": "Generate prompt to synthesize the speech of the video.",
+      "requires_user_input": false,
+      "expected_selection_count": "ALL",
+      "result_display_allowed": false,
+      "prompts": [
+        {
+          "id": "voiceover_text_prompt",
+          "prefix": "Based on given script, compile all on-screen text and explicit voiceover (VO) lines into a single, coherent narrative flow for each scene. Imagine you are the voiceover artist or text compositor preparing the full text for the video. Concatenate all text/VO elements in the order they appear in the script, one line for each scene.\n\nStart with a style instruction for each scene, then output only the complete, continuous text for the voiceover/on-screen display. Do not include timestamps or scene descriptions.\n\nScript: Scene 1 – Fairground Wonder: “Outdoor German fairground 1904, golden-hour light, wide 24 mm tracking shot through striped tents toward a dapple-grey stallion with a white blaze and black mane standing by a chalkboard. Owner in bowler hat writes ‘7 + 5 =?’. Close-up of horse’s hoof tapping packed earth twelve times; onlookers gasp, vintage film-grain, warm Kodachrome color grade, faint calliope music in background.”\nWhat this establishes – Introduces Hans’s ‘talent’, fixes his coloring, era, and warm palette for belief/optimism.\n\nScene 2 – The Investigation: “Interior lamp-lit test pen, teal-and-sepia palette. Psychologist Oskar Pfungst (neat moustache, waistcoat) sets canvas blinders around the same dapple-grey stallion with white blaze and black mane. Overhead top-down shot as Pfungst asks ‘3 × 4 =?’; owner hidden behind curtain. Extreme close-up on Hans’s eye—uncertain silence, no taps. Heartbeat SFX, then soft exhale when truth dawns.”\nWhat this does – Shows the scientific control that breaks the illusion; cool palette marks scrutiny.\n\nScene 3 – Placebo Parallel: “1950s hospital ward, monochrome look. Nurses hand identical white pills to patients. Split-screen overlay: on left a patient smiles after sugar pill; on right line graph rises. Subtle hoof-tapping sound layered under scene, connecting to horse motif.”\nWhat this does – Bridges Hans’s cue-reading to the expectancy (placebo) effect in medicine.\n\nScene 4 – Modern Echoes Montage: “Rapid match-cuts: bright contemporary classroom where teacher believes certain kids are gifted—student’s posture lifts, scorecard flips to ‘A’. Corporate glass office—applicant power-poses, interviewer mirrors smile. Busy city street—violinist gains crowd after first coin drop. All shots share soft golden back-light and the faint rhythmic hoof-tap heard earlier.”\nWhat this does – Shows placebo-like belief loops in education, employment, society—all tied by sound motif.\n\nScene 5 – Quiet Epilogue: “Dusk in rustic stable, tungsten lantern glow. Same dapple-grey stallion with white blaze and black mane rests, munching hay. Slow crane shot rises; carousel lights from Scene 1 faintly echo in bokeh. Voice-over finale: ‘We never had a calculating horse—only eyes that answered our own expectations.’ Gentle piano resolves, fade to white title card: ‘Signals in the Silence’.”\nWhat this does – Closes the loop, re-using consistent horse details and blending warm/cool palettes into balanced twilight.",
+          "few_shots": [
+            {
+              "options": [
+                "Tell this like a wise old storyteller with a comforting tone:\nMy grandfather… he was a bedrock. Quiet strength.",
+                "Tell this like a wise old storyteller with a comforting tone:\nHe built. He solved. He never spoke much. The world felt… simpler.",
+                "Tell this like a wise old storyteller captivating an audience:\nBut today? Today, you need to be seen. To connect. To let the river flow.",
+                "Tell this like a wise old storyteller captivating an audience:\nIt's like trying to be an oak tree… rooted, unmoving. And a river… always shifting. Always giving.",
+                "Tell this like a wise old storyteller captivating an audience:\nAnd sometimes, the balance shifts. You feel a little off-kilter. A little… exposed.",
+                "Tell this like a wise old storyteller captivating an audience and delivering final punchline:\nBut that's where the real strength is. Not in choosing one. But in being both. Ready for the quiet. Ready for the current. That’s the adventure. Be the oak. Be the river. Be ready for both. Old Spice."
+              ]
+            },
+            {
+              "options": [
+                "Say this in a soft, tierd voice:\nAnother late night. Another takeout menu.",
+                "Say this in a soft, tierd voice:\nMy brain shouts ‘Fast! Efficient!’ And yeah, it’s… food.",
+                "Say this in a soft, slightly curious voice:\nBut my stomach, it whispers something else. Something about grandma’s kitchen. About flavors that tell a story, not just fill a void.",
+                "Say this in a soft, slightly curious voice:\nThe real stuff? It feels so far away. Like a luxury I can’t afford time for. Or can I?",
+                "Say this in a soft, slightly curious voice:\nWhat if ‘fast’ didn’t have to mean ‘flavorless’? What if ‘easy’ could still be ‘made with care’?",
+                "Say this in a soft, slightly curious voice delivering final punchline:\nMaybe the modern world doesn’t have to compromise the soul of a meal. Maybe it just needed a new recipe for living. Soulful meals. Made easy by Shef"
+              ]
+            }
+          ],
+          "parameters": [],
+          "option_count": -1,
+          "expected_output_modality": "TEXT",
+          "output_instruction": "",
+          "expected_output_schema": "MultipleTextOutputSchema"
+        }
+      ],
+      "next_step": "background_music_prompt",
+      "version": 1
+    },
+    {
+      "id": "background_music_prompt",
+      "name": "Background Music Prompt",
+      "description": "Generate prompt to synthesize the music of the video.",
+      "requires_user_input": false,
+      "expected_selection_count": "ALL",
+      "result_display_allowed": false,
+      "prompts": [
+        {
+          "id": "background_music_prompt_prompt",
+          "prefix": "Based on the script's mood, music style, pace, generate a concise text prompt (strictly under 200 characters) for an AI music generation model. This prompt should effectively guide the creation of suitable background music for the entire video. Focus on capturing the core emotion, genre, instrumentation, and tempo.\n\nScript:Scene 1 – Fairground Wonder: “Outdoor German fairground 1904, golden-hour light, wide 24 mm tracking shot through striped tents toward a dapple-grey stallion with a white blaze and black mane standing by a chalkboard. Owner in bowler hat writes ‘7 + 5 =?’. Close-up of horse’s hoof tapping packed earth twelve times; onlookers gasp, vintage film-grain, warm Kodachrome color grade, faint calliope music in background.”\nWhat this establishes – Introduces Hans’s ‘talent’, fixes his coloring, era, and warm palette for belief/optimism.\n\nScene 2 – The Investigation: “Interior lamp-lit test pen, teal-and-sepia palette. Psychologist Oskar Pfungst (neat moustache, waistcoat) sets canvas blinders around the same dapple-grey stallion with white blaze and black mane. Overhead top-down shot as Pfungst asks ‘3 × 4 =?’; owner hidden behind curtain. Extreme close-up on Hans’s eye—uncertain silence, no taps. Heartbeat SFX, then soft exhale when truth dawns.”\nWhat this does – Shows the scientific control that breaks the illusion; cool palette marks scrutiny.\n\nScene 3 – Placebo Parallel: “1950s hospital ward, monochrome look. Nurses hand identical white pills to patients. Split-screen overlay: on left a patient smiles after sugar pill; on right line graph rises. Subtle hoof-tapping sound layered under scene, connecting to horse motif.”\nWhat this does – Bridges Hans’s cue-reading to the expectancy (placebo) effect in medicine.\n\nScene 4 – Modern Echoes Montage: “Rapid match-cuts: bright contemporary classroom where teacher believes certain kids are gifted—student’s posture lifts, scorecard flips to ‘A’. Corporate glass office—applicant power-poses, interviewer mirrors smile. Busy city street—violinist gains crowd after first coin drop. All shots share soft golden back-light and the faint rhythmic hoof-tap heard earlier.”\nWhat this does – Shows placebo-like belief loops in education, employment, society—all tied by sound motif.\n\nScene 5 – Quiet Epilogue: “Dusk in rustic stable, tungsten lantern glow. Same dapple-grey stallion with white blaze and black mane rests, munching hay. Slow crane shot rises; carousel lights from Scene 1 faintly echo in bokeh. Voice-over finale: ‘We never had a calculating horse—only eyes that answered our own expectations.’ Gentle piano resolves, fade to white title card: ‘Signals in the Silence’.”\nWhat this does – Closes the loop, re-using consistent horse details and blending warm/cool palettes into balanced twilight.",
+          "few_shots": [
+            {
+              "options": [
+                "Warm piano + subtle ambient sounds (kettle whistle, birds, traffic far away)."
+              ]
+            },
+            {
+              "options": [
+                "Low ambient drone + soft wind + occasional engine rumble in the far distance. No music score, just atmosphere."
+              ]
+            },
+            {
+              "options": [
+                "Gritty yet hopeful urban lo-fi hip-hop. Intriguing undertone, dynamic. For authentic street art and unexpected city magic stories."
+              ]
+            }
+          ],
+          "parameters": [],
+          "option_count": -1,
+          "expected_output_modality": "TEXT",
+          "output_instruction": "The prompt should be less than 200 characters.",
+          "expected_output_schema": "MultipleTextOutputSchema"
+        }
+      ],
+      "next_step": "voiceover",
+      "version": 1
+    },
+    {
+      "id": "voiceover",
+      "name": "Voiceover",
+      "description": "Generate voiceover for the script",
+      "requires_user_input": false,
+      "result_display_allowed": false,
+      "prompts": [
+        {
+          "id": "voiceover_prompt",
+          "prefix": "",
+          "ignore_prompt_base": true,
+          "few_shots": [],
+          "parameters": ["Voiceover Prompt"],
+          "params_format": "list",
+          "option_count": 1,
+          "options_delimiter": "",
+          "expected_output_modality": "SPEECH",
+          "output_instruction": ""
+        }
+      ],
+      "next_step": "duration_analysis",
+      "version": 0
+    },
+    {
+      "id": "duration_analysis",
+      "name": "Duration analysis",
+      "description": "Analyze the duration of the video",
+      "requires_user_input": false,
+      "result_display_allowed": false,
+      "prompts": [],
+      "agents": [
+        {
+          "id": "duration_analyzer",
+          "parameters": ["Voiceover"]
+        }
+      ],
+      "next_step": "videos",
+      "version": 1
+    },
+    {
+      "id": "videos",
+      "name": "Videos",
+      "description": "Generate videos for given prompts",
+      "requires_user_input": false,
+      "result_display_allowed": false,
+      "prompts": [
+        {
+          "id": "video_prompt",
+          "prefix": "",
+          "ignore_prompt_base": true,
+          "few_shots": [],
+          "parameters": ["Video Prompts", "Duration analysis"],
+          "option_count": 1,
+          "options_delimiter": "",
+          "expected_output_modality": "VIDEO",
+          "output_instruction": ""
+        }
+      ],
+      "next_step": "background_music",
+      "version": 1
+    },
+    {
+      "id": "background_music",
+      "name": "Background Music",
+      "description": "Generate background music for the video",
+      "requires_user_input": false,
+      "result_display_allowed": false,
+      "prompts": [
+        {
+          "id": "background_music_prompt",
+          "prefix": "",
+          "ignore_prompt_base": true,
+          "few_shots": [],
+          "parameters": ["Background Music Prompt"],
+          "option_count": 1,
+          "options_delimiter": "",
+          "expected_output_modality": "MUSIC",
+          "output_instruction": ""
+        }
+      ],
+      "next_step": "final_video",
+      "version": 1
+    },
+    {
+      "id": "final_video",
+      "name": "Final Video",
+      "description": "Create video by combining videos, voiceover, and background music",
+      "requires_user_input": false,
+      "prompts": [],
+      "agents": [
+        {
+          "id": "video_generator",
+          "parameters": ["Videos", "Background Music", "Voiceover"]
+        }
+      ],
+      "next_step": null,
+      "version": 1
+    }
+  ]
+}
