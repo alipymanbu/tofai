@@ -135,7 +135,7 @@
       "prompts": [
         {
           "id": "script_prompt",
-          "prefix": "Write the instagram organic content scripts for the insight shortlisted. Each script can be between 30s long. Don’t make the script salsey. Let it be emotional, something that elucidates the insight very well and brings it out in a narrative. The main point is to capture attention, get the user to reach the end of the video and remember/feel something strongly about the brand's world view.",
+          "prefix": "Write the instagram organic content scripts for the insight shortlisted. Each script can be between 30s-1m long. Don’t make the script salsey. Let it be emotional, something that elucidates the insight very well and brings it out in a narrative but not in a too direct way. Let it have wittiness, humor or saracasm. The main point is to capture attention, get the user to reach the end of the video and remember/feel something strongly about the brand's world view. Always have the first scene include the face of the main character, and let the script be based in a single setting surrounded around the main character - no fast cuts or jumping to different settings across the scenes.",
           "few_shots": [
             {
               "options": [
@@ -182,8 +182,63 @@
       "description": "User selects a script from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "video_prompts",
+      "next_step": "headshot_prompt",
       "require_user_input_for_step_id": "script",
+      "version": 1
+    },
+    {
+      "id": "headshot_prompt",
+      "name": "Headshot prompt",
+      "description": "Generate the prompt for main character of the script",
+      "requires_user_input": false,
+      "expected_selection_count": "ALL",
+      "result_display_allowed": false,
+      "prompts": [
+        {
+          "id": "headshot_prompt_prompt",
+          "prefix": "Generate the image prompt for the given persona. Based on the name and demographics, pay close attention to the ethinicity gender and age of the person. Also pay clost attention to the first scene in the given script. Potray the person in the starting frame of that scene. Start directly with the prompt, do not output anything else.",
+          "few_shots": [
+            {
+              "options": [
+                "A 24-year-old Indian male, Rohit Kumar, dressed in smart-casual office attire (like a neat polo shirt or button-down), is intensely focused, with his hands furiously typing on a laptop keyboard. He is seated at a modern office desk in a well-lit, perhaps slightly sterile, office environment. His expression shows concentration and a hint of the pressure from his fast-paced work as a software engineer. The background is subtly blurred to suggest other desks, monitors, or the general bustling atmosphere of a busy workday, keeping the focus tightly on Rohit and his intense typing action. Photorealistic, detailed, wide-angle lens to capture the immersive feeling of his workspace."
+              ]
+            },
+            {
+              "options": [
+                "A 42-year-old Latina woman, Clara Rodriguez, sits cross-legged on a yoga mat in a serene, sunlit room, her expression thoughtful with a subtle, reflective furrow in her brow, hinting at a momentary mental block or lack of inspiration. She wears comfortable, minimalist athletic wear. Her hands are resting gently in her lap or on her knees, and her gaze is soft, slightly downward or inward, conveying an internal search for clarity rather than external focus. A ceramic mug of herbal tea sits beside her on a small, uncluttered side table or directly on the floor. The background is softly blurred, minimalist, and infused with warm, natural morning light, creating a peaceful yet contemplative atmosphere that suggests a moment of stillness before a mindful activity."
+              ]
+            }
+          ],
+          "parameters": ["User Persona", "Script"],
+          "option_count": -1,
+          "expected_output_modality": "TEXT",
+          "output_instruction": "",
+          "expected_output_schema": "MultipleTextOutputSchema"
+        }
+      ],
+      "next_step": "headshot",
+      "version": 1
+    },
+    {
+      "id": "headshot",
+      "name": "Headshot",
+      "description": "Generate image of main character.",
+      "requires_user_input": false,
+      "result_display_allowed": false,
+      "prompts": [
+        {
+          "id": "headshot_prompt",
+          "prefix": "",
+          "ignore_prompt_base": true,
+          "few_shots": [],
+          "parameters": ["Headshot prompt"],
+          "option_count": 1,
+          "options_delimiter": "",
+          "expected_output_modality": "IMAGE",
+          "output_instruction": ""
+        }
+      ],
+      "next_step": "video_prompts",
       "version": 1
     },
     {
@@ -326,24 +381,8 @@
           "output_instruction": ""
         }
       ],
-      "next_step": "duration_analysis",
-      "version": 0
-    },
-    {
-      "id": "duration_analysis",
-      "name": "Duration analysis",
-      "description": "Analyze the duration of the video",
-      "requires_user_input": false,
-      "result_display_allowed": false,
-      "prompts": [],
-      "agents": [
-        {
-          "id": "duration_analyzer",
-          "parameters": ["Voiceover"]
-        }
-      ],
       "next_step": "videos",
-      "version": 1
+      "version": 0
     },
     {
       "id": "videos",
@@ -351,17 +390,12 @@
       "description": "Generate videos for given prompts",
       "requires_user_input": false,
       "result_display_allowed": false,
-      "prompts": [
+      "expected_selection_count": "ALL",
+      "prompts": [],
+      "agents": [
         {
-          "id": "video_prompt",
-          "prefix": "",
-          "ignore_prompt_base": true,
-          "few_shots": [],
-          "parameters": ["Video Prompts", "Duration analysis"],
-          "option_count": 1,
-          "options_delimiter": "",
-          "expected_output_modality": "VIDEO",
-          "output_instruction": ""
+          "id": "scene_generator",
+          "parameters": ["Video Prompts", "Headshot", "Voiceover"]
         }
       ],
       "next_step": "background_music",

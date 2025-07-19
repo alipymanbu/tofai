@@ -12,6 +12,7 @@ from services.ai.framework_model import MediaUri
 from services.ai.lm_facade import LMFacade
 from services.storage.object_store import S3MediaManager, MediaType
 import math
+from PIL import Image
 
 
 class VideoGenerator:
@@ -255,8 +256,71 @@ class VideoGenerator:
         local_speech_paths.append(local_speech_path)
       for idx, speech in enumerate(local_speech_paths):
         with AudioFileClip(speech) as audio_clip:
-          durations.append(f"Scene{idx}: {str(math.ceil(audio_clip.duration))} seconds")
-    return ["SCENE_DURATIONS_BEGIN\n" + "\n".join(durations) + "\nSCENE_DURATIONS_END\n"]
+          durations.append(math.ceil(audio_clip.duration))
+          # durations.append(f"Scene{idx}: {str(math.ceil(audio_clip.duration))} seconds")
+    # return ["SCENE_DURATIONS_BEGIN\n" + "\n".join(durations) + "\nSCENE_DURATIONS_END\n"]
+    return durations  
+
+  def scene_generator(self, video_prompts: list[str], speeches: list[str], starting_frame: str, session_id: str, step_id: str) -> List[MediaUri]:
+    """
+    Generate scenes based on the provided video prompts, speeches, and starting frame.
+    
+    Args:
+      video_prompts (list[str]): List of video prompts for each scene.
+      speeches (list[str]): List of speech file paths for each scene.
+      starting_frame str: starting frame URL for each scene.
+    
+    Returns:
+      List[MediaUri]: List of MediaUri objects containing the generated scenes.
+    """
+    if len(video_prompts) != len(speeches):
+      raise ValueError(f"Number of video prompts ({len(video_prompts)}) must match number of speeches ({len(speeches)})")
+    with self._temp_directory() as temp_dir:
+      try:
+        results = []
+        duration_analysis = self.analyze_duration(speeches)
+        starting_frame_bytes = b''
+        if starting_frame:
+          media_path = os.path.join(temp_dir, f"starting_frame_{0}.png")
+          media_path = self._download_from_url(starting_frame, media_path)
+          # Read bytes from the file starting_frame_path
+          with open(media_path, 'rb') as f:
+            starting_frame_bytes = f.read()
+        
+        for idx, video_prompt in enumerate(video_prompts):
+          scene_bytes = self.lm_facade.invoke_p2v(prompt=video_prompt, scene_duration_sec=duration_analysis[idx], starting_frame=starting_frame_bytes)
+          # TODO: pick last frame from scene_bytes and feed as starting frame for next scene
+          # Extract the last frame from the video bytes
+          with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video_file:
+            temp_video_file.write(scene_bytes)
+            temp_video_file.flush()
+            with VideoFileClip(temp_video_file.name) as video_clip:
+              last_frame = video_clip.get_frame(video_clip.duration)
+              # Convert the RGB frame to a PIL Image
+              last_frame_image = Image.fromarray(last_frame)
+              # Save the image as PNG bytes
+              media_path = os.path.join(temp_dir, f"starting_frame_{idx+1}.png")
+              last_frame_image.save(media_path, format="PNG")
+              with open(media_path, 'rb') as f:
+                starting_frame_bytes = f.read()
+          
+          # Update the starting frame for the next scene
+          scene_filename = self._create_video_s3_filename(session_id=session_id, step_id=step_id)
+          result = self.object_store.upload_file(
+            file_data=scene_bytes,
+            media_type=MediaType.VIDEO,
+            filename=scene_filename,
+          )
+          if not result:
+            raise ValueError("Failed to upload video to S3.")
+          
+          url = self.object_store.get_file_url(filename=scene_filename, media_type=MediaType.VIDEO)
+          print(f"Scene uploaded to S3: {url}")
+          results.append(MediaUri(uri=url))
+        return results
+      except Exception as e:
+        print(f"Error during scene generation: {e}")
+        raise e
 
 if __name__ == "__main__":
   # Example usage

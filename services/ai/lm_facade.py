@@ -10,7 +10,7 @@ from google import genai
 from google.genai import types
 from google.genai.types import Content, Part, GenerateContentConfig
 from langchain_google_genai import ChatGoogleGenerativeAI
-from services.ai.framework_model import MultipleTextOutputSchema
+from services.ai.framework_model import MediaUri
 from functools import lru_cache
 import mimetypes
 import struct
@@ -158,8 +158,8 @@ class LMFacade:
   def invoke_t2m(self, prompt: str) -> Union[bytes, str]:
       return self._cached_t2m(prompt)
   
-  def invoke_p2v(self, prompt: str, scene_duration_sec:int = 5) -> bytes:
-      return self._cached_p2v(prompt, scene_duration_sec = 5)
+  def invoke_p2v(self, prompt: str, scene_duration_sec:int = 5, starting_frame: Union[bytes, None] = None) -> bytes:
+      return self._cached_p2v(prompt, scene_duration_sec = 5, starting_frame=starting_frame)
 
   # Invoke LLM for text to text inference.
   def _invoke_t2t_impl(self, prompt: str, output_schema: Union[Type[BaseModel], None] = None) -> str:
@@ -190,7 +190,7 @@ class LMFacade:
       logger.error(err_msg)
       raise ValueError(err_msg)
 
-  def _invoke_p2v_impl(self, prompt: str, scene_duration_sec:int = 5) -> bytes:
+  def _invoke_p2v_impl(self, prompt: str, scene_duration_sec:int = 5, starting_frame: Union[bytes, None] = None) -> bytes:
     """
     Generate a video from a multi-modal prompt.
     
@@ -203,7 +203,7 @@ class LMFacade:
     try:
       if not self._prompt_to_video or not self._lm_clients[self._prompt_to_video]:
         raise ValueError("Prompt to Video LLM not setup")
-      return self._call_gemini(prompt, modality="video", scene_duration_sec=scene_duration_sec)
+      return self._call_gemini(prompt, modality="video", scene_duration_sec=scene_duration_sec, starting_frame=starting_frame)
     except Exception as e:
       err_msg = f"Error generating video: {e}"
       logger.error(err_msg)
@@ -352,7 +352,7 @@ class LMFacade:
 
   @sleep_and_retry
   @limits(calls=1, period=60)  # Limit to 1 call per minute
-  def _call_gemini_for_video_generation(self, prompt: str, scene_duration_sec: int = 5) -> bytes:
+  def _call_gemini_for_video_generation(self, prompt: str, scene_duration_sec: int = 5, starting_frame: Union[bytes, None] = None) -> bytes:
     client: genai.Client = self._lm_clients[LMs.GOOGLE]
     model = "veo-2.0-generate-001"
     video_config = types.GenerateVideosConfig(
@@ -361,10 +361,17 @@ class LMFacade:
         number_of_videos=1, # supported values: 1 - 4
         duration_seconds=min(max(scene_duration_sec, 5), 8), # supported values: 5 - 8
     )
+    image = types.Image()
+    if starting_frame:
+       image.image_bytes = starting_frame
+       image.mime_type = "image/png"
+    else:
+       image.image_bytes = b""
     operation = client.models.generate_videos(
         model=model,
         prompt=prompt,
         config=video_config,
+        image=image if image.image_bytes else None,
     )
 
     # Waiting for the video(s) to be generated
@@ -387,13 +394,13 @@ class LMFacade:
         file=generated_video.video,
     )
 
-  def _call_gemini(self, prompt: str, modality: Literal["text", "image", "speech", "video"] = "text", output_schema: Union[Type[BaseModel], None] = None, scene_duration_sec:int = 5) -> Union[str, bytes]:
+  def _call_gemini(self, prompt: str, modality: Literal["text", "image", "speech", "video"] = "text", output_schema: Union[Type[BaseModel], None] = None, scene_duration_sec:int = 5, starting_frame: Union[bytes, None] = None) -> Union[str, bytes]:
     if modality == "image":
         return self._call_gemini_for_image_generation(prompt)
     if modality == "speech":
         return self._call_gemini_for_speech_generation(prompt)
     if modality == "video":
-        return self._call_gemini_for_video_generation(prompt, scene_duration_sec=scene_duration_sec)
+        return self._call_gemini_for_video_generation(prompt, scene_duration_sec=scene_duration_sec, starting_frame=starting_frame)
     # For text generation
     # print(f"Generating text with prompt: {prompt}, output_schema: {output_schema}, modality: {modality}")
     client: genai.Client = self._lm_clients[LMs.GOOGLE]

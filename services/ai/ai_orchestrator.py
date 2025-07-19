@@ -216,7 +216,7 @@ class AIOrchestrator:
     except Exception as e:
         state.error = str(e)
         logger.error(f"Error generating options: {e}")
-        return {"current_step_id": state.current_step_id}
+        raise ValueError(f"Error generating options for step '{state.current_step_id}': {e}")
   
   @track_latency
   def _select_option(self, state: VideoCreationState) -> dict[str, Union[str, FrameworkResult]]:
