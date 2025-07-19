@@ -7,9 +7,10 @@ import redis.asyncio as redis # For async Redis
 import pickle
 from config.settings import Settings
 from models.job_db import JobDBModel
-from models.session_db import SessionDBModel
+from models.session_db import SessionDBModel, Session
 from models.user_session_db import UserSessionDBModel
 from models.feedback_db import FeedbackDBModel
+from services.ai.framework_model import FrameworkResult
 from api.models import User
 from enum import Enum
 
@@ -72,6 +73,17 @@ class DataAccess:
         )
         await self.redis_client.set(
             self._cache_key(ModelType.SESSIONS, session_db_model.session.id),
+            pickle.dumps(session_db_model),
+        )
+    
+    async def update_framework_result_in_cache(self, session_id: str, result: FrameworkResult, current_step_id: str) -> None:
+        """Update the session in Redis cache."""
+        cached_data = await self.redis_client.get(self._cache_key(ModelType.SESSIONS, session_id))
+        session_db_model: SessionDBModel = pickle.loads(cached_data)
+        session_db_model.session.result = result
+        session_db_model.session.current_step_id = current_step_id
+        await self.redis_client.set(
+            self._cache_key(ModelType.SESSIONS, session_id),
             pickle.dumps(session_db_model),
         )
 

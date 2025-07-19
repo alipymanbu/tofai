@@ -1,3 +1,4 @@
+import mimetypes
 import boto3
 from botocore.exceptions import NoCredentialsError, ClientError
 from botocore.config import Config
@@ -47,8 +48,9 @@ class S3MediaManager:
         )
     
     @classmethod
-    def create_key(cls, session_id: str, framework_step_id: str, index: int, unique_key: str = "unique_key"):
-        return f"{session_id}-{framework_step_id}-{index}-{unique_key}"
+    def create_key(cls, session_id: str, framework_step_id: str, index: int, unique_key: str = "unique_key", content_type: str = "text/html") -> str:
+        file_extension = mimetypes.guess_extension(content_type)
+        return f"{session_id}-{framework_step_id}-{index}-{unique_key}.{file_extension}"
 
     def _check_connection(self):
         """

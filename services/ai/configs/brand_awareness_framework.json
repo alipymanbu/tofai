@@ -4,7 +4,7 @@
   "description": "A framework for creating brand awareness videos by generating user personas, human insights, tonality, and scripts, with enhanced prompt engineering.",
   "initial_step": "initial_input",
   "final_step": "final_video",
-  "prompt_base": "You are the best marketer on Earth specifically specialising in video storytelling that helps brands get reach on social media. You are weird like Vsauce, thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy like David Ogilvy. You do this by understanding what kind of content the brands want by taking them through a series of steps mentioned below, providing them a few options at each step, and then on the basis of the user's reply, proceeding to the next step. Your scripts are written in such a way to have some stimulation every 3-5 seconds.",
+  "prompt_base": "You are the best marketer on Earth specifically specialising in video storytelling that helps brands get reach on social media. You are weird like Vsauce, thorough like Veritasium, goofy and imaginative like Tim Urban, and can write copy like David Ogilvy. You do this by understanding what kind of content the brands want by taking them through a series of steps mentioned below, providing them a few options at each step, and then on the basis of the user's reply, proceeding to the next step. Your scripts are written in such a way to have some stimulation every 3-5 seconds.\n\n",
   "steps": [
     {
       "id": "initial_input",
@@ -57,8 +57,9 @@
           ],
           "parameters": ["Link Research"],
           "option_count": 3,
-          "options_delimiter": "||",
-          "expected_output_modality": "TEXT"
+          "expected_output_modality": "TEXT",
+          "expected_output_schema": "MultipleTextOutputSchema",
+          "output_instruction": ""
         }
       ],
       "next_step": "select_user_persona",
@@ -93,23 +94,24 @@
             },
             {
               "options": [
-                "Option 4: Yes, I have good hair days and bad hair days. Yes, I have to spend time, energy and effort to keep them a certain way. But I wouldn't have it any other way. My hair isn't just a part of me, they define me. My relationship with them defines my relationship with myself.",
-                "Option 5: Sometimes when everything seems difficult, the world seems to be crumbling down and being meaninglessly cruel to my dreams, it is the simple moments of companionship that make life worth living.",
-                "Option 6: I want to explore the world, live through experiences that enliven my spirit and connect me to others, but the fear of the unknown keeps me hesitating. I know that I need to let go of my strong need for certainty, only then can I fulfill my desires."
+                "Option 1: Yes, I have good hair days and bad hair days. Yes, I have to spend time, energy and effort to keep them a certain way. But I wouldn't have it any other way. My hair isn't just a part of me, they define me. My relationship with them defines my relationship with myself.",
+                "Option 2: Sometimes when everything seems difficult, the world seems to be crumbling down and being meaninglessly cruel to my dreams, it is the simple moments of companionship that make life worth living.",
+                "Option 3: I want to explore the world, live through experiences that enliven my spirit and connect me to others, but the fear of the unknown keeps me hesitating. I know that I need to let go of my strong need for certainty, only then can I fulfill my desires."
               ]
             },
             {
               "options": [
-                "Option 7: What matters to me the most is my family’s future. However I sometimes forget that to prioritize them, I need to prioritize myself. My health.",
-                "Option 8: As kids, we didn’t need motivation to move. We played for hours — without tracking steps, without watching the clock, without feeling guilty. It wasn’t discipline. It was friendship. Now, I have goals, gadgets, plans… but no one to say, ‘Come on, let’s go.’ I don’t just miss being active. I miss the joy of moving with someone who cared enough to show up every day.",
-                "Option 9: I believe a home is not just bricks and beams but an extension of me. It sets the scene for the most meaningful parts of life- love, laughter and the warmth of relationships. Having curtailments on what I can and cannot do in my own home makes me feel extremely claustrophobic. I cannot keep living like this."
+                "Option 1: What matters to me the most is my family’s future. However I sometimes forget that to prioritize them, I need to prioritize myself. My health.",
+                "Option 2: As kids, we didn’t need motivation to move. We played for hours — without tracking steps, without watching the clock, without feeling guilty. It wasn’t discipline. It was friendship. Now, I have goals, gadgets, plans… but no one to say, ‘Come on, let’s go.’ I don’t just miss being active. I miss the joy of moving with someone who cared enough to show up every day.",
+                "Option 3: I believe a home is not just bricks and beams but an extension of me. It sets the scene for the most meaningful parts of life- love, laughter and the warmth of relationships. Having curtailments on what I can and cannot do in my own home makes me feel extremely claustrophobic. I cannot keep living like this."
               ]
             }
           ],
           "parameters": ["Link Research", "User Persona"],
           "option_count": 3,
-          "options_delimiter": "||",
-          "expected_output_modality": "TEXT"
+          "expected_output_modality": "TEXT",
+          "expected_output_schema": "MultipleTextOutputSchema",
+          "output_instruction": ""
         }
       ],
       "next_step": "select_human_insight",
@@ -166,8 +168,9 @@
           ],
           "parameters": ["Link Research", "User Persona", "Human Insights"],
           "option_count": 3,
-          "options_delimiter": "||",
-          "expected_output_modality": "TEXT"
+          "expected_output_modality": "TEXT",
+          "expected_output_schema": "MultipleTextOutputSchema",
+          "output_instruction": ""
         }
       ],
       "next_step": "select_script",
@@ -179,27 +182,28 @@
       "description": "User selects a script from the options",
       "requires_user_input": true,
       "prompts": [],
-      "next_step": "image_prompts",
+      "next_step": "video_prompts",
       "require_user_input_for_step_id": "script",
       "version": 1
     },
     {
-      "id": "image_prompts",
-      "name": "Image Prompts",
-      "description": "Generate images' prompts for each scene in the script",
+      "id": "video_prompts",
+      "name": "Video Prompts",
+      "description": "Generate videos' prompts for each scene in the script",
       "requires_user_input": false,
       "expected_selection_count": "ALL",
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "image_prompt_prompt",
-          "prefix": "Based on the script (specifically its 'Script Breakdown' section), generate a detailed visual description (image prompt) for *each timed scene*. Imagine you are the director meticulously visualizing every shot for an image generation model. Each prompt should be rich in detail, describing subjects, actions, setting, mood, lighting, and camera angle. \n\nOutput one continuous string containing all scene descriptions, with each individual scene's description clearly separated by '||'. Do not add any other text or numbering outside of the descriptions themselves.",
+          "id": "video_prompt_prompt",
+          "prefix": "Based on the script (specifically its 'Script Breakdown' section), generate a detailed visual description (veo prompt) for *each timed scene*. Imagine you are the director meticulously visualizing every shot for a video generation model. Each prompt should be rich in detail, describing subjects, actions, setting, mood, lighting, and camera angle.",
           "few_shots": [
             {
               "options": [
                 "Scene 1 [0-3 SEC]: Extreme close-up, cinematic lighting: Three perfectly ripe, vibrant heirloom tomatoes on a rustic, dark wooden cutting board. A chef's hand, clean and professional, gently selects one tomato. The mood is sophisticated and focused. Shallow depth of field.",
                 "Scene 2 [4-8 SEC]: Dynamic quick cuts, bright natural light: Chef Anya's hands skillfully slicing a tomato with a sharp knife; a drizzle of golden olive oil from a small spout; a fresh, green basil leaf being placed precisely. Actions are simple yet elegant. Focus on the fresh ingredients.",
-                "Scene 3 [9-14 SEC]: Food photography style, soft lighting: A beautifully plated single slice of tomato, adorned with oil and basil, looking like a gourmet appetizer on a minimalist white plate. Close up on Chef Anya's face, a subtle smile of satisfaction as she savors the bite. Warm, inviting mood. || Scene 4 [15-20 SEC]: Medium shot, warm and friendly lighting: Chef Anya, in her well-lit kitchen, smiles warmly and directly at the camera, exuding confidence and passion. The background is slightly blurred, keeping focus on her approachable expertise."
+                "Scene 3 [9-14 SEC]: Food photography style, soft lighting: A beautifully plated single slice of tomato, adorned with oil and basil, looking like a gourmet appetizer on a minimalist white plate. Close up on Chef Anya's face, a subtle smile of satisfaction as she savors the bite. Warm, inviting mood.",
+                "Scene 4 [15-20 SEC]: Medium shot, warm and friendly lighting: Chef Anya, in her well-lit kitchen, smiles warmly and directly at the camera, exuding confidence and passion. The background is slightly blurred, keeping focus on her approachable expertise."
               ]
             },
             {
@@ -213,31 +217,9 @@
           ],
           "parameters": ["Script"],
           "option_count": -1,
-          "options_delimiter": "||",
           "expected_output_modality": "TEXT",
-          "output_instruction": "Add `||` between each scene's image prompt. Do not output anything else."
-        }
-      ],
-      "next_step": "images",
-      "version": 1
-    },
-    {
-      "id": "images",
-      "name": "Images",
-      "description": "Generate image for given prompt",
-      "requires_user_input": false,
-      "result_display_allowed": false,
-      "prompts": [
-        {
-          "id": "image_prompt",
-          "prefix": "",
-          "ignore_prompt_base": true,
-          "few_shots": [],
-          "parameters": ["Image Prompts"],
-          "option_count": 1,
-          "options_delimiter": "",
-          "expected_output_modality": "IMAGE",
-          "output_instruction": "."
+          "output_instruction": "",
+          "expected_output_schema": "MultipleTextOutputSchema"
         }
       ],
       "next_step": "voiceover_prompt",
@@ -253,24 +235,72 @@
       "prompts": [
         {
           "id": "voiceover_text_prompt",
-          "prefix": "Based on the 'Script Breakdown' section of the selected script, compile all on-screen text and explicit voiceover (VO) lines into a single, coherent narrative flow. Imagine you are the voiceover artist or text compositor preparing the full text for the video. Concatenate all text/VO elements in the order they appear in the script. \n\nOutput only the complete, continuous text for the voiceover/on-screen display. Do not include timestamps or scene descriptions.",
+          "prefix": "Based on the 'Script Breakdown' section of the selected script, compile all on-screen text and explicit voiceover (VO) lines into a single, coherent narrative flow for each scene. Imagine you are the voiceover artist or text compositor preparing the full text for the video. Concatenate all text/VO elements in the order they appear in the script.\n\nStart with a style instruction for each scene, then output only the complete, continuous text for the voiceover/on-screen display. Do not include timestamps or scene descriptions.",
           "few_shots": [
             {
               "options": [
-                "Perfection in three? Chef Anya’s secret: Less is more. The taste of pure quality. No distractions. Find your essential. Italic. What's your simple masterpiece?"
+                "Tell this like a wise old storyteller with a comforting tone:\nMy grandfather… he was a bedrock. Quiet strength.",
+                "Tell this like a wise old storyteller with a comforting tone:\nHe built. He solved. He never spoke much. The world felt… simpler.",
+                "Tell this like a wise old storyteller captivating an audience:\nBut today? Today, you need to be seen. To connect. To let the river flow.",
+                "Tell this like a wise old storyteller captivating an audience:\nIt's like trying to be an oak tree… rooted, unmoving. And a river… always shifting. Always giving.",
+                "Tell this like a wise old storyteller captivating an audience:\nAnd sometimes, the balance shifts. You feel a little off-kilter. A little… exposed.",
+                "Tell this like a wise old storyteller captivating an audience and delivering final punchline:\nBut that's where the real strength is. Not in choosing one. But in being both. Ready for the quiet. Ready for the current. That’s the adventure. Be the oak. Be the river. Be ready for both. Old Spice."
               ]
             },
             {
               "options": [
-                "Little scraps... big imagination! Meet Meera's mom-made best friend. Zero waste. Pure love. Lasting memories. Good for them, good for Earth. Born Good. What can you create today?"
+                "Say this in a soft, tierd voice:\nAnother late night. Another takeout menu.",
+                "Say this in a soft, tierd voice:\nMy brain shouts ‘Fast! Efficient!’ And yeah, it’s… food.",
+                "Say this in a soft, slightly curious voice:\nBut my stomach, it whispers something else. Something about grandma’s kitchen. About flavors that tell a story, not just fill a void.",
+                "Say this in a soft, slightly curious voice:\nThe real stuff? It feels so far away. Like a luxury I can’t afford time for. Or can I?",
+                "Say this in a soft, slightly curious voice:\nWhat if ‘fast’ didn’t have to mean ‘flavorless’? What if ‘easy’ could still be ‘made with care’?",
+                "Say this in a soft, slightly curious voice delivering final punchline:\nMaybe the modern world doesn’t have to compromise the soul of a meal. Maybe it just needed a new recipe for living. Soulful meals. Made easy by Shef"
               ]
             }
           ],
           "parameters": ["Script"],
           "option_count": -1,
-          "options_delimiter": "||",
           "expected_output_modality": "TEXT",
-          "output_instruction": "Just output the speech text. Do not output anything else."
+          "output_instruction": "",
+          "expected_output_schema": "MultipleTextOutputSchema"
+        }
+      ],
+      "next_step": "background_music_prompt",
+      "version": 1
+    },
+    {
+      "id": "background_music_prompt",
+      "name": "Background Music Prompt",
+      "description": "Generate prompt to synthesize the music of the video.",
+      "requires_user_input": false,
+      "expected_selection_count": "ALL",
+      "result_display_allowed": false,
+      "prompts": [
+        {
+          "id": "background_music_prompt_prompt",
+          "prefix": "Based on the script's 'Visuals/Editing Style' section (which describes mood, music style, pace) and considering the brand's essence (from 'Link Research'), generate a concise text prompt (strictly under 200 characters) for an AI music generation model. This prompt should effectively guide the creation of suitable background music for the entire video. Focus on capturing the core emotion, genre, instrumentation, and tempo.",
+          "few_shots": [
+            {
+              "options": [
+                "Warm piano + subtle ambient sounds (kettle whistle, birds, traffic far away)."
+              ]
+            },
+            {
+              "options": [
+                "Low ambient drone + soft wind + occasional engine rumble in the far distance. No music score, just atmosphere."
+              ]
+            },
+            {
+              "options": [
+                "Gritty yet hopeful urban lo-fi hip-hop. Intriguing undertone, dynamic. For authentic street art and unexpected city magic stories."
+              ]
+            }
+          ],
+          "parameters": ["Link Research", "Script"],
+          "option_count": -1,
+          "expected_output_modality": "TEXT",
+          "output_instruction": "The prompt should be less than 200 characters.",
+          "expected_output_schema": "MultipleTextOutputSchema"
         }
       ],
       "next_step": "voiceover",
@@ -293,45 +323,45 @@
           "option_count": 1,
           "options_delimiter": "",
           "expected_output_modality": "SPEECH",
-          "output_instruction": "."
+          "output_instruction": ""
         }
       ],
-      "next_step": "background_music_prompt",
+      "next_step": "duration_analysis",
       "version": 0
     },
     {
-      "id": "background_music_prompt",
-      "name": "Background Music Prompt",
-      "description": "Generate prompt to synthesize the music of the video.",
+      "id": "duration_analysis",
+      "name": "Duration analysis",
+      "description": "Analyze the duration of the video",
       "requires_user_input": false,
-      "expected_selection_count": "ALL",
+      "result_display_allowed": false,
+      "prompts": [],
+      "agents": [
+        {
+          "id": "duration_analyzer",
+          "parameters": ["Voiceover"]
+        }
+      ],
+      "next_step": "videos",
+      "version": 1
+    },
+    {
+      "id": "videos",
+      "name": "Videos",
+      "description": "Generate videos for given prompts",
+      "requires_user_input": false,
       "result_display_allowed": false,
       "prompts": [
         {
-          "id": "background_music_prompt_prompt",
-          "prefix": "Based on the selected script's 'Visuals/Editing Style' section (which describes mood, music style, pace) and considering the brand's essence (from 'Link Research'), generate a concise text prompt (strictly under 200 characters) for an AI music generation model. This prompt should effectively guide the creation of suitable background music for the entire video. Focus on capturing the core emotion, genre, instrumentation, and tempo.",
-          "few_shots": [
-            {
-              "options": [
-                "Warm, inviting acoustic folk. Gentle, sophisticated, inspiring. Builds subtly. Perfect for refined, achievable luxury brand storytelling."
-              ]
-            },
-            {
-              "options": [
-                "Upbeat, playful indie pop. Bright, warm, and heartwarming. Acoustic guitar focus. For joyful, creative, eco-friendly family brand moments."
-              ]
-            },
-            {
-              "options": [
-                "Gritty yet hopeful urban lo-fi hip-hop. Intriguing undertone, dynamic. For authentic street art and unexpected city magic stories."
-              ]
-            }
-          ],
-          "parameters": ["Link Research", "Script"],
-          "option_count": -1,
-          "options_delimiter": "||",
-          "expected_output_modality": "TEXT",
-          "output_instruction": "The prompt should be less than 200 characters. Just output the text. Do not output anything else."
+          "id": "video_prompt",
+          "prefix": "",
+          "ignore_prompt_base": true,
+          "few_shots": [],
+          "parameters": ["Video Prompts", "Duration analysis"],
+          "option_count": 1,
+          "options_delimiter": "",
+          "expected_output_modality": "VIDEO",
+          "output_instruction": ""
         }
       ],
       "next_step": "background_music",
@@ -353,7 +383,7 @@
           "option_count": 1,
           "options_delimiter": "",
           "expected_output_modality": "MUSIC",
-          "output_instruction": "."
+          "output_instruction": ""
         }
       ],
       "next_step": "final_video",
@@ -362,13 +392,13 @@
     {
       "id": "final_video",
       "name": "Final Video",
-      "description": "Create video by combining images, voiceover, and background music",
+      "description": "Create video by combining videos, voiceover, and background music",
       "requires_user_input": false,
       "prompts": [],
       "agents": [
         {
           "id": "video_generator",
-          "parameters": ["Images", "Background Music", "Voiceover"]
+          "parameters": ["Videos", "Background Music", "Voiceover"]
         }
       ],
       "next_step": null,

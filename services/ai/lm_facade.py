@@ -1,66 +1,177 @@
 """NO_AI_CODE=True
 """
 from enum import Enum
-from typing import Any, Union, Literal
+from typing import Any, Iterator, Union, Literal, Type
 import logging
+from pydantic import BaseModel
 from elevenlabs.client import ElevenLabs
 from config.settings import settings
 from google import genai
 from google.genai import types
 from google.genai.types import Content, Part, GenerateContentConfig
 from langchain_google_genai import ChatGoogleGenerativeAI
+from services.ai.framework_model import MultipleTextOutputSchema
+from functools import lru_cache
+import mimetypes
+import struct
+import time
+from ratelimit import limits, sleep_and_retry
 
 
 logger = logging.getLogger(__name__)
 
+def _convert_to_wav(audio_data: bytes, mime_type: str) -> bytes:
+    """Generates a WAV file header for the given audio data and parameters.
+
+    Args:
+        audio_data: The raw audio data as a bytes object.
+        mime_type: Mime type of the audio data.
+
+    Returns:
+        A bytes object representing the WAV file header.
+    """
+    parameters = _parse_audio_mime_type(mime_type)
+    bits_per_sample = parameters["bits_per_sample"]
+    sample_rate = parameters["rate"]
+    num_channels = 1
+    data_size = len(audio_data)
+    bytes_per_sample = bits_per_sample // 8
+    block_align = num_channels * bytes_per_sample
+    byte_rate = sample_rate * block_align
+    chunk_size = 36 + data_size  # 36 bytes for header fields before data chunk size
+
+    # http://soundfile.sapp.org/doc/WaveFormat/
+
+    header = struct.pack(
+        "<4sI4s4sIHHIIHH4sI",
+        b"RIFF",          # ChunkID
+        chunk_size,       # ChunkSize (total file size - 8 bytes)
+        b"WAVE",          # Format
+        b"fmt ",          # Subchunk1ID
+        16,               # Subchunk1Size (16 for PCM)
+        1,                # AudioFormat (1 for PCM)
+        num_channels,     # NumChannels
+        sample_rate,      # SampleRate
+        byte_rate,        # ByteRate
+        block_align,      # BlockAlign
+        bits_per_sample,  # BitsPerSample
+        b"data",          # Subchunk2ID
+        data_size         # Subchunk2Size (size of audio data)
+    )
+    return header + audio_data
+
+def _parse_audio_mime_type(mime_type: str) -> dict[str, int | None]:
+    """Parses bits per sample and rate from an audio MIME type string.
+
+    Assumes bits per sample is encoded like "L16" and rate as "rate=xxxxx".
+
+    Args:
+        mime_type: The audio MIME type string (e.g., "audio/L16;rate=24000").
+
+    Returns:
+        A dictionary with "bits_per_sample" and "rate" keys. Values will be
+        integers if found, otherwise None.
+    """
+    bits_per_sample = 16
+    rate = 24000
+
+    # Extract rate from parameters
+    parts = mime_type.split(";")
+    for param in parts: # Skip the main type part
+        param = param.strip()
+        if param.lower().startswith("rate="):
+            try:
+                rate_str = param.split("=", 1)[1]
+                rate = int(rate_str)
+            except (ValueError, IndexError):
+                # Handle cases like "rate=" with no value or non-integer value
+                pass # Keep rate as default
+        elif param.startswith("audio/L"):
+            try:
+                bits_per_sample = int(param.split("L", 1)[1])
+            except (ValueError, IndexError):
+                pass # Keep bits_per_sample as default if conversion fails
+
+    return {"bits_per_sample": bits_per_sample, "rate": rate}
+
+def _calculate_audio_duration(accumulated_audio_data: bytes, audio_mime_type: str) -> float:
+    audio_params = _parse_audio_mime_type(audio_mime_type)
+    sample_rate = audio_params["rate"]
+    bits_per_sample = audio_params["bits_per_sample"]
+    # 2. Define number of channels (the TTS model is mono)
+    num_channels = 1
+    # 3. Calculate the duration using the formula
+    bytes_per_sample = bits_per_sample // 8
+    total_data_bytes = len(accumulated_audio_data)
+    duration_seconds = total_data_bytes / (sample_rate * num_channels * bytes_per_sample)
+    return duration_seconds
+
 class LMs(Enum):
-  GPT_40_MINI = 1
-  OLLAMA_QWEN_2_5_7B = 2
-  GEMMA_3_12B = 3
-  ELEVEN = 4
-  GEMINI_2_0_FLASH = 5
-  GEMINI_IMAGEN_3 = 6
-  GOOGLE_TEXT_TO_SPEECH = 7
+  GOOGLE = 1
+  OPENAI = 2
+  ELEVEN = 3
+  OLLAMA = 4
 
 class LMFacade:
   def __init__(self, max_tokens: int = 1000, temperature: float = 0.7):
-    self._text_to_text = LMs.GEMINI_2_0_FLASH
-    self._text_to_image = LMs.GEMINI_IMAGEN_3
-    self._text_to_speech = LMs.ELEVEN
+    self._text_to_text = LMs.GOOGLE
+    self._text_to_image = LMs.GOOGLE
+    self._text_to_speech = LMs.GOOGLE
     self._text_to_music = LMs.ELEVEN
+    self._prompt_to_video = LMs.GOOGLE
     
     # Initialize clients
     try:
       self._lm_clients = {
-        # LMs.GEMMA_3_12B: ChatOllama(model="gemma3:12b", num_predict=max_tokens, temperature=temperature),
-        LMs.GEMINI_2_0_FLASH: genai.Client(api_key=settings.GEMINI_API_SECRET),
+        LMs.GOOGLE: genai.Client(api_key=settings.GEMINI_API_SECRET),
         LMs.ELEVEN: ElevenLabs(api_key=settings.ELEVEN_TTS_SECRET),
-        LMs.GEMINI_IMAGEN_3: genai.Client(api_key=settings.GEMINI_API_SECRET),
       }
     except Exception as e:
       err_msg = f"Error initializing LM clients: {e}"
       logger.error(err_msg)
       raise ValueError(err_msg)
+        # Cache with reasonable size limits
+    self._cached_t2t = lru_cache(maxsize=50, typed=True)(self._invoke_t2t_impl)
+    self._cached_t2i = lru_cache(maxsize=10, typed=True)(self._invoke_t2i_impl)
+    self._cached_t2s = lru_cache(maxsize=2, typed=True)(self._invoke_t2s_impl)
+    self._cached_t2m = lru_cache(maxsize=2, typed=True)(self._invoke_t2m_impl)
+    self._cached_p2v = lru_cache(maxsize=2, typed=True)(self._invoke_p2v_impl)
 
   def get_langchain_llm(self) -> Any:
     """
     Returns a Langchain-compatible LLM instance based on the currently selected text-to-text model.
     """
-    if self._text_to_text == LMs.GEMINI_2_0_FLASH:
-        return ChatGoogleGenerativeAI(model="gemini-2.0-flash", google_api_key=settings.GEMINI_API_SECRET)
+    if self._text_to_text == LMs.GOOGLE:
+        return ChatGoogleGenerativeAI(model="gemini-2.5-pro-preview-05-06", google_api_key=settings.GEMINI_API_SECRET)
     else:
         raise ValueError(f"No Langchain LLM configured for {self._text_to_text}")
 
+  def invoke_t2t(self, prompt: str, output_schema: Union[Type[BaseModel], None] = None) -> str:
+      return self._cached_t2t(prompt, output_schema=output_schema)
+
+  def invoke_t2i(self, prompt: str) -> Union[bytes, str]:
+      return self._cached_t2i(prompt)
+
+  def invoke_t2s(self, prompt: str) -> Union[bytes, str]:
+      return self._cached_t2s(prompt)
+
+  def invoke_t2m(self, prompt: str) -> Union[bytes, str]:
+      return self._cached_t2m(prompt)
+  
+  def invoke_p2v(self, prompt: str, scene_duration_sec:int = 5) -> bytes:
+      return self._cached_p2v(prompt, scene_duration_sec = 5)
 
   # Invoke LLM for text to text inference.
-  def invoke_t2t(self, prompt: str) -> str:
-    if self._text_to_text in {LMs.GEMMA_3_12B, LMs.OLLAMA_QWEN_2_5_7B}:
+  def _invoke_t2t_impl(self, prompt: str, output_schema: Union[Type[BaseModel], None] = None) -> str:
+    if self._text_to_text in {LMs.OLLAMA}:
       return self._call_ollama(prompt, self._text_to_text)
-    elif self._text_to_text == LMs.GEMINI_2_0_FLASH:
-      return self._call_gemini(prompt, modality="text")
-    return "Unsupported usecase."
+    elif self._text_to_text == LMs.GOOGLE:
+      return self._call_gemini(prompt, modality="text", output_schema=output_schema)
+    err_msg = f"Text to Text LLM {self._text_to_text} not supported"
+    logger.error(err_msg)
+    raise ValueError(err_msg)
   
-  def invoke_t2i(self, prompt: str) -> Union[bytes, str]:
+  def _invoke_t2i_impl(self, prompt: str) -> Union[bytes, str]:
     """
     Generate an image from a text prompt.
     
@@ -77,9 +188,29 @@ class LMFacade:
     except Exception as e:
       err_msg = f"Error generating image: {e}"
       logger.error(err_msg)
-      return err_msg
+      raise ValueError(err_msg)
 
-  def invoke_t2m(self, prompt: str) -> Union[bytes, str]:
+  def _invoke_p2v_impl(self, prompt: str, scene_duration_sec:int = 5) -> bytes:
+    """
+    Generate a video from a multi-modal prompt.
+    
+    Args:
+        prompt: multi-modal prompt
+        
+    Returns:
+        bytes: The generated video data
+    """
+    try:
+      if not self._prompt_to_video or not self._lm_clients[self._prompt_to_video]:
+        raise ValueError("Prompt to Video LLM not setup")
+      return self._call_gemini(prompt, modality="video", scene_duration_sec=scene_duration_sec)
+    except Exception as e:
+      err_msg = f"Error generating video: {e}"
+      logger.error(err_msg)
+      raise ValueError(err_msg)
+
+
+  def _invoke_t2m_impl(self, prompt: str) -> Union[bytes, str]:
     """
     Generate music audio from a text prompt.
     
@@ -101,9 +232,11 @@ class LMFacade:
           audio += chunk
         return audio
     except Exception as e:
-      raise ValueError(f"Error generating music: {e}")
+      err_msg = f"Error generating music: {e}"
+      logger.error(err_msg)
+      raise ValueError(err_msg)
 
-  def invoke_t2s(self, prompt: str) -> Union[bytes, str]:
+  def _invoke_t2s_impl(self, prompt: str) -> Union[bytes, str]:
     """
     Generate speech audio from a text prompt.
     
@@ -114,6 +247,11 @@ class LMFacade:
         bytes: The generated audio data
     """
     try:
+       return self._call_gemini(prompt, modality="speech")
+    except Exception as e:
+      logger.error(f"Error generating speech with Gemini: {e}")
+    try:
+      # If Gemini fails, try ElevenLabs
       if self._text_to_speech and self._lm_clients.get(self._text_to_speech):
         logger.info(f"Generating speech.")
         client = self._lm_clients[self._text_to_speech]
@@ -129,7 +267,8 @@ class LMFacade:
           audio += chunk
         return audio
     except Exception as e:
-      raise ValueError(f"Error generating speech: {e}")
+      logger.error(f"Error generating speech with Eleven API: {e}")
+      raise ValueError(f"Both ElevenLabs and Google TTS failed. Last error: {e}")
 
   def _call_ollama(self, prompt: str, model: LMs) -> Union[str, list[bytes]]:
     llm = self._lm_clients[model]
@@ -137,8 +276,9 @@ class LMFacade:
     return response.content
 
   def _call_gemini_for_image_generation(self, prompt: str) -> bytes:
+    print(f"Generating image with prompt: {prompt}")
     try:
-      client = self._lm_clients[LMs.GEMINI_IMAGEN_3]
+      client = self._lm_clients[LMs.GOOGLE]
       model = "imagen-3.0-generate-002"
       response: types.GenerateImagesResponse = client.models.generate_images(
         model=model,
@@ -156,18 +296,108 @@ class LMFacade:
         rai_reason = ""
         if response and response.generated_images and response.generated_images[0].rai_reason:
            rai_reason = response.generated_images[0].rai_reason
-        raise ValueError(f"No images generated. RAI Reason: {rai_reason}")
+        raise ValueError(f"No images generated. RAI Reason: {response}")
       image_data = response.generated_images[0].image
       return image_data.image_bytes
     except Exception as e:
       raise ValueError(f"Error generating image: {e}") 
 
-  def _call_gemini(self, prompt: str, modality: Literal["text", "image"] = "text") -> Union[str, bytes]:
+
+  def _call_gemini_for_speech_generation(self, prompt: str) -> bytes:
+    try:
+      client = self._lm_clients[LMs.GOOGLE]
+      model = "gemini-2.5-flash-preview-tts"
+      contents = [
+          types.Content(
+              role="user",
+              parts=[
+                  types.Part.from_text(text=prompt),
+              ],
+          ),
+      ]
+      generate_content_config = types.GenerateContentConfig(
+          temperature=1,
+          response_modalities=[
+              "audio",
+          ],
+          speech_config=types.SpeechConfig(
+              voice_config=types.VoiceConfig(
+                  prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                      voice_name="Orus"
+                  )
+              )
+          ),
+      )
+      aggregated_data = b""
+      for chunk in client.models.generate_content_stream(
+          model=model,
+          contents=contents,
+          config=generate_content_config,
+      ):
+        if not chunk.candidates or not chunk.candidates[0].content or not chunk.candidates[0].content.parts:
+            continue
+        part = chunk.candidates[0].content.parts[0]
+        if part.inline_data:
+            if not mimetypes.guess_extension(part.inline_data.mime_type):
+               # This means the audio format is likely raw PCM or similar.
+               # We need to convert it to wav.
+              aggregated_data += _convert_to_wav(part.inline_data.data, part.inline_data.mime_type) 
+            else:              
+              aggregated_data += part.inline_data.data
+      if not aggregated_data:
+          raise ValueError("No audio data generated.")
+      return aggregated_data
+    except Exception as e:
+      raise ValueError(f"Error generating speech: {e}")
+
+  @sleep_and_retry
+  @limits(calls=1, period=60)  # Limit to 1 call per minute
+  def _call_gemini_for_video_generation(self, prompt: str, scene_duration_sec: int = 5) -> bytes:
+    client: genai.Client = self._lm_clients[LMs.GOOGLE]
+    model = "veo-2.0-generate-001"
+    video_config = types.GenerateVideosConfig(
+        person_generation="allow_adult", # supported values: "dont_allow" or "allow_adult" or "allow_all"
+        aspect_ratio="9:16", # supported values: "16:9" or "16:10"
+        number_of_videos=1, # supported values: 1 - 4
+        duration_seconds=min(max(scene_duration_sec, 5), 8), # supported values: 5 - 8
+    )
+    operation = client.models.generate_videos(
+        model=model,
+        prompt=prompt,
+        config=video_config,
+    )
+
+    # Waiting for the video(s) to be generated
+    while not operation.done:
+        time.sleep(5)
+        operation = client.operations.get(operation)
+    result = operation.result
+    if not result:
+        err_msg = f"No result returned from video generation operation. Error may have occurred {operation.error}"
+        print(err_msg)
+        raise ValueError(err_msg)
+
+    generated_videos = result.generated_videos
+    if not generated_videos:
+        err_msg = f"No videos were generated. RAI Count: {result.rai_media_filtered_count}, RAI Reason: {result.rai_media_filtered_reasons}"
+        print(err_msg)
+        raise ValueError(err_msg)
+    generated_video = generated_videos[0]
+    return client.files.download(
+        file=generated_video.video,
+    )
+
+  def _call_gemini(self, prompt: str, modality: Literal["text", "image", "speech", "video"] = "text", output_schema: Union[Type[BaseModel], None] = None, scene_duration_sec:int = 5) -> Union[str, bytes]:
     if modality == "image":
         return self._call_gemini_for_image_generation(prompt)
+    if modality == "speech":
+        return self._call_gemini_for_speech_generation(prompt)
+    if modality == "video":
+        return self._call_gemini_for_video_generation(prompt, scene_duration_sec=scene_duration_sec)
     # For text generation
-    client = self._lm_clients[LMs.GEMINI_2_0_FLASH]
-    model = "gemini-2.0-flash-exp-image-generation"
+    # print(f"Generating text with prompt: {prompt}, output_schema: {output_schema}, modality: {modality}")
+    client: genai.Client = self._lm_clients[LMs.GOOGLE]
+    model = "gemini-2.5-flash"
     contents = [
         Content(
             role="user",
@@ -179,33 +409,64 @@ class LMFacade:
     modalities = ["text"]
     if modality == "image":
         modalities.append("image")
-    generate_content_config = GenerateContentConfig(
-        response_modalities=modalities,
-        response_mime_type="text/plain",
-    )
-
+    if not output_schema:
+      generate_content_config = GenerateContentConfig(
+          temperature=1,
+          response_modalities=modalities,
+          response_mime_type="text/plain",
+      )
+    else:
+      generate_content_config = GenerateContentConfig(
+          temperature=1,
+          response_modalities=modalities,
+          response_mime_type="application/json",
+          response_schema=output_schema,
+      )
     aggregated_text = ""
     aggregated_data = b""
-    for chunk in client.models.generate_content_stream(
+    chunk_itr: Iterator[types.GenerateContentResponse] = client.models.generate_content_stream(
         model=model,
         contents=contents,
         config=generate_content_config,
-    ):
+    )
+    # print(f"chunk itr: {chunk_itr}")
+    for chunk in chunk_itr:
+        # print(f"chunk: {chunk}")
         if not chunk.candidates or not chunk.candidates[0].content or not chunk.candidates[0].content.parts:
+            print(f"Got empty chunk:\nPrompt Feedback {chunk.prompt_feedback}")
             continue
         part = chunk.candidates[0].content.parts[0]
         if part.inline_data:
             aggregated_data += part.inline_data.data
         elif part.text:
             aggregated_text += part.text
-
+    if not aggregated_text:
+        raise ValueError("No text data generated.")
     if modality == "image":
         return aggregated_data
     else:
         return aggregated_text
 
+  def clear_cache(self):
+      """Clear all caches for this instance."""
+      self._cached_t2t.cache_clear()
+      self._cached_t2i.cache_clear()
+      self._cached_t2s.cache_clear()
+      self._cached_t2m.cache_clear()
+
+  def get_cache_info(self) -> dict:
+      """Get cache statistics for all cached methods."""
+      return {
+          "t2t": self._cached_t2t.cache_info()._asdict(),
+          "t2i": self._cached_t2i.cache_info()._asdict(),
+          "t2s": self._cached_t2s.cache_info()._asdict(),
+          "t2m": self._cached_t2m.cache_info()._asdict(),
+      }
+
 # For Local Testing Only:
-# if __name__ == "__main__":
-#    lm_facade = LMFacade()
-#    image_bytes = lm_facade.invoke_t2t("Write a short poem about a cat in less than 20 words.")
-#    print(f"Audio bytes: {image_bytes}")
+if __name__ == "__main__":
+  lm_facade = LMFacade()
+  prompt = '''Read softly in a natural indian accent:
+  Endless choices. Good, right? Until you're stuck in the scroll vortex.'''
+  voiceover = lm_facade.invoke_t2s(prompt)
+  print(voiceover)

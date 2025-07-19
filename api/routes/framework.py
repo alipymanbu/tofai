@@ -66,7 +66,7 @@ async def generate_step_options(
         if not session:
             raise HTTPException(status_code=404, detail=f"Session not found: {session_id}")
         generator = Generator(framework_id=request.framework_id)
-        aio = ai_orchestrator.AIOrchestrator(framework_id=request.framework_id)
+        aio = ai_orchestrator.AIOrchestrator(framework_id=request.framework_id, db=db)
         result = await aio.run(session=session.session, current_step_id=request.step_id)
         # Update session with results
         session.session.updated_at = datetime.now(timezone.utc)
@@ -149,7 +149,7 @@ async def select_step_option(
         step = generator.get_step_by_id(step_id=request.step_id)
         selection_step = generator.get_step_id_for_selection_id(step_id=request.step_id)
         next_api_call, wait_for_user_action = _get_next_api_call(selection_step, generator)
-        print(f"Selection for: {selection_step} {request}")
+        # print(f"Selection for: {selection_step} {request}")
         if not step or not selection_step:
             raise HTTPException(status_code=400, detail="Invalid step id.")
         is_valid_selection = False

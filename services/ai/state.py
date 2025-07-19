@@ -115,11 +115,11 @@ class VideoCreationState(BaseModel):
             if step.name in params:
                 step_id_name[step.id] = step.name
                 expected_user_selected_count[step.id] = step.expected_selection_count
-        print(f"step_id_name: {step_id_name}")
+        # print(f"step_id_name: {step_id_name}")
         # print(f"framework_result: {self.framework_result}")
         for step_result in self.framework_result.step_results:
             if step_result.id in step_id_name:
-                print(f"step_result.id found: {step_result.id}")
+                # print(f"step_result.id found: {step_result.id}")
                 result_values = []
                 for result_index in range(len(step_result.result)):
                     user_selection_for_step = self.get_user_selection_for_step(step_result, result_index, expected_user_selected_count[step_result.id])
@@ -128,7 +128,7 @@ class VideoCreationState(BaseModel):
                             result_values.append(user_selection.uri)
                         else:
                             result_values.append(user_selection)
-                print(f"result length: {len(result_values)}")
+                # print(f"result length: {len(result_values)}")
                 if result_values:
                     result[step_id_name[step_result.id]] = result_values[0] if len(result_values) == 1 else result_values
         # print(f"get_param_values: {result}")

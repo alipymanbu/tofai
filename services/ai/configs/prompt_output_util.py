@@ -26,4 +26,4 @@ def generate_prompt_templates(framework_id):
 if __name__ == "__main__":
   # Example usage
   framework_id = "brand_awareness_framework"
-  print(generate_prompt_templates(framework_id))
+  generate_prompt_templates(framework_id)
