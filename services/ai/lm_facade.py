@@ -354,12 +354,11 @@ class LMFacade:
   @limits(calls=1, period=60)  # Limit to 1 call per minute
   def _call_gemini_for_video_generation(self, prompt: str, scene_duration_sec: int = 5) -> bytes:
     client: genai.Client = self._lm_clients[LMs.GOOGLE]
-    model = "veo-2.0-generate-001"
+    model = "veo-3.0-fast-generate-preview"
     video_config = types.GenerateVideosConfig(
-        person_generation="allow_adult", # supported values: "dont_allow" or "allow_adult" or "allow_all"
+        person_generation="allow_all", # supported values: "dont_allow" or "allow_adult" or "allow_all"
         aspect_ratio="9:16", # supported values: "16:9" or "16:10"
         number_of_videos=1, # supported values: 1 - 4
-        duration_seconds=min(max(scene_duration_sec, 5), 8), # supported values: 5 - 8
     )
     operation = client.models.generate_videos(
         model=model,
@@ -466,7 +465,6 @@ class LMFacade:
 # For Local Testing Only:
 if __name__ == "__main__":
   lm_facade = LMFacade()
-  prompt = '''Read softly in a natural indian accent:
-  Endless choices. Good, right? Until you're stuck in the scroll vortex.'''
-  voiceover = lm_facade.invoke_t2s(prompt)
+  prompt = '''Extreme close-up, soft, warm lighting: Two female friends, their hands are interlocked around the large, uneven chunks of Cadbury Dairy Milk. Bits of chocolate are scattered on the sofa fabric, and faint smudges are visible on their fingers. They are casually eating, still chuckling softly, completely oblivious to the camera. The focus is on the authentic, messy enjoyment.'''
+  voiceover = lm_facade.invoke_p2v(prompt)
   print(voiceover)

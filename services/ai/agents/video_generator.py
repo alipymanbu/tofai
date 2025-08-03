@@ -81,7 +81,7 @@ class VideoGenerator:
   def _create_video_s3_filename(self, session_id: str, step_id: str) -> str:
     return self.object_store.create_key(session_id=session_id, framework_step_id=step_id, index=0, unique_key=uuid.uuid4().hex, content_type="video/mp4")
 
-  def generate(self, images: List[str], speeches: List[str], music: str, session_id: str, step_id: str) -> List[MediaUri]:
+  def generate(self, scenes: List[str], speeches: List[str], music: str, session_id: str, step_id: str) -> List[MediaUri]:
     """Generate a video from images, speeches, and music.
 
     Args:
@@ -91,11 +91,11 @@ class VideoGenerator:
       session_id: Session ID for S3 storage.
       step_id: Step ID for S3 storage.
     """
-    if len(images) == 0:
+    if len(scenes) == 0:
       raise ValueError("No images provided for video generation.")
     
-    if len(images) != len(speeches):
-      raise ValueError(f"Number of images ({len(images)}) must match number of speeches ({len(speeches)})")
+    if len(scenes) != len(speeches):
+      raise ValueError(f"Number of images ({len(scenes)}) must match number of speeches ({len(speeches)})")
         
     # Use a context manager to ensure cleanup even if exceptions occur
     with self._temp_directory() as temp_dir:
@@ -104,7 +104,7 @@ class VideoGenerator:
       local_speech_paths = []
       
       # Download images/videos
-      for i, media_url in enumerate(images):
+      for i, media_url in enumerate(scenes):
         media_ext = self._get_extension_from_url(media_url)
         media_path = os.path.join(temp_dir, f"media_{i}{media_ext}")
         self._download_from_url(media_url, media_path)
@@ -234,6 +234,84 @@ class VideoGenerator:
         if 'final_video' in locals() and hasattr(final_video, 'close'):
           final_video.close()
 
+  def generate_with_scenes_only(self, scenes: List[str], session_id: str, step_id: str) -> List[MediaUri]:
+    """Generate a video from scenes only.
+
+    Args:
+      scenes: List of image/video URLs (one per scene).
+    """
+    if len(scenes) == 0:
+      raise ValueError("No scenes provided for video generation.")
+    
+    # Use a context manager to ensure cleanup even if exceptions occur
+    with self._temp_directory() as temp_dir:
+      # Download all media files to our isolated temporary directory
+      local_media_paths = []
+      local_speech_paths = []
+      
+      # Download images/videos
+      for i, media_url in enumerate(scenes):
+        media_ext = self._get_extension_from_url(media_url)
+        media_path = os.path.join(temp_dir, f"media_{i}{media_ext}")
+        self._download_from_url(media_url, media_path)
+        local_media_paths.append(media_path)
+      
+      # Process each scene (image/video + speech pair)
+      scene_clips = []
+      default_scene_duration = 5.0  # Default duration for each scene if no motion video is provided
+      
+      try:
+        for i, media_path in enumerate(local_media_paths):
+          # Create video clip based on media type
+          media_type = mimetypes.guess_type(media_path)[0]
+          
+          if media_type and media_type.startswith("image"):
+            # For images, create a clip with speech duration
+            video_clip = ImageClip(media_path).with_duration(default_scene_duration).with_fps(24)
+          elif media_type and media_type.startswith("video"):
+            video_clip = VideoFileClip(media_path)
+            video_duration = video_clip.duration
+          
+          scene_clips.append(video_clip)
+        
+        # Concatenate all scene clips
+        final_video = concatenate_videoclips(scene_clips, method="compose")
+        
+        # Export video
+        output_path = os.path.join(temp_dir, "output.mp4")
+        final_video.write_videofile(
+          output_path, 
+          codec="libx264", 
+          audio_codec="aac", 
+          threads=2, 
+          logger=None
+        )
+        
+        # Read and upload to S3
+        with open(output_path, 'rb') as f:
+          video_data = f.read()
+        
+        video_filename = self._create_video_s3_filename(session_id=session_id, step_id=step_id)
+        result = self.object_store.upload_file(
+          file_data=video_data,
+          media_type=MediaType.VIDEO,
+          filename=video_filename,
+        )
+        
+        if not result:
+          raise ValueError("Failed to upload video to S3.")
+        
+        url = self.object_store.get_file_url(filename=video_filename, media_type=MediaType.VIDEO)
+        print(f"Video uploaded to S3: {url}")
+        return [MediaUri(uri=url)]
+        
+      finally:
+        # Properly close all clips to prevent the MoviePy error
+        for clip in scene_clips:
+          if hasattr(clip, 'close'):
+            clip.close()
+        if 'final_video' in locals() and hasattr(final_video, 'close'):
+          final_video.close()
 
   def analyze_duration(self, speeches: list[str]) -> list[str]:
     """

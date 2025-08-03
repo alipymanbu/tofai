@@ -293,7 +293,7 @@ class Generator:
         generate(0, [])
         return combinations
 
-    def get_durations_from_prompts(self, video_prompt: str, scene_idx: int) -> tuple[str, int]:
+    def get_durations_from_prompts(self, video_prompt: str, scene_idx: int) -> tuple[str, Union[int,None]]:
         match = re.search(r"Duration Analysis.*?SCENE_DURATIONS_END", video_prompt, re.DOTALL)
         if match:
             duration_analysis = match.group(0)
@@ -305,7 +305,7 @@ class Generator:
             else:
                 duration = 0
             return video_prompt, duration
-        return video_prompt, 0
+        return video_prompt, None
 
     def generate_options_from_prompt(self, step: FrameworkStep, param_values: Dict[str, Union[str, List[str]]], session_id: str) -> List[List[Union[str, MediaUri]]]:
         result = []
@@ -356,7 +356,10 @@ class Generator:
             elif expected_modality == "VIDEO":
                 full_prompt_without_durations, scene_duration = self.get_durations_from_prompts(full_prompt[0], idx)
                 try:
-                    video_data = self.lm_facade.invoke_p2v(full_prompt_without_durations, scene_duration_sec=scene_duration)
+                    if scene_duration:
+                        video_data = self.lm_facade.invoke_p2v(full_prompt_without_durations, scene_duration_sec=scene_duration)
+                    else:
+                        video_data = self.lm_facade.invoke_p2v(full_prompt_without_durations)
                     result.append([self.put_media_to_s3_and_get_url(
                         data=video_data,
                         type=MediaType.VIDEO,
@@ -367,6 +370,8 @@ class Generator:
                     )])
                 except Exception as e:
                     print(f"Error generating video for prompt '{e}'. Falling back to image.")
+                    if "RESOURCE_EXHAUSTED" in str(e):
+                        raise ValueError(f"Video generation failed due to resource exhaustion: {e}")
                     image_data = self.lm_facade.invoke_t2i(full_prompt_without_durations)
                     result.append([self.put_media_to_s3_and_get_url(
                         data=image_data,

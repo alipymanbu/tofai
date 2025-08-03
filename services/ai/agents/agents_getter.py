@@ -12,7 +12,7 @@ def get_agent_call(id: AgentId, **kwargs) -> Optional[List[Union[str, MediaUri]]
             lm_facade=kwargs["lm_facade"], 
             object_store=kwargs["s3"]
           ).generate(
-              images=kwargs["param_values"]["Videos"],
+              scenes=kwargs["param_values"]["Videos"],
               speeches=kwargs["param_values"]["Voiceover"],
               music=kwargs["param_values"]["Background Music"],
               session_id=kwargs["session_id"],
@@ -22,4 +22,12 @@ def get_agent_call(id: AgentId, **kwargs) -> Optional[List[Union[str, MediaUri]]
             lm_facade=kwargs["lm_facade"], 
             object_store=kwargs["s3"]
           ).analyze_duration(speeches=kwargs["param_values"]["Voiceover"])
+    if id == AgentId.VIDEO_GENERATOR_V2:
+        return VideoGenerator(
+            lm_facade=kwargs["lm_facade"], 
+            object_store=kwargs["s3"]
+          ).generate_with_scenes_only(
+              scenes=kwargs["param_values"]["Videos"],
+              session_id=kwargs["session_id"],
+              step_id=kwargs["step_id"])
     return None
