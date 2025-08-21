@@ -148,8 +148,9 @@ class AIOrchestrator:
     """
     # Check if we already have brand info
     step_result = state.get_step_result(step_id=state.current_step_id, framework_result=state.framework_result)
+    lineage_id = state.get_lineage_id_for_step(framework_result=state.framework_result, step_id=state.current_step_id)
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
-    if step_result:
+    if step_result and step_result.result and lineage_id in step_result.result.versioned_results:
         return {"current_step_id": next_step}
     if not self.is_local_test:
         return {"current_step_id": END}
@@ -159,14 +160,14 @@ class AIOrchestrator:
     framework_result = state.set_step_result(step_id=state.current_step_id, result_options=result_options, display_to_user=self.generator.get_step_by_id(state.current_step_id).result_display_allowed)
     return {"framework_result": framework_result, "current_step_id": next_step}
 
-  def _get_latest_param_values(self, step: FrameworkStep, state:VideoCreationState) -> dict[str, Union[str, List[str]]]:
+  def _get_latest_param_values(self, step: FrameworkStep, state:VideoCreationState, lineage_id: str) -> dict[str, Union[str, List[str]]]:
     params = set()
     for prompt in step.prompts:
         params = params.union(set(prompt.parameters))
     for agent in step.agents:
         params = params.union(set(agent.parameters))
     # print(f"params: {params}")
-    return state.get_param_values(params=params, framework_steps=self.generator.framework.steps)
+    return state.get_param_values(params=params, framework_steps=self.generator.framework.steps, lineage_id=lineage_id)
 
   async def _persist_state_in_cache(self, session_id: str, result: FrameworkResult, current_step_id: str) -> None:
     """
@@ -195,14 +196,15 @@ class AIOrchestrator:
         VideoCreationState: The updated state
     """
     step_result = state.get_step_result(step_id=state.current_step_id, framework_result=state.framework_result)
+    lineage_id = state.get_lineage_id_for_step(framework_result=state.framework_result, step_id=state.current_step_id)
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
-    if step_result:
+    if step_result and step_result.result and lineage_id in step_result.result.versioned_results:
         print(f"Step result already exists for step '{state.current_step_id}'. Moving to next step: {next_step}")
         return {"current_step_id": next_step}
     try:
         # Get the current step configuration
         step = self.generator.get_step_by_id(state.current_step_id)
-        param_values = self._get_latest_param_values(step=step, state=state)
+        param_values = self._get_latest_param_values(step=step, state=state, lineage_id=lineage_id)
         # Generate options
         results, context_ids_deck = self.generator.generate_options(state.current_step_id, param_values, session_id=state.session_id)
         framework_result = None
@@ -232,20 +234,21 @@ class AIOrchestrator:
     selection_for = self.generator.get_selection_for_step_id(step_id=state.current_step_id)
     selection_step_result = state.get_step_result(step_id=selection_for, framework_result=state.framework_result)
     next_step = self.generator.get_step_by_id(state.current_step_id).next_step
+    lineage_id = state.get_lineage_id_for_step(framework_result=state.framework_result, step_id=selection_for)
     # print(f"next_step: {next_step} selection_step_result: {selection_step_result}")
-    if selection_step_result and all([opt.selected_option >= 0 for opt in selection_step_result.result]):
+    if selection_step_result and all([opt.selected_option >= 0 for opt in selection_step_result.result.versioned_results[lineage_id]]):
         return {"current_step_id": next_step}
     if not self.is_local_test:
         return {"current_step_id": END}
     try:
     #   print(f"\nChoose an option for '{state.current_step_id}':")
       step_result = state.get_step_result(step_id=selection_for, framework_result=state.framework_result)
-      for idx, opt in enumerate(state.get_options_for_result(step_result=step_result, result_index=0), 1):
+      for idx, opt in enumerate(state.get_options_for_result(step_result=step_result, result_index=0, lineage_id=lineage_id), 1):
           print(f"{idx}. {opt}")
       
       print("Type the number to select.")
       user_input = int(input().strip())
-      framework_result = state.set_step_result_option_selection(step_id=state.current_step_id, result_index=0, selected_option=user_input)
+      framework_result = state.set_step_result_option_selection(step_id=state.current_step_id, result_index=0, selected_option=user_input, lineage_id=lineage_id)
       return {"current_step_id": next_step, "framework_result": framework_result}
     except Exception as e:
       logger.error(f"Error in select_option: {e}. Retrying.")

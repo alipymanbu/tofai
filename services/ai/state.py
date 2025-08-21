@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Tuple, Optional, Union, Dict, Any, Set
-from services.ai.framework_model import FrameworkResult, FrameworkStepResult, ResultOptions, FrameworkStep, MediaUri
+from services.ai.framework_model import FrameworkResult, FrameworkStepResult, ResultOptions, FrameworkStep, MediaUri, StepResult
 from services.ai.tasks.generator import generate_context_id
 
 # ======== Define constants ========
@@ -54,16 +54,31 @@ class VideoCreationState(BaseModel):
             if step_result.id == step_id:
                 return step_result
 
-    def get_options_for_result(self, step_result: FrameworkStepResult, result_index: int) -> List[Union[str, bytes]]:
-        if result_index < 0 or result_index >= len(step_result.result):
+    def get_lineage_id_for_step(self, framework_result: FrameworkResult, step_id: str) -> str:
+        lineage_id_chunks = []
+        prev_lineage_id = ''
+        for result in framework_result.step_results:
+            if result.id == step_id:
+                return '-'.join(lineage_id_chunks)
+            if result.result.versioned_results:
+                output: List[ResultOptions] = result.result.versioned_results[prev_lineage_id]
+                lineage_id_chunks.append(result.id)
+                for idx, option in enumerate(output):
+                    lineage_id_chunks.append(str(idx))
+                    lineage_id_chunks.append(str(option.selected_option))
+            prev_lineage_id = '-'.join(lineage_id_chunks)
+        return '-'.join(lineage_id_chunks)
+
+    def get_options_for_result(self, step_result: FrameworkStepResult, result_index: int, lineage_id: str) -> List[Union[str, bytes]]:
+        if result_index < 0 or (step_result.result.versioned_results[lineage_id] and result_index >= len(step_result.result.versioned_results[lineage_id])):
             return []
-        return step_result.result[result_index].result_options
+        return step_result.result.versioned_results[lineage_id][result_index].result_options
     
-    def get_user_selection_for_step(self, step_result: FrameworkStepResult, result_index: int, expected_selection_count: Union[int, str]) -> Optional[List[Union[str, MediaUri]]]:
+    def get_user_selection_for_step(self, step_result: FrameworkStepResult, result_index: int, expected_selection_count: Union[int, str], lineage_id: str) -> Optional[List[Union[str, MediaUri]]]:
         # print(f"get_user_selection_for_step: {step_result.id} {result_index} {step_result}")
-        if result_index < 0 or result_index >= len(step_result.result):
+        if result_index < 0 or (step_result.result.versioned_results[lineage_id] and result_index >= len(step_result.result.versioned_results[lineage_id])):
             return None
-        result_options = step_result.result[result_index]
+        result_options = step_result.result.versioned_results[lineage_id][result_index]
         if isinstance(expected_selection_count, str) and expected_selection_count == "ALL":
             # If the expected selection count is "ALL", return all options
             return result_options.result_options
@@ -77,16 +92,19 @@ class VideoCreationState(BaseModel):
         framework_result = intermediate_framework_result or self.framework_result.model_copy()
         step_result = self.get_step_result(step_id=step_id, framework_result=framework_result)
         if not step_result:
-            step_result = FrameworkStepResult(id=step_id, result=[])
+            step_result = FrameworkStepResult(id=step_id, result=StepResult(versioned_results={}))
             framework_result.step_results.append(step_result)
-        step_result.result.append(result_options)
+        lineage_id = self.get_lineage_id_for_step(framework_result, step_id)
+        if lineage_id not in step_result.result.versioned_results:
+            step_result.result.versioned_results[lineage_id] = []
+        step_result.result.versioned_results[lineage_id].append(result_options)
         step_result.display_to_user = display_to_user
         return framework_result
     
-    def flatten_step_result(self, step_result: FrameworkStepResult, intermediate_framework_result: FrameworkResult = None) -> List[ResultOptions]:
+    def flatten_step_result(self, step_result: FrameworkStepResult, lineage_id: str, intermediate_framework_result: FrameworkResult = None) -> List[ResultOptions]:
         """Flatten the step result which have selected_option == 'ALL'"""
         flattened_result = []
-        for result in step_result.result:
+        for result in step_result.result.versioned_results[lineage_id]:
             if result.selected_option == "ALL":
                 for option in result.result_options:
                     option = ResultOptions(result_options=[option], context_ids=[generate_context_id(option)], selected_option=0)
@@ -95,19 +113,19 @@ class VideoCreationState(BaseModel):
                 flattened_result.append(result.result_options)
         framework_result = intermediate_framework_result or self.framework_result.model_copy()
         step_result = self.get_step_result(step_id=step_result.id, framework_result=framework_result)
-        step_result.result = flattened_result
+        step_result.result.versioned_results[lineage_id] = flattened_result
         return framework_result
     
-    def set_step_result_option_selection(self, step_id: str, result_index: int, selected_option: int, intermediate_framework_result: FrameworkResult = None) -> FrameworkResult:
+    def set_step_result_option_selection(self, step_id: str, result_index: int, selected_option: int, lineage_id: str, intermediate_framework_result: FrameworkResult = None) -> FrameworkResult:
         if result_index < 0 or selected_option < 0:
             return
         framework_result = intermediate_framework_result or self.framework_result.model_copy()
         step_result = self.get_step_result(step_id=step_id, framework_result=framework_result)
-        if step_result and result_index < len(step_result.result):
-            step_result.result[result_index].selected_option = selected_option
+        if step_result and result_index < len(step_result.result.versioned_results[lineage_id]):
+            step_result.result.versioned_results[lineage_id][result_index].selected_option = selected_option
         return framework_result
 
-    def get_param_values(self, params: Set[str], framework_steps: List[FrameworkStep]) -> dict[str, Union[str, List[str]]]:
+    def get_param_values(self, params: Set[str], framework_steps: List[FrameworkStep], lineage_id: str) -> dict[str, Union[str, List[str]]]:
         result = {}
         step_id_name = {}
         expected_user_selected_count = {}
@@ -121,14 +139,15 @@ class VideoCreationState(BaseModel):
             if step_result.id in step_id_name:
                 # print(f"step_result.id found: {step_result.id}")
                 result_values = []
-                for result_index in range(len(step_result.result)):
-                    user_selection_for_step = self.get_user_selection_for_step(step_result, result_index, expected_user_selected_count[step_result.id])
-                    for user_selection in user_selection_for_step:
-                        if isinstance(user_selection, MediaUri):
-                            result_values.append(user_selection.uri)
-                        else:
-                            result_values.append(user_selection)
-                # print(f"result length: {len(result_values)}")
+                for l_id, result_list in step_result.result.versioned_results.items():
+                    if lineage_id.startswith(l_id):
+                        for result_index in range(len(result_list)):
+                            user_selection_for_step = self.get_user_selection_for_step(step_result, result_index, expected_user_selected_count[step_result.id], l_id)
+                            for user_selection in user_selection_for_step:
+                                if isinstance(user_selection, MediaUri):
+                                    result_values.append(user_selection.uri)
+                                else:
+                                    result_values.append(user_selection)
                 if result_values:
                     result[step_id_name[step_result.id]] = result_values[0] if len(result_values) == 1 else result_values
         # print(f"get_param_values: {result}")

@@ -103,6 +103,7 @@ class SelectRequest(BaseModel):
     step_id: str
     option_index: int = Field(default=0, ge=0)
     result_index: int = Field(default=0, ge=0)
+    lineage_id: str
 
 class UserResponse(BaseModel):
     """Response model for select options."""

@@ -213,15 +213,25 @@ class ResultOptions(BaseModel):
         if len(result_options) != len(context_ids):
             raise ValueError("The length of result_options must be the same as the length of context_ids.")
         return self
-
+    
+class StepResult(BaseModel):
+    """Model for the result of a step.
+    Args:
+        versioned_results (Dict[str, List[ResultOptions]]): Dict of version to result of a step corresponding to a path of selections done for previous steps.
+    """
+    versioned_results: Dict[str, List[ResultOptions]] = Field(
+        default_factory=dict,
+        description="Dict of version to result of a step corresponding to a path of selections done for previous steps."
+    )
+        
 class FrameworkStepResult(BaseModel):
     """Model for the result of a step.
     Args:
         id (str): Id of the step.
-        result (List[ResultOptions]): result of each prompt in the step, in that order.
+        result (StepResult): result of each prompt/agent in the step, in that order.
     """
     id: str
-    result: List[ResultOptions]
+    result: StepResult | List[ResultOptions]
     display_to_user: bool = True
 
 class FrameworkResult(BaseModel):

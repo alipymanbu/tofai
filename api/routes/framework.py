@@ -13,7 +13,7 @@ import io
 from services.storage.database import DataAccess
 from services.ai.tasks.generator import Generator
 from services.ai import ai_orchestrator
-from services.ai.framework_model import ResultOptions, FrameworkResult, FrameworkStepResult, FrameworkStep
+from services.ai.framework_model import ResultOptions, FrameworkResult, FrameworkStepResult, FrameworkStep, StepResult
 from api.models import GenerateOptionsRequest, GenerateOptionsResponse, InitInputRequest, JobStatus, Job, UserResponse, SelectRequest
 from models.job_db import JobDBModel
 from api.dependency.data import get_data_access
@@ -155,8 +155,8 @@ async def select_step_option(
         is_valid_selection = False
         for step_result in framework_result.step_results:
             if step_result.id == step.id:
-                if request.result_index < len(step_result.result) and request.option_index <= len(step_result.result[request.result_index].result_options):
-                    step_result.result[request.result_index].selected_option = request.option_index
+                if request.result_index < len(step_result.result.versioned_results[request.lineage_id]) and request.option_index <= len(step_result.result.versioned_results[request.lineage_id][request.result_index].result_options):
+                    step_result.result.versioned_results[request.lineage_id][request.result_index].selected_option = request.option_index
                     is_valid_selection = True
         if not is_valid_selection:
             raise HTTPException(status_code=404, detail=f"invalid selection")
@@ -221,12 +221,13 @@ async def get_initial_input(
         if not step:
             raise HTTPException(status_code=400, detail="Invalid framework id.")
         next_api_call, wait_for_user_action = _get_next_api_call(step, generator)
+        step_result = StepResult(versioned_results={'': [ResultOptions(result_options=[initial_input.brand_link], context_ids=["brand_url"], selected_option=0)]})
         framework_result = FrameworkResult(
             id=initial_input.framework_id, 
             step_results=[
                 FrameworkStepResult(
                     id=step.id,
-                     result=[ResultOptions(result_options=[initial_input.brand_link], context_ids=["brand_url"], selected_option=0)]
+                    result=step_result
                 )
             ]
         )
