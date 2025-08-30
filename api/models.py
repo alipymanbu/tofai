@@ -113,6 +113,23 @@ class UserResponse(BaseModel):
     next_api: str | None = None
     wait_for_user_action: bool | None = None
 
+class MutateOptionRequest(BaseModel):
+    """Request to mutate/edit an option."""
+    framework_id: str = "brand_awareness_video"
+    step_id: str
+    result_index: int = Field(default=0, ge=0)
+    option_index: int = Field(default=0, ge=0)
+    lineage_id: str
+    new_content: str = Field(..., description="The new content for the option")
+
+class MutateOptionResponse(BaseModel):
+    """Response for option mutation."""
+    success: bool
+    updated_at: datetime
+    framework_id: str
+    step_id: str
+    message: str = "Option updated successfully"
+
 # ============ Jobs Models ============
 
 class JobStatus(int, Enum):

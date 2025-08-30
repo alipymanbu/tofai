@@ -11,10 +11,10 @@ import logging
 import io
 
 from services.storage.database import DataAccess
-from services.ai.tasks.generator import Generator
+from services.ai.tasks.generator import Generator, generate_context_id
 from services.ai import ai_orchestrator
 from services.ai.framework_model import ResultOptions, FrameworkResult, FrameworkStepResult, FrameworkStep, StepResult
-from api.models import GenerateOptionsRequest, GenerateOptionsResponse, InitInputRequest, JobStatus, Job, UserResponse, SelectRequest
+from api.models import GenerateOptionsRequest, GenerateOptionsResponse, InitInputRequest, JobStatus, Job, UserResponse, SelectRequest, MutateOptionRequest, MutateOptionResponse
 from models.job_db import JobDBModel
 from api.dependency.data import get_data_access
 from api.dependency.auth import get_current_user
@@ -261,3 +261,71 @@ async def get_initial_input(
     except Exception as e:
         print(f"Error in initial input: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error selecting option: {str(e)}")
+
+@router.put("/framework/steps/{step_id}/mutate_option", response_model=MutateOptionResponse)
+async def mutate_option(
+    step_id: str,
+    request: MutateOptionRequest,
+    session_id: str = Query(..., description="Session ID to update"),
+    user: User = Depends(get_current_user),
+    db: DataAccess = Depends(get_data_access)
+):
+    """
+    Mutate (edit) an option for a framework step.
+    Only options in steps marked as editable and displayable can be modified.
+    
+    Args:
+        step_id: The framework step ID
+        request: The request data including the new content
+        session_id: Session ID to update
+        
+    Returns:
+        Success status and update information
+    """
+    try:
+        # Get the session
+        session_db_model = await db.get_session(session_id)
+        if not session_db_model:
+            raise HTTPException(status_code=404, detail=f"Session not found: {session_id}")
+            
+        # Check if framework_result exists
+        if not session_db_model.session.result:
+            raise HTTPException(status_code=400, detail="Session has no previous generations.")
+        generator = Generator(framework_id=request.framework_id)
+        step = generator.get_step_by_id(step_id=request.step_id)
+        if not step.result_editable:
+            raise HTTPException(status_code=403, detail="Step results are not editable")
+        framework_result = session_db_model.session.result
+        if framework_result.step_results[-1].id != step.id:
+            raise HTTPException(status_code=400, detail="Only the latest step can be edited.")
+        is_valid_selection = False
+        for step_result in framework_result.step_results:
+            if step_result.id == step.id:
+                if request.result_index < len(step_result.result.versioned_results[request.lineage_id]) and request.option_index <= len(step_result.result.versioned_results[request.lineage_id][request.result_index].result_options):
+                    step_result.result.versioned_results[request.lineage_id][request.result_index].result_options[request.option_index] = request.new_content
+                    step_result.result.versioned_results[request.lineage_id][request.result_index].context_ids[request.option_index] = generate_context_id(request.new_content)
+                    is_valid_selection = True
+                    step_result.is_mutated_state = True
+        if not is_valid_selection:
+            raise HTTPException(status_code=404, detail=f"invalid selection")
+        # Update session with modified results
+        session_db_model.session.result = framework_result
+        session_db_model.session.updated_at = datetime.now(timezone.utc)
+        await db.update_session(session_db_model)
+        
+        logger.info(f"Option mutated successfully for session {session_id}, step {step_id}, result {request.result_index}, option {request.option_index}")
+        
+        return MutateOptionResponse(
+            success=True,
+            updated_at=session_db_model.session.updated_at,
+            framework_id=request.framework_id,
+            step_id=step_id,
+            message="Option updated successfully",
+        )
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions as they already have proper status codes
+        raise
+    except Exception as e:
+        logger.error(f"Error mutating option: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating option: {str(e)}")

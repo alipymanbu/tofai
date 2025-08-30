@@ -164,7 +164,14 @@ class FrameworkStep(BaseModel):
     requires_user_input: bool = False
     require_user_input_for_step_id: str = ""
     result_display_allowed: bool = True
+    result_editable: bool = False
     version: int = 0
+
+    @model_validator(mode="after")
+    def validate_result_editable(self):
+        if self.result_editable and not self.result_display_allowed:
+            raise ValueError("result_editable can only be true if result_display_allowed is true.")
+        return self
     
 
 class Framework(BaseModel):
@@ -233,6 +240,7 @@ class FrameworkStepResult(BaseModel):
     id: str
     result: StepResult | List[ResultOptions]
     display_to_user: bool = True
+    is_mutated_state: bool = False
 
 class FrameworkResult(BaseModel):
     """Model for the results of executing the framework.

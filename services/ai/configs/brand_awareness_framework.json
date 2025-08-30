@@ -35,6 +35,7 @@
       "name": "User Persona",
       "description": "Generate user persona options based on brand research.",
       "requires_user_input": false,
+      "result_editable": true,
       "prompts": [
         {
           "id": "user_persona_prompt",
@@ -80,6 +81,7 @@
       "name": "Human Insights",
       "description": "Generate human insight options based on brand research and user persona, reflecting the brand's worldview and creating emotional friction.",
       "requires_user_input": false,
+      "result_editable": true,
       "prompts": [
         {
           "id": "human_insights_prompt",
@@ -132,6 +134,7 @@
       "name": "Script",
       "description": "Generate script options based on selected persona and human insight.",
       "requires_user_input": false,
+      "result_editable": true,
       "prompts": [
         {
           "id": "script_prompt",
