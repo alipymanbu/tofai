@@ -279,7 +279,7 @@ class LMFacade:
     print(f"Generating image with prompt: {prompt}")
     try:
       client = self._lm_clients[LMs.GOOGLE]
-      model = "imagen-3.0-generate-002"
+      model = "imagen-4.0-generate-001"
       response: types.GenerateImagesResponse = client.models.generate_images(
         model=model,
         prompt=prompt,
@@ -466,5 +466,5 @@ class LMFacade:
 if __name__ == "__main__":
   lm_facade = LMFacade()
   prompt = '''Extreme close-up, soft, warm lighting: Two female friends, their hands are interlocked around the large, uneven chunks of Cadbury Dairy Milk. Bits of chocolate are scattered on the sofa fabric, and faint smudges are visible on their fingers. They are casually eating, still chuckling softly, completely oblivious to the camera. The focus is on the authentic, messy enjoyment.'''
-  voiceover = lm_facade.invoke_p2v(prompt)
-  print(voiceover)
+  image = lm_facade.invoke_t2i(prompt)
+  print(image)
